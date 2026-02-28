@@ -19,11 +19,6 @@ export function loadFromLocal(): OhmBoard {
     if (raw) {
       const parsed = JSON.parse(raw) as OhmBoard;
       if (parsed.version === 1) {
-        // Backfill fields added after initial release
-        parsed.cards = parsed.cards.map((card) => ({
-          ...card,
-          description: card.description ?? '',
-        }));
         return parsed;
       }
     }
