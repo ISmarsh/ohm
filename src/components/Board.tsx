@@ -10,7 +10,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { Zap } from 'lucide-react';
+import { Zap, Settings } from 'lucide-react';
 import type { OhmCard, ColumnStatus } from '../types/board';
 import { COLUMNS } from '../types/board';
 import { getColumnCards, isOverWipLimit } from '../utils/board-utils';
@@ -21,14 +21,25 @@ import { Card } from './Card';
 import { QuickCapture } from './QuickCapture';
 import { CardDetail } from './CardDetail';
 import { GroundedPrompt } from './GroundedPrompt';
+import { SettingsDialog } from './SettingsDialog';
 
 export function Board() {
-  const { board, quickAdd, move, updateCard, deleteCard, addCategory, removeCategory } = useBoard();
+  const {
+    board,
+    quickAdd,
+    move,
+    updateCard,
+    deleteCard,
+    addCategory,
+    removeCategory,
+    setWipLimit,
+  } = useBoard();
 
   const [captureOpen, setCaptureOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
   const [groundingCard, setGroundingCard] = useState<OhmCard | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Drag sensors — with distance threshold to allow taps
   const pointerSensor = useSensor(PointerSensor, {
@@ -159,10 +170,23 @@ export function Board() {
             setSelectedCard(null);
           }}
           onClose={() => setSelectedCard(null)}
-          onAddCategory={addCategory}
-          onRemoveCategory={removeCategory}
+          onOpenSettings={() => {
+            setSelectedCard(null);
+            setSettingsOpen(true);
+          }}
         />
       )}
+
+      {/* Settings dialog */}
+      <SettingsDialog
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        categories={board.categories}
+        onAddCategory={addCategory}
+        onRemoveCategory={removeCategory}
+        wipLimit={board.liveWipLimit}
+        onSetWipLimit={setWipLimit}
+      />
 
       {/* Grounded prompt modal */}
       {groundingCard && (
@@ -173,7 +197,17 @@ export function Board() {
         />
       )}
 
-      {/* Mobile FAB (visible on small screens) */}
+      {/* Settings FAB — bottom left */}
+      <Button
+        size="icon"
+        onClick={() => setSettingsOpen(true)}
+        className="fixed bottom-6 left-6 z-40 h-10 w-10 rounded-full border border-ohm-border bg-ohm-bg text-ohm-muted shadow-md transition-transform hover:text-ohm-text active:scale-95"
+        aria-label="Settings"
+      >
+        <Settings size={16} />
+      </Button>
+
+      {/* Quick spark FAB — bottom right */}
       <Button
         size="icon"
         onClick={() => setCaptureOpen(true)}
