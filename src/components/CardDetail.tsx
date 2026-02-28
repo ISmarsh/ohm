@@ -73,6 +73,7 @@ export function CardDetail({ card, categories, onUpdate, onDelete, onClose }: Ca
         <Input
           value={editing.title}
           onChange={(e) => setEditing((prev) => ({ ...prev, title: e.target.value }))}
+          aria-label="Card title"
           className="mb-4 border-transparent bg-transparent pb-1 font-body text-base font-medium text-ohm-text shadow-none focus-visible:border-ohm-border focus-visible:ring-0"
         />
 
