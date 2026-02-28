@@ -1,23 +1,11 @@
 import { useState, useCallback } from 'react';
-import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragStartEvent,
-  type DragEndEvent,
-} from '@dnd-kit/core';
 import { Zap, Settings } from 'lucide-react';
-import type { OhmCard, ColumnStatus } from '../types/board';
+import type { OhmCard } from '../types/board';
 import { COLUMNS } from '../types/board';
 import { getColumnCards, isOverWipLimit } from '../utils/board-utils';
 import { useBoard } from '../hooks/useBoard';
 import { Button } from './ui/button';
 import { Column } from './Column';
-import { Card } from './Card';
 import { QuickCapture } from './QuickCapture';
 import { CardDetail } from './CardDetail';
 import { GroundedPrompt } from './GroundedPrompt';
@@ -38,58 +26,7 @@ export function Board() {
   const [captureOpen, setCaptureOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
   const [groundingCard, setGroundingCard] = useState<OhmCard | null>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  // Drag sensors — with distance threshold to allow taps
-  const pointerSensor = useSensor(PointerSensor, {
-    activationConstraint: { distance: 8 },
-  });
-  const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: { delay: 200, tolerance: 5 },
-  });
-  const sensors = useSensors(pointerSensor, touchSensor);
-
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  }, []);
-
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setActiveId(null);
-      const { active, over } = event;
-      if (!over) return;
-
-      const cardId = active.id as string;
-      const card = board.cards.find((c) => c.id === cardId);
-      if (!card) return;
-
-      // Determine target column — over could be a card or a column droppable
-      let targetStatus: ColumnStatus | null = null;
-
-      // Check if dropped over a column
-      if (COLUMNS.some((col) => col.status === over.id)) {
-        targetStatus = over.id as ColumnStatus;
-      } else {
-        // Dropped over another card — find that card's column
-        const targetCard = board.cards.find((c) => c.id === over.id);
-        if (targetCard) {
-          targetStatus = targetCard.status;
-        }
-      }
-
-      if (!targetStatus || targetStatus === card.status) return;
-
-      // If moving to Grounded, prompt for context
-      if (targetStatus === 'grounded') {
-        setGroundingCard({ ...card, status: targetStatus });
-        return;
-      }
-
-      move(cardId, targetStatus);
-    },
-    [board.cards, move],
-  );
 
   const handleGroundConfirm = useCallback(
     (cardId: string, whereILeftOff: string) => {
@@ -98,8 +35,6 @@ export function Board() {
     },
     [move],
   );
-
-  const activeCard = activeId ? (board.cards.find((c) => c.id === activeId) ?? null) : null;
 
   const wipWarning = isOverWipLimit(board);
 
@@ -118,36 +53,20 @@ export function Board() {
       </header>
 
       {/* Board */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
-          <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
-            {COLUMNS.map((col) => (
-              <Column
-                key={col.status}
-                column={col}
-                cards={getColumnCards(board, col.status)}
-                onCardTap={setSelectedCard}
-                wipWarning={col.status === 'live' && wipWarning}
-                defaultExpanded={col.status === 'live'}
-              />
-            ))}
-          </div>
-        </main>
-
-        {/* Drag overlay */}
-        <DragOverlay>
-          {activeCard && (
-            <div className="rotate-2 scale-105">
-              <Card card={activeCard} onTap={() => {}} />
-            </div>
-          )}
-        </DragOverlay>
-      </DndContext>
+      <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
+        <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
+          {COLUMNS.map((col) => (
+            <Column
+              key={col.status}
+              column={col}
+              cards={getColumnCards(board, col.status)}
+              onCardTap={setSelectedCard}
+              wipWarning={col.status === 'live' && wipWarning}
+              defaultExpanded={col.status === 'live'}
+            />
+          ))}
+        </div>
+      </main>
 
       {/* Quick capture modal */}
       <QuickCapture

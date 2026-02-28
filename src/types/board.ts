@@ -1,3 +1,6 @@
+import type { LucideIcon } from 'lucide-react';
+import { Zap, Battery, Flame } from 'lucide-react';
+
 /** Energy level — match tasks to your current state */
 export type EnergyTag = 'quick-win' | 'medium' | 'deep-focus';
 
@@ -8,6 +11,8 @@ export type ColumnStatus = 'spark' | 'charge' | 'live' | 'grounded' | 'powered';
 export interface OhmCard {
   id: string;
   title: string;
+  /** Free-form notes or context about the card */
+  description: string;
   status: ColumnStatus;
   /** The single next concrete action — always filled for charge+ */
   nextStep: string;
@@ -81,10 +86,10 @@ export const COLUMNS: OhmColumn[] = [
 ];
 
 /** Energy tag display config */
-export const ENERGY_CONFIG: Record<EnergyTag, { label: string; icon: string }> = {
-  'quick-win': { label: 'Quick Win', icon: '⚡' },
-  medium: { label: 'Medium', icon: '🔋' },
-  'deep-focus': { label: 'Deep Focus', icon: '🔥' },
+export const ENERGY_CONFIG: Record<EnergyTag, { label: string; icon: LucideIcon }> = {
+  'quick-win': { label: 'Quick Win', icon: Zap },
+  medium: { label: 'Medium', icon: Battery },
+  'deep-focus': { label: 'Deep Focus', icon: Flame },
 };
 
 /** Create a default empty board */

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { OhmCard, ColumnStatus, EnergyTag } from '../types/board';
 import { COLUMNS, ENERGY_CONFIG } from '../types/board';
-import { X, Settings } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { X, Settings, ArrowRight, MapPin } from 'lucide-react';
 import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from './ui/dialog';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -36,6 +37,14 @@ export function CardDetail({
   onOpenSettings,
 }: CardDetailProps) {
   const [editing, setEditing] = useState(card);
+  const descRef = useCallback((node: HTMLTextAreaElement | null) => {
+    if (node) autoSize(node);
+  }, []);
+
+  const autoSize = (el: HTMLTextAreaElement) => {
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight + 2}px`;
+  };
 
   const handleSave = () => {
     onUpdate({ ...editing, updatedAt: new Date().toISOString() });
@@ -82,23 +91,49 @@ export function CardDetail({
           value={editing.title}
           onChange={(e) => setEditing((prev) => ({ ...prev, title: e.target.value }))}
           aria-label="Card title"
-          className="mb-4 border-transparent bg-transparent pb-1 font-body text-base font-medium text-ohm-text shadow-none focus-visible:border-ohm-border focus-visible:ring-0"
+          autoComplete="off"
+          className="mb-2 border-transparent bg-transparent pb-1 font-body text-base font-medium text-ohm-text shadow-none focus-visible:border-ohm-border focus-visible:ring-0"
         />
+
+        {/* Description */}
+        <div className="mb-3">
+          <label
+            htmlFor="card-description"
+            className="mb-1 block font-display text-[10px] uppercase tracking-widest text-ohm-muted"
+          >
+            Description
+          </label>
+          <Textarea
+            ref={descRef}
+            id="card-description"
+            value={editing.description}
+            onChange={(e) => {
+              setEditing((prev) => ({ ...prev, description: e.target.value }));
+              autoSize(e.target);
+            }}
+            placeholder="Notes, context, details..."
+            autoComplete="off"
+            rows={2}
+            className="resize-none border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
+          />
+        </div>
 
         {/* Next Step */}
         <div className="mb-3">
           <label
             htmlFor="card-next-step"
-            className="mb-1 block font-display text-[10px] uppercase tracking-widest text-ohm-muted"
+            className="mb-1 flex items-center gap-1 font-display text-[10px] uppercase tracking-widest text-ohm-muted"
           >
-            → Next Step
+            <ArrowRight size={10} />
+            Next Step
           </label>
           <Input
             id="card-next-step"
             value={editing.nextStep}
             onChange={(e) => setEditing((prev) => ({ ...prev, nextStep: e.target.value }))}
             placeholder="What's the one concrete action?"
-            className="border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-spark/20 focus-visible:ring-offset-0"
+            autoComplete="off"
+            className="border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
           />
         </div>
 
@@ -106,17 +141,19 @@ export function CardDetail({
         <div className="mb-3">
           <label
             htmlFor="card-where-left-off"
-            className="mb-1 block font-display text-[10px] uppercase tracking-widest text-ohm-muted"
+            className="mb-1 flex items-center gap-1 font-display text-[10px] uppercase tracking-widest text-ohm-muted"
           >
-            📍 Where I Left Off
+            <MapPin size={10} />
+            Where I Left Off
           </label>
           <Textarea
             id="card-where-left-off"
             value={editing.whereILeftOff}
             onChange={(e) => setEditing((prev) => ({ ...prev, whereILeftOff: e.target.value }))}
             placeholder="Context for future you..."
+            autoComplete="off"
             rows={2}
-            className="resize-none border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-grounded/20 focus-visible:ring-offset-0"
+            className="resize-none border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
           />
         </div>
 
@@ -125,9 +162,12 @@ export function CardDetail({
           <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
             Energy Level
           </span>
-          <div className="flex gap-2">
-            {(Object.entries(ENERGY_CONFIG) as [EnergyTag, { label: string; icon: string }][]).map(
-              ([key, config]) => (
+          <div className="flex flex-wrap gap-2">
+            {(
+              Object.entries(ENERGY_CONFIG) as [EnergyTag, { label: string; icon: LucideIcon }][]
+            ).map(([key, config]) => {
+              const Icon = config.icon;
+              return (
                 <Button
                   key={key}
                   variant="outline"
@@ -135,15 +175,15 @@ export function CardDetail({
                   onClick={() => setEditing((prev) => ({ ...prev, energy: key }))}
                   className={`gap-1.5 font-body text-xs ${
                     editing.energy === key
-                      ? 'border-ohm-spark/50 bg-ohm-spark/10 text-ohm-text'
+                      ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
                       : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
                   }`}
                 >
-                  <span>{config.icon}</span>
+                  <Icon size={14} />
                   <span>{config.label}</span>
                 </Button>
-              ),
-            )}
+              );
+            })}
           </div>
         </div>
 
@@ -196,22 +236,25 @@ export function CardDetail({
           <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
             Status
           </span>
-          <div className="flex gap-1.5 overflow-x-auto pb-1">
-            {COLUMNS.map((col) => (
-              <Button
-                key={col.status}
-                variant="outline"
-                size="sm"
-                onClick={() => handleStatusChange(col.status)}
-                className={`whitespace-nowrap font-display text-[11px] uppercase tracking-wider ${
-                  editing.status === col.status
-                    ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
-                    : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
-                }`}
-              >
-                {col.label}
-              </Button>
-            ))}
+          <div className="flex justify-between gap-2">
+            {(['grounded', 'live', 'powered'] as const).map((status) => {
+              const col = COLUMNS.find((c) => c.status === status)!;
+              return (
+                <Button
+                  key={status}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStatusChange(status)}
+                  className={`font-body text-xs uppercase ${
+                    editing.status === status
+                      ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
+                      : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
+                  }`}
+                >
+                  {col.label}
+                </Button>
+              );
+            })}
           </div>
         </div>
 

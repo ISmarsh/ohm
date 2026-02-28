@@ -14,6 +14,7 @@ export function createCard(
   return {
     id: generateId(),
     title,
+    description: '',
     status: 'spark',
     nextStep: overrides?.nextStep ?? '',
     whereILeftOff: '',
