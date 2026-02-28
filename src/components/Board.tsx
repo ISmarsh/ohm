@@ -201,20 +201,20 @@ export function Board() {
       <Button
         size="icon"
         onClick={() => setSettingsOpen(true)}
-        className="fixed bottom-6 left-6 z-40 h-10 w-10 rounded-full border border-ohm-border bg-ohm-bg text-ohm-muted shadow-md transition-transform hover:text-ohm-text active:scale-95"
+        className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full border border-ohm-border bg-ohm-muted/10 text-ohm-muted shadow-md transition-transform hover:text-ohm-text active:scale-95"
         aria-label="Settings"
       >
-        <Settings size={16} />
+        <Settings size={20} />
       </Button>
 
       {/* Quick spark FAB — bottom right */}
       <Button
         size="icon"
         onClick={() => setCaptureOpen(true)}
-        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-ohm-spark text-2xl font-bold text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform hover:bg-ohm-spark/90 active:scale-95"
+        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-ohm-spark text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform hover:bg-ohm-spark/90 active:scale-95"
         aria-label="Quick spark"
       >
-        +
+        <Zap size={24} />
       </Button>
     </div>
   );
