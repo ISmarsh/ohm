@@ -86,13 +86,19 @@ export function useBoard() {
     });
   }, []);
 
-  /** Remove a category from the board */
+  /** Remove a category from the board and clear it from any cards using it */
   const removeCategory = useCallback((category: string) => {
-    setBoard((prev) => ({
-      ...prev,
-      categories: prev.categories.filter((c) => c !== category),
-      lastSaved: new Date().toISOString(),
-    }));
+    setBoard((prev) => {
+      if (!prev.categories.includes(category)) return prev;
+      return {
+        ...prev,
+        categories: prev.categories.filter((c) => c !== category),
+        cards: prev.cards.map((card) =>
+          card.category === category ? { ...card, category: '' } : card,
+        ),
+        lastSaved: new Date().toISOString(),
+      };
+    });
   }, []);
 
   return {

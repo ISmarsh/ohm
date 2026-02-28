@@ -32,6 +32,8 @@ export function Column({
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
+        aria-expanded={expanded}
+        aria-controls={`column-cards-${column.status}`}
         className="sticky top-0 z-10 flex w-full items-center gap-2 bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm md:cursor-default"
       >
         <span className="text-ohm-muted md:hidden">
@@ -55,6 +57,7 @@ export function Column({
       {/* Cards — hidden on mobile when collapsed, always visible on md+ */}
       <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <div
+          id={`column-cards-${column.status}`}
           className={`flex-col gap-2 px-2 pb-4 ${expanded ? 'flex min-h-[60px]' : 'hidden'} md:flex md:min-h-[100px]`}
         >
           {cards.map((card) => (

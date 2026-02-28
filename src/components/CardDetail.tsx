@@ -192,7 +192,7 @@ export function CardDetail({
                       setEditing((prev) => ({ ...prev, category: '' }));
                     }
                   }}
-                  className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-ohm-live/80 text-[8px] text-ohm-bg group-hover:flex"
+                  className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-ohm-live/80 text-[8px] text-ohm-bg group-focus-within:flex group-hover:flex"
                   aria-label={`Remove ${cat} category`}
                 >
                   ×
@@ -214,7 +214,7 @@ export function CardDetail({
                 className="flex items-center gap-1"
               >
                 <Input
-                  ref={(el) => el?.focus()}
+                  autoFocus
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="Name..."
