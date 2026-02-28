@@ -85,8 +85,8 @@ export function useDriveSync(
     }
     setSyncStatus('syncing');
     try {
-      await saveToDrive(board);
-      setSyncStatus('synced');
+      const ok = await saveToDrive(board);
+      setSyncStatus(ok ? 'synced' : 'error');
     } catch {
       setSyncStatus('error');
     }
@@ -104,11 +104,12 @@ export function useDriveSync(
       if (remote && remote.lastSaved > boardRef.current.lastSaved) {
         // Remote is newer -- use it
         onBoardLoaded(remote);
+        setSyncStatus('synced');
       } else {
         // Local is newer or no remote -- push local
-        await saveToDrive(boardRef.current);
+        const ok = await saveToDrive(boardRef.current);
+        setSyncStatus(ok ? 'synced' : 'error');
       }
-      setSyncStatus('synced');
     } catch {
       setSyncStatus('error');
     }
@@ -136,10 +137,11 @@ export function useDriveSync(
       const remote = await loadFromDrive();
       if (remote && remote.lastSaved > boardRef.current.lastSaved) {
         onBoardLoaded(remote);
+        setSyncStatus('synced');
       } else {
-        await saveToDrive(boardRef.current);
+        const ok = await saveToDrive(boardRef.current);
+        setSyncStatus(ok ? 'synced' : 'error');
       }
-      setSyncStatus('synced');
     } catch {
       setSyncStatus('error');
     }

@@ -164,8 +164,15 @@ export async function saveToDrive(board: OhmBoard): Promise<boolean> {
     if (!res.ok) {
       const err = await res.json().catch(() => null);
       console.error('[Ohm] Drive save failed:', res.status, err);
+      if (res.status === 404) {
+        // File was deleted externally -- clear cache and fall through to create
+        cachedFileId = null;
+      } else {
+        return false;
+      }
+    } else {
+      return true;
     }
-    return res.ok;
   }
 
   // Create new file in appDataFolder (multipart upload)
