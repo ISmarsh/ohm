@@ -1,6 +1,22 @@
 import { useState } from 'react';
 import type { OhmCard, ColumnStatus, EnergyTag } from '../types/board';
 import { COLUMNS, ENERGY_CONFIG } from '../types/board';
+import { X } from 'lucide-react';
+import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from './ui/dialog';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import { Button } from './ui/button';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle as AlertTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from './ui/alert-dialog';
 
 interface CardDetailProps {
   card: OhmCard;
@@ -12,7 +28,6 @@ interface CardDetailProps {
 
 export function CardDetail({ card, categories, onUpdate, onDelete, onClose }: CardDetailProps) {
   const [editing, setEditing] = useState(card);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleSave = () => {
     onUpdate({ ...editing, updatedAt: new Date().toISOString() });
@@ -26,192 +41,212 @@ export function CardDetail({ card, categories, onUpdate, onDelete, onClose }: Ca
   const currentColumn = COLUMNS.find((c) => c.status === editing.status);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      {/* Backdrop */}
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Detail panel */}
-      <div className="animate-slide-up relative mx-0 max-h-[90vh] w-full overflow-y-auto sm:mx-4 sm:max-w-lg">
-        <div className="rounded-t-xl border border-ohm-border bg-ohm-surface p-5 shadow-2xl sm:rounded-xl">
-          {/* Header */}
-          <div className="mb-4 flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <div
-                className="h-2 w-2 rounded-full"
-                style={{
-                  backgroundColor: `var(--color-${currentColumn?.color ?? 'ohm-muted'})`,
-                }}
-              />
-              <span className="font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-                {currentColumn?.label}
-              </span>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-lg leading-none text-ohm-muted transition-colors hover:text-ohm-text"
-            >
-              ×
-            </button>
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        {/* Header */}
+        <DialogTitle className="sr-only">{editing.title || 'Card details'}</DialogTitle>
+        <DialogDescription className="sr-only">Edit card details</DialogDescription>
+        <div className="mb-4 flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <div
+              className="h-2 w-2 rounded-full"
+              style={{
+                backgroundColor: `var(--color-${currentColumn?.color ?? 'ohm-muted'})`,
+              }}
+            />
+            <span className="font-display text-[10px] uppercase tracking-widest text-ohm-muted">
+              {currentColumn?.label}
+            </span>
           </div>
+          <DialogClose className="rounded-sm text-ohm-muted opacity-70 transition-opacity hover:opacity-100">
+            <X size={16} />
+            <span className="sr-only">Close</span>
+          </DialogClose>
+        </div>
 
-          {/* Title */}
-          <input
-            value={editing.title}
-            onChange={(e) => setEditing((prev) => ({ ...prev, title: e.target.value }))}
-            className="mb-4 w-full border-b border-transparent bg-transparent pb-1 font-body text-base font-medium text-ohm-text transition-colors focus:border-ohm-border focus:outline-none"
+        {/* Title */}
+        <Input
+          value={editing.title}
+          onChange={(e) => setEditing((prev) => ({ ...prev, title: e.target.value }))}
+          aria-label="Card title"
+          className="mb-4 border-transparent bg-transparent pb-1 font-body text-base font-medium text-ohm-text shadow-none focus-visible:border-ohm-border focus-visible:ring-0"
+        />
+
+        {/* Next Step */}
+        <div className="mb-3">
+          <label
+            htmlFor="card-next-step"
+            className="mb-1 block font-display text-[10px] uppercase tracking-widest text-ohm-muted"
+          >
+            → Next Step
+          </label>
+          <Input
+            id="card-next-step"
+            value={editing.nextStep}
+            onChange={(e) => setEditing((prev) => ({ ...prev, nextStep: e.target.value }))}
+            placeholder="What's the one concrete action?"
+            className="border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-spark/20 focus-visible:ring-offset-0"
           />
+        </div>
 
-          {/* Next Step */}
-          <label className="mb-3 block">
-            <span className="mb-1 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-              → Next Step
-            </span>
-            <input
-              value={editing.nextStep}
-              onChange={(e) => setEditing((prev) => ({ ...prev, nextStep: e.target.value }))}
-              placeholder="What's the one concrete action?"
-              className="w-full rounded-lg border border-ohm-border bg-ohm-bg px-3 py-2 font-body text-sm text-ohm-text transition-colors placeholder:text-ohm-muted/40 focus:border-ohm-spark/30 focus:outline-none"
-            />
+        {/* Where I Left Off */}
+        <div className="mb-3">
+          <label
+            htmlFor="card-where-left-off"
+            className="mb-1 block font-display text-[10px] uppercase tracking-widest text-ohm-muted"
+          >
+            📍 Where I Left Off
           </label>
+          <Textarea
+            id="card-where-left-off"
+            value={editing.whereILeftOff}
+            onChange={(e) => setEditing((prev) => ({ ...prev, whereILeftOff: e.target.value }))}
+            placeholder="Context for future you..."
+            rows={2}
+            className="resize-none border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-grounded/20 focus-visible:ring-offset-0"
+          />
+        </div>
 
-          {/* Where I Left Off (visible for grounded or when editing) */}
-          <label className="mb-3 block">
-            <span className="mb-1 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-              📍 Where I Left Off
-            </span>
-            <textarea
-              value={editing.whereILeftOff}
-              onChange={(e) => setEditing((prev) => ({ ...prev, whereILeftOff: e.target.value }))}
-              placeholder="Context for future you..."
-              rows={2}
-              className="w-full resize-none rounded-lg border border-ohm-border bg-ohm-bg px-3 py-2 font-body text-sm text-ohm-text transition-colors placeholder:text-ohm-muted/40 focus:border-ohm-grounded/30 focus:outline-none"
-            />
-          </label>
-
-          {/* Energy tag */}
-          <div className="mb-3">
-            <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-              Energy Level
-            </span>
-            <div className="flex gap-2">
-              {(
-                Object.entries(ENERGY_CONFIG) as [EnergyTag, { label: string; icon: string }][]
-              ).map(([key, config]) => (
-                <button
+        {/* Energy tag */}
+        <div className="mb-3">
+          <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
+            Energy Level
+          </span>
+          <div className="flex gap-2">
+            {(Object.entries(ENERGY_CONFIG) as [EnergyTag, { label: string; icon: string }][]).map(
+              ([key, config]) => (
+                <Button
                   key={key}
+                  variant="outline"
+                  size="sm"
                   onClick={() => setEditing((prev) => ({ ...prev, energy: key }))}
-                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-body text-xs transition-colors ${
+                  className={`gap-1.5 font-body text-xs ${
                     editing.energy === key
                       ? 'border-ohm-spark/50 bg-ohm-spark/10 text-ohm-text'
                       : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
-                  } `}
+                  }`}
                 >
                   <span>{config.icon}</span>
                   <span>{config.label}</span>
-                </button>
-              ))}
-            </div>
+                </Button>
+              ),
+            )}
           </div>
+        </div>
 
-          {/* Category */}
-          <div className="mb-4">
-            <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-              Category
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setEditing((prev) => ({ ...prev, category: '' }))}
-                className={`rounded-lg border px-2.5 py-1 font-body text-xs transition-colors ${
-                  !editing.category
+        {/* Category */}
+        <div className="mb-4">
+          <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
+            Category
+          </span>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditing((prev) => ({ ...prev, category: '' }))}
+              className={`font-body text-xs ${
+                !editing.category
+                  ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
+                  : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
+              }`}
+            >
+              None
+            </Button>
+            {categories.map((cat) => (
+              <Button
+                key={cat}
+                variant="outline"
+                size="sm"
+                onClick={() => setEditing((prev) => ({ ...prev, category: cat }))}
+                className={`font-body text-xs ${
+                  editing.category === cat
                     ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
                     : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
-                } `}
+                }`}
               >
-                None
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setEditing((prev) => ({ ...prev, category: cat }))}
-                  className={`rounded-lg border px-2.5 py-1 font-body text-xs transition-colors ${
-                    editing.category === cat
-                      ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
-                      : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
-                  } `}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+                {cat}
+              </Button>
+            ))}
           </div>
+        </div>
 
-          {/* Status (move between columns) */}
-          <div className="mb-5">
-            <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-              Status
-            </span>
-            <div className="flex gap-1.5 overflow-x-auto pb-1">
-              {COLUMNS.map((col) => (
-                <button
-                  key={col.status}
-                  onClick={() => handleStatusChange(col.status)}
-                  className={`whitespace-nowrap rounded-lg border px-2.5 py-1.5 font-display text-[11px] uppercase tracking-wider transition-colors ${
-                    editing.status === col.status
-                      ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
-                      : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
-                  } `}
-                >
-                  {col.label}
-                </button>
-              ))}
-            </div>
+        {/* Status (move between columns) */}
+        <div className="mb-5">
+          <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
+            Status
+          </span>
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {COLUMNS.map((col) => (
+              <Button
+                key={col.status}
+                variant="outline"
+                size="sm"
+                onClick={() => handleStatusChange(col.status)}
+                className={`whitespace-nowrap font-display text-[11px] uppercase tracking-wider ${
+                  editing.status === col.status
+                    ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
+                    : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
+                }`}
+              >
+                {col.label}
+              </Button>
+            ))}
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-between border-t border-ohm-border pt-3">
-            {confirmDelete ? (
-              <div className="flex items-center gap-2">
-                <span className="font-body text-xs text-ohm-live">Delete this card?</span>
-                <button
+        {/* Actions */}
+        <div className="flex items-center justify-between border-t border-ohm-border pt-3">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-auto p-0 font-display text-xs uppercase tracking-wider text-ohm-muted hover:bg-transparent hover:text-ohm-live"
+              >
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertTitle className="text-ohm-text">Delete this card?</AlertTitle>
+                <AlertDialogDescription>
+                  This will permanently remove &ldquo;{editing.title || card.title}&rdquo;.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="border-ohm-border text-ohm-muted hover:bg-ohm-bg hover:text-ohm-text">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
                   onClick={() => {
                     onDelete(card.id);
                     onClose();
                   }}
-                  className="font-display text-xs uppercase tracking-wider text-ohm-live transition-colors hover:text-red-400"
+                  className="bg-ohm-live/20 text-ohm-live hover:bg-ohm-live/30"
                 >
-                  Yes
-                </button>
-                <button
-                  onClick={() => setConfirmDelete(false)}
-                  className="font-display text-xs uppercase tracking-wider text-ohm-muted transition-colors hover:text-ohm-text"
-                >
-                  No
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setConfirmDelete(true)}
-                className="font-display text-xs uppercase tracking-wider text-ohm-muted transition-colors hover:text-ohm-live"
-              >
-                Delete
-              </button>
-            )}
-            <button
-              onClick={handleSave}
-              className="rounded-lg bg-ohm-powered/20 px-5 py-2 font-display text-xs uppercase tracking-wider text-ohm-powered transition-colors hover:bg-ohm-powered/30 active:bg-ohm-powered/40"
-            >
-              Save
-            </button>
-          </div>
-
-          {/* Timestamps */}
-          <div className="mt-3 font-body text-[9px] text-ohm-muted/40">
-            Created {new Date(card.createdAt).toLocaleDateString()} · Updated{' '}
-            {new Date(card.updatedAt).toLocaleDateString()}
-          </div>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Button
+            onClick={handleSave}
+            className="bg-ohm-powered/20 font-display text-xs uppercase tracking-wider text-ohm-powered hover:bg-ohm-powered/30 active:bg-ohm-powered/40"
+          >
+            Save
+          </Button>
         </div>
-      </div>
-    </div>
+
+        {/* Timestamps */}
+        <div className="mt-3 font-body text-[9px] text-ohm-muted/40">
+          Created {new Date(card.createdAt).toLocaleDateString()} · Updated{' '}
+          {new Date(card.updatedAt).toLocaleDateString()}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
