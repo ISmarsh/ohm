@@ -5,7 +5,7 @@ export function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/** Create a new card with minimal input (quick capture) */
+/** Create a new card with minimal input (fast capture for Spark) */
 export function createCard(
   title: string,
   overrides?: Partial<Pick<OhmCard, 'energy' | 'category' | 'nextStep'>>,
@@ -15,7 +15,7 @@ export function createCard(
     id: generateId(),
     title,
     description: '',
-    status: 'charging',
+    status: 'spark',
     nextStep: overrides?.nextStep ?? '',
     whereILeftOff: '',
     energy: overrides?.energy ?? 'medium',

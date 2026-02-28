@@ -6,14 +6,15 @@ Ohm uses an electrical metaphor to map ADHD energy cycles into a visual workflow
 
 | Column          | Metaphor           | Purpose                                |
 | --------------- | ------------------ | -------------------------------------- |
-| **Charging** 🔋 | Building energy    | Captured ideas shaped with a next step |
+| **Spark** ⚡    | The initial flash  | Raw idea capture, zero friction        |
+| **Charge** 🔋   | Building energy    | Shaped with a clear next step          |
 | **Live** 🔴     | Hot/active circuit | Currently working (WIP limited)        |
 | **Grounded** 🟣 | Safely discharged  | Paused with "where I left off" context |
 | **Powered** ✅  | Circuit complete   | Done                                   |
 
 ## Philosophy
 
-- **Capture fast** — Quick Spark accepts just a title. Think later.
+- **Capture fast** — Spark column accepts just a title. Think later.
 - **Always know what's next** — Every card has a "Next Step" field.
 - **Don't abandon, ground** — Moving to Grounded prompts you to leave context for future you.
 - **Match energy to tasks** — Energy tags (Quick Win / Medium / Deep Focus) let you filter by current state.
@@ -36,11 +37,11 @@ npm run dev
 
 ## Roadmap
 
-- [x] PWA support (installable on mobile)
-- [x] Google Drive sync (cross-device persistence)
+- [ ] Google Drive sync (cross-device persistence)
 - [ ] Energy-based filtering
 - [ ] Quick wins view (low-energy day mode)
 - [ ] Card archive (Powered cards older than 30 days)
+- [ ] PWA support (installable on mobile)
 - [ ] Keyboard shortcuts
 - [ ] Analytics (completion rates, time-in-column)
 
