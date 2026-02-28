@@ -37,14 +37,15 @@ export function CardDetail({
   onOpenSettings,
 }: CardDetailProps) {
   const [editing, setEditing] = useState(card);
-  const descRef = useCallback((node: HTMLTextAreaElement | null) => {
-    if (node) autoSize(node);
-  }, []);
 
   const autoSize = (el: HTMLTextAreaElement) => {
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight + 2}px`;
   };
+
+  const descRef = useCallback((node: HTMLTextAreaElement | null) => {
+    if (node) autoSize(node);
+  }, []);
 
   const handleSave = () => {
     onUpdate({ ...editing, updatedAt: new Date().toISOString() });
