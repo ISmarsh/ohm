@@ -22,7 +22,7 @@ import { CardDetail } from './CardDetail';
 import { GroundedPrompt } from './GroundedPrompt';
 
 export function Board() {
-  const { board, quickAdd, move, updateCard, deleteCard } = useBoard();
+  const { board, quickAdd, move, updateCard, deleteCard, addCategory, removeCategory } = useBoard();
 
   const [captureOpen, setCaptureOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
@@ -95,22 +95,13 @@ export function Board() {
     <div className="flex min-h-screen flex-col bg-ohm-bg">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-ohm-border bg-ohm-bg/90 backdrop-blur-md">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-center px-4 py-3">
           <div className="flex items-center gap-2">
             <span className="font-display text-base font-bold tracking-tight text-ohm-text">Ω</span>
             <span className="font-display text-sm font-bold uppercase tracking-widest text-ohm-text">
               Ohm
             </span>
           </div>
-
-          {/* Quick add */}
-          <Button
-            onClick={() => setCaptureOpen(true)}
-            className="gap-1.5 bg-ohm-spark/20 font-display text-xs uppercase tracking-wider text-ohm-spark hover:bg-ohm-spark/30 active:bg-ohm-spark/40"
-          >
-            <span className="text-base leading-none">+</span>
-            <span className="hidden sm:inline">Spark</span>
-          </Button>
         </div>
       </header>
 
@@ -121,8 +112,8 @@ export function Board() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <main className="flex-1 overflow-x-auto overflow-y-hidden">
-          <div className="flex min-h-[calc(100vh-56px)] gap-3 p-4 md:gap-4">
+        <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
+          <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
             {COLUMNS.map((col) => (
               <Column
                 key={col.status}
@@ -130,6 +121,7 @@ export function Board() {
                 cards={getColumnCards(board, col.status)}
                 onCardTap={setSelectedCard}
                 wipWarning={col.status === 'live' && wipWarning}
+                defaultExpanded={col.status === 'live'}
               />
             ))}
           </div>
@@ -166,6 +158,8 @@ export function Board() {
             setSelectedCard(null);
           }}
           onClose={() => setSelectedCard(null)}
+          onAddCategory={addCategory}
+          onRemoveCategory={removeCategory}
         />
       )}
 
@@ -182,7 +176,7 @@ export function Board() {
       <Button
         size="icon"
         onClick={() => setCaptureOpen(true)}
-        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-ohm-spark text-2xl font-bold text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform hover:bg-ohm-spark/90 active:scale-95 sm:hidden"
+        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-ohm-spark text-2xl font-bold text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform hover:bg-ohm-spark/90 active:scale-95"
         aria-label="Quick spark"
       >
         +

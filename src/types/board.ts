@@ -92,7 +92,7 @@ export function createDefaultBoard(): OhmBoard {
   return {
     version: 1,
     cards: [],
-    categories: ['Personal', 'Code', 'Creative', 'Improv', 'SMARS'],
+    categories: ['Personal', 'Creative', 'Home'],
     liveWipLimit: 2,
     lastSaved: new Date().toISOString(),
   };

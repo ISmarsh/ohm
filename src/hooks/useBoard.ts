@@ -74,6 +74,27 @@ export function useBoard() {
     setBoard((prev) => ({ ...prev, liveWipLimit: limit }));
   }, []);
 
+  /** Add a category to the board */
+  const addCategory = useCallback((category: string) => {
+    setBoard((prev) => {
+      if (prev.categories.includes(category)) return prev;
+      return {
+        ...prev,
+        categories: [...prev.categories, category],
+        lastSaved: new Date().toISOString(),
+      };
+    });
+  }, []);
+
+  /** Remove a category from the board */
+  const removeCategory = useCallback((category: string) => {
+    setBoard((prev) => ({
+      ...prev,
+      categories: prev.categories.filter((c) => c !== category),
+      lastSaved: new Date().toISOString(),
+    }));
+  }, []);
+
   return {
     board,
     quickAdd,
@@ -82,5 +103,7 @@ export function useBoard() {
     deleteCard,
     reorder,
     setWipLimit,
+    addCategory,
+    removeCategory,
   };
 }

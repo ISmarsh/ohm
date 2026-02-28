@@ -23,10 +23,22 @@ interface CardDetailProps {
   onUpdate: (card: OhmCard) => void;
   onDelete: (cardId: string) => void;
   onClose: () => void;
+  onAddCategory: (category: string) => void;
+  onRemoveCategory: (category: string) => void;
 }
 
-export function CardDetail({ card, categories, onUpdate, onDelete, onClose }: CardDetailProps) {
+export function CardDetail({
+  card,
+  categories,
+  onUpdate,
+  onDelete,
+  onClose,
+  onAddCategory,
+  onRemoveCategory,
+}: CardDetailProps) {
   const [editing, setEditing] = useState(card);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const handleSave = () => {
     onUpdate({ ...editing, updatedAt: new Date().toISOString() });
@@ -151,20 +163,79 @@ export function CardDetail({ card, categories, onUpdate, onDelete, onClose }: Ca
               None
             </Button>
             {categories.map((cat) => (
+              <div key={cat} className="group relative">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditing((prev) => ({ ...prev, category: cat }))}
+                  className={`font-body text-xs ${
+                    editing.category === cat
+                      ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
+                      : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
+                  }`}
+                >
+                  {cat}
+                </Button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveCategory(cat);
+                    if (editing.category === cat) {
+                      setEditing((prev) => ({ ...prev, category: '' }));
+                    }
+                  }}
+                  className="absolute -right-1 -top-1 hidden h-4 w-4 items-center justify-center rounded-full bg-ohm-live/80 text-[8px] text-ohm-bg group-hover:flex"
+                  aria-label={`Remove ${cat} category`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {addingCategory ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const trimmed = newCategoryName.trim();
+                  if (trimmed && !categories.includes(trimmed)) {
+                    onAddCategory(trimmed);
+                    setEditing((prev) => ({ ...prev, category: trimmed }));
+                  }
+                  setNewCategoryName('');
+                  setAddingCategory(false);
+                }}
+                className="flex items-center gap-1"
+              >
+                <Input
+                  ref={(el) => el?.focus()}
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Name..."
+                  className="h-7 w-24 border-ohm-border bg-ohm-bg px-2 font-body text-xs text-ohm-text"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setNewCategoryName('');
+                      setAddingCategory(false);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => {
+                      setNewCategoryName('');
+                      setAddingCategory(false);
+                    }, 150);
+                  }}
+                />
+              </form>
+            ) : (
               <Button
-                key={cat}
                 variant="outline"
                 size="sm"
-                onClick={() => setEditing((prev) => ({ ...prev, category: cat }))}
-                className={`font-body text-xs ${
-                  editing.category === cat
-                    ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
-                    : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
-                }`}
+                onClick={() => setAddingCategory(true)}
+                className="border-dashed border-ohm-border font-body text-xs text-ohm-muted hover:text-ohm-text"
               >
-                {cat}
+                +
               </Button>
-            ))}
+            )}
           </div>
         </div>
 
