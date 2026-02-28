@@ -1,5 +1,5 @@
-import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { OhmCard, OhmColumn as OhmColumnType } from '../types/board';
 import { Card } from './Card';
 
@@ -8,24 +8,37 @@ interface ColumnProps {
   cards: OhmCard[];
   onCardTap: (card: OhmCard) => void;
   wipWarning?: boolean;
+  defaultExpanded?: boolean;
 }
 
-export function Column({ column, cards, onCardTap, wipWarning }: ColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: column.status });
+export function Column({
+  column,
+  cards,
+  onCardTap,
+  wipWarning,
+  defaultExpanded = false,
+}: ColumnProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
-    <div
-      ref={setNodeRef}
-      className={`flex w-[280px] min-w-[280px] shrink-0 flex-col rounded-xl transition-colors duration-200 md:w-auto md:min-w-0 md:flex-1 ${isOver ? 'bg-ohm-border/30' : ''} `}
-    >
-      {/* Column header */}
-      <div className="sticky top-0 z-10 flex items-center gap-2 bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm">
+    <div className="flex w-full min-w-0 flex-col rounded-xl md:w-auto md:flex-1">
+      {/* Column header — tappable on mobile to toggle */}
+      {/* Mobile: tappable button to toggle collapse. Desktop: static header. */}
+      <div className="sticky top-0 z-10 flex w-full items-center gap-2 bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm">
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          aria-expanded={expanded}
+          aria-controls={`column-cards-${column.status}`}
+          className="flex items-center gap-2 md:hidden"
+        >
+          <span className="text-ohm-muted">
+            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </span>
+        </button>
         <div
-          className={`h-2 w-2 rounded-full bg-${column.color}`}
-          style={{
-            // Fallback for dynamic Tailwind classes
-            backgroundColor: `var(--color-${column.color}, currentColor)`,
-          }}
+          className="h-2 w-2 rounded-full"
+          style={{ backgroundColor: `var(--color-${column.color}, currentColor)` }}
         />
         <h2 className="font-display text-xs font-bold uppercase tracking-widest text-ohm-text">
           {column.label}
@@ -38,19 +51,20 @@ export function Column({ column, cards, onCardTap, wipWarning }: ColumnProps) {
         )}
       </div>
 
-      {/* Cards */}
-      <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex min-h-[100px] flex-col gap-2 px-2 pb-4">
-          {cards.map((card) => (
-            <Card key={card.id} card={card} onTap={onCardTap} />
-          ))}
-          {cards.length === 0 && (
-            <div className="py-8 text-center font-body text-xs italic text-ohm-muted/40">
-              {column.description}
-            </div>
-          )}
-        </div>
-      </SortableContext>
+      {/* Cards — hidden on mobile when collapsed, always visible on md+ */}
+      <div
+        id={`column-cards-${column.status}`}
+        className={`flex-col gap-2 px-2 pb-4 ${expanded ? 'flex min-h-[60px]' : 'hidden'} md:flex md:min-h-[100px]`}
+      >
+        {cards.map((card) => (
+          <Card key={card.id} card={card} onTap={onCardTap} />
+        ))}
+        {cards.length === 0 && (
+          <div className="py-8 text-center font-body text-xs italic text-ohm-muted/40">
+            {column.description}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

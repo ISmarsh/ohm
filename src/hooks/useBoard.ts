@@ -71,7 +71,36 @@ export function useBoard() {
 
   /** Update WIP limit */
   const setWipLimit = useCallback((limit: number) => {
-    setBoard((prev) => ({ ...prev, liveWipLimit: limit }));
+    setBoard((prev) => ({ ...prev, liveWipLimit: limit, lastSaved: new Date().toISOString() }));
+  }, []);
+
+  /** Add a category to the board */
+  const addCategory = useCallback((category: string) => {
+    setBoard((prev) => {
+      if (prev.categories.includes(category)) return prev;
+      return {
+        ...prev,
+        categories: [...prev.categories, category],
+        lastSaved: new Date().toISOString(),
+      };
+    });
+  }, []);
+
+  /** Remove a category from the board and clear it from any cards using it */
+  const removeCategory = useCallback((category: string) => {
+    setBoard((prev) => {
+      if (!prev.categories.includes(category)) return prev;
+      return {
+        ...prev,
+        categories: prev.categories.filter((c) => c !== category),
+        cards: prev.cards.map((card) =>
+          card.category === category
+            ? { ...card, category: '', updatedAt: new Date().toISOString() }
+            : card,
+        ),
+        lastSaved: new Date().toISOString(),
+      };
+    });
   }, []);
 
   return {
@@ -82,5 +111,7 @@ export function useBoard() {
     deleteCard,
     reorder,
     setWipLimit,
+    addCategory,
+    removeCategory,
   };
 }

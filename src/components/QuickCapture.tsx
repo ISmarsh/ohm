@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Zap } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -47,7 +48,7 @@ export function QuickCapture({ onAdd, isOpen, onClose }: QuickCaptureProps) {
     >
       <DialogContent className="sm:max-w-md">
         <div className="mb-3 flex items-center gap-2">
-          <span className="text-lg text-ohm-spark">⚡</span>
+          <Zap size={18} className="text-ohm-spark" />
           <DialogTitle className="font-display text-xs uppercase tracking-widest text-ohm-spark">
             Quick Spark
           </DialogTitle>
@@ -63,6 +64,7 @@ export function QuickCapture({ onAdd, isOpen, onClose }: QuickCaptureProps) {
           onKeyDown={handleKeyDown}
           placeholder="What's the idea?"
           aria-label="New spark title"
+          autoComplete="off"
           className="border-ohm-border bg-ohm-bg px-4 py-3 font-body text-sm text-ohm-text placeholder:text-ohm-muted/50 focus-visible:ring-ohm-spark/20 focus-visible:ring-offset-0"
         />
         <div className="mt-1 flex items-center justify-between">

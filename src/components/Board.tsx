@@ -1,93 +1,22 @@
-import { useState, useCallback } from 'react';
-import {
-  DndContext,
-  DragOverlay,
-  closestCenter,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragStartEvent,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import type { OhmCard, ColumnStatus } from '../types/board';
+import { useState } from 'react';
+import { Zap, Settings } from 'lucide-react';
+import type { OhmCard } from '../types/board';
 import { COLUMNS } from '../types/board';
 import { getColumnCards, isOverWipLimit } from '../utils/board-utils';
 import { useBoard } from '../hooks/useBoard';
 import { Button } from './ui/button';
 import { Column } from './Column';
-import { Card } from './Card';
 import { QuickCapture } from './QuickCapture';
 import { CardDetail } from './CardDetail';
-import { GroundedPrompt } from './GroundedPrompt';
+import { SettingsDialog } from './SettingsDialog';
 
 export function Board() {
-  const { board, quickAdd, move, updateCard, deleteCard } = useBoard();
+  const { board, quickAdd, updateCard, deleteCard, addCategory, removeCategory, setWipLimit } =
+    useBoard();
 
   const [captureOpen, setCaptureOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
-  const [groundingCard, setGroundingCard] = useState<OhmCard | null>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
-
-  // Drag sensors — with distance threshold to allow taps
-  const pointerSensor = useSensor(PointerSensor, {
-    activationConstraint: { distance: 8 },
-  });
-  const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: { delay: 200, tolerance: 5 },
-  });
-  const sensors = useSensors(pointerSensor, touchSensor);
-
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  }, []);
-
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setActiveId(null);
-      const { active, over } = event;
-      if (!over) return;
-
-      const cardId = active.id as string;
-      const card = board.cards.find((c) => c.id === cardId);
-      if (!card) return;
-
-      // Determine target column — over could be a card or a column droppable
-      let targetStatus: ColumnStatus | null = null;
-
-      // Check if dropped over a column
-      if (COLUMNS.some((col) => col.status === over.id)) {
-        targetStatus = over.id as ColumnStatus;
-      } else {
-        // Dropped over another card — find that card's column
-        const targetCard = board.cards.find((c) => c.id === over.id);
-        if (targetCard) {
-          targetStatus = targetCard.status;
-        }
-      }
-
-      if (!targetStatus || targetStatus === card.status) return;
-
-      // If moving to Grounded, prompt for context
-      if (targetStatus === 'grounded') {
-        setGroundingCard({ ...card, status: targetStatus });
-        return;
-      }
-
-      move(cardId, targetStatus);
-    },
-    [board.cards, move],
-  );
-
-  const handleGroundConfirm = useCallback(
-    (cardId: string, whereILeftOff: string) => {
-      move(cardId, 'grounded', whereILeftOff);
-      setGroundingCard(null);
-    },
-    [move],
-  );
-
-  const activeCard = activeId ? (board.cards.find((c) => c.id === activeId) ?? null) : null;
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const wipWarning = isOverWipLimit(board);
 
@@ -95,55 +24,31 @@ export function Board() {
     <div className="flex min-h-screen flex-col bg-ohm-bg">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-ohm-border bg-ohm-bg/90 backdrop-blur-md">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-center px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="font-display text-base font-bold tracking-tight text-ohm-text">Ω</span>
+            <Zap size={18} className="text-ohm-spark" />
             <span className="font-display text-sm font-bold uppercase tracking-widest text-ohm-text">
               Ohm
             </span>
           </div>
-
-          {/* Quick add */}
-          <Button
-            onClick={() => setCaptureOpen(true)}
-            className="gap-1.5 bg-ohm-spark/20 font-display text-xs uppercase tracking-wider text-ohm-spark hover:bg-ohm-spark/30 active:bg-ohm-spark/40"
-          >
-            <span className="text-base leading-none">+</span>
-            <span className="hidden sm:inline">Spark</span>
-          </Button>
         </div>
       </header>
 
       {/* Board */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <main className="flex-1 overflow-x-auto overflow-y-hidden">
-          <div className="flex min-h-[calc(100vh-56px)] gap-3 p-4 md:gap-4">
-            {COLUMNS.map((col) => (
-              <Column
-                key={col.status}
-                column={col}
-                cards={getColumnCards(board, col.status)}
-                onCardTap={setSelectedCard}
-                wipWarning={col.status === 'live' && wipWarning}
-              />
-            ))}
-          </div>
-        </main>
-
-        {/* Drag overlay */}
-        <DragOverlay>
-          {activeCard && (
-            <div className="rotate-2 scale-105">
-              <Card card={activeCard} onTap={() => {}} />
-            </div>
-          )}
-        </DragOverlay>
-      </DndContext>
+      <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
+        <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
+          {COLUMNS.map((col) => (
+            <Column
+              key={col.status}
+              column={col}
+              cards={getColumnCards(board, col.status)}
+              onCardTap={setSelectedCard}
+              wipWarning={col.status === 'live' && wipWarning}
+              defaultExpanded={col.status === 'live'}
+            />
+          ))}
+        </div>
+      </main>
 
       {/* Quick capture modal */}
       <QuickCapture
@@ -166,26 +71,42 @@ export function Board() {
             setSelectedCard(null);
           }}
           onClose={() => setSelectedCard(null)}
+          onOpenSettings={() => {
+            setSelectedCard(null);
+            setSettingsOpen(true);
+          }}
         />
       )}
 
-      {/* Grounded prompt modal */}
-      {groundingCard && (
-        <GroundedPrompt
-          card={groundingCard}
-          onConfirm={handleGroundConfirm}
-          onCancel={() => setGroundingCard(null)}
-        />
-      )}
+      {/* Settings dialog */}
+      <SettingsDialog
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        categories={board.categories}
+        onAddCategory={addCategory}
+        onRemoveCategory={removeCategory}
+        wipLimit={board.liveWipLimit}
+        onSetWipLimit={setWipLimit}
+      />
 
-      {/* Mobile FAB (visible on small screens) */}
+      {/* Settings FAB — bottom left */}
+      <Button
+        size="icon"
+        onClick={() => setSettingsOpen(true)}
+        className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full border border-ohm-border bg-ohm-muted/10 text-ohm-muted shadow-md transition-transform hover:text-ohm-text active:scale-95"
+        aria-label="Settings"
+      >
+        <Settings size={20} />
+      </Button>
+
+      {/* Quick spark FAB — bottom right */}
       <Button
         size="icon"
         onClick={() => setCaptureOpen(true)}
-        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-ohm-spark text-2xl font-bold text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform hover:bg-ohm-spark/90 active:scale-95 sm:hidden"
+        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-ohm-spark text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform hover:bg-ohm-spark/90 active:scale-95"
         aria-label="Quick spark"
       >
-        +
+        <Zap size={24} />
       </Button>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { MapPin } from 'lucide-react';
 import type { OhmCard } from '../types/board';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
@@ -31,7 +32,7 @@ export function GroundedPrompt({ card, onConfirm, onCancel }: GroundedPromptProp
     >
       <DialogContent className="border-ohm-grounded/30 sm:max-w-md">
         <div className="mb-2 flex items-center gap-2">
-          <span className="text-lg text-ohm-grounded">📍</span>
+          <MapPin size={18} className="text-ohm-grounded" />
           <DialogTitle className="font-display text-xs uppercase tracking-widest text-ohm-grounded">
             Grounding
           </DialogTitle>
@@ -53,6 +54,7 @@ export function GroundedPrompt({ card, onConfirm, onCancel }: GroundedPromptProp
           value={text}
           onChange={(e) => setText(e.target.value)}
           aria-label="Where I left off"
+          autoComplete="off"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();

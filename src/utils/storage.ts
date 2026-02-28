@@ -18,7 +18,6 @@ export function loadFromLocal(): OhmBoard {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as OhmBoard;
-      // Basic version check for future migrations
       if (parsed.version === 1) {
         return parsed;
       }

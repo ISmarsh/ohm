@@ -24,7 +24,6 @@ Ohm uses an electrical metaphor to map ADHD energy cycles into a visual workflow
 
 - React 19 + TypeScript
 - Tailwind CSS
-- dnd-kit (drag and drop)
 - Vite
 - localStorage (MVP persistence)
 - GitHub Pages (deployment)
@@ -42,8 +41,6 @@ npm run dev
 - [ ] Energy-based filtering
 - [ ] Quick wins view (low-energy day mode)
 - [ ] Card archive (Powered cards older than 30 days)
-- [ ] Discord webhook notifications
-- [ ] Bluesky integration for accountability
 - [ ] PWA support (installable on mobile)
 - [ ] Keyboard shortcuts
 - [ ] Analytics (completion rates, time-in-column)
