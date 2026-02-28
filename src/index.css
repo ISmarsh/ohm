@@ -3,12 +3,35 @@
 @tailwind utilities;
 
 :root {
+  /* ohm electrical accent colors */
   --color-ohm-spark: #fbbf24;
   --color-ohm-charge: #f97316;
   --color-ohm-live: #ef4444;
   --color-ohm-grounded: #6366f1;
   --color-ohm-powered: #22c55e;
   --color-ohm-muted: #6b6b80;
+
+  /* shadcn/ui semantic tokens — mapped to ohm palette */
+  --background: 240 27% 5%; /* ohm-bg #0a0a0f */
+  --foreground: 240 14% 89%; /* ohm-text #e0e0e8 */
+  --card: 240 15% 9%; /* ohm-surface #13131a */
+  --card-foreground: 240 14% 89%;
+  --popover: 240 15% 9%;
+  --popover-foreground: 240 14% 89%;
+  --primary: 43 96% 56%; /* ohm-spark #fbbf24 */
+  --primary-foreground: 240 27% 5%;
+  --secondary: 240 15% 9%; /* ohm-surface */
+  --secondary-foreground: 240 14% 89%;
+  --muted: 240 15% 9%;
+  --muted-foreground: 240 9% 46%; /* ohm-muted #6b6b80 */
+  --accent: 240 15% 9%;
+  --accent-foreground: 240 14% 89%;
+  --destructive: 0 84% 60%; /* ohm-live #ef4444 */
+  --destructive-foreground: 240 14% 89%;
+  --border: 240 17% 14%; /* ohm-border #1e1e2a */
+  --input: 240 17% 14%;
+  --ring: 43 96% 56%; /* ohm-spark */
+  --radius: 0.5rem;
 }
 
 * {

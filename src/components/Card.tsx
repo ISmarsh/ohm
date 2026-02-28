@@ -2,6 +2,8 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { OhmCard } from '../types/board';
 import { ENERGY_CONFIG } from '../types/board';
+import { Card as CardContainer } from './ui/card';
+import { Badge } from './ui/badge';
 
 interface CardProps {
   card: OhmCard;
@@ -21,7 +23,7 @@ export function Card({ card, onTap }: CardProps) {
   const energyInfo = ENERGY_CONFIG[card.energy];
 
   return (
-    <div
+    <CardContainer
       ref={setNodeRef}
       style={style}
       {...attributes}
@@ -32,7 +34,7 @@ export function Card({ card, onTap }: CardProps) {
       onKeyDown={(e) => {
         if (e.key === 'Enter') onTap(card);
       }}
-      className={`relative rounded-lg border border-ohm-border bg-ohm-surface p-3 transition-all duration-150 active:scale-[0.98] ${isDragging ? 'z-50 scale-105 opacity-50 shadow-xl' : 'opacity-100'} cursor-grab touch-manipulation active:cursor-grabbing`}
+      className={`border-ohm-border bg-ohm-surface p-3 shadow-none transition-all duration-150 active:scale-[0.98] ${isDragging ? 'z-50 scale-105 opacity-50 shadow-xl' : 'opacity-100'} cursor-grab touch-manipulation active:cursor-grabbing`}
     >
       {/* Title */}
       <p className="pr-6 font-body text-sm font-medium leading-snug text-ohm-text">{card.title}</p>
@@ -46,9 +48,12 @@ export function Card({ card, onTap }: CardProps) {
 
         {/* Category pill */}
         {card.category && (
-          <span className="rounded bg-ohm-bg px-1.5 py-0.5 font-body text-[10px] font-medium uppercase tracking-wider text-ohm-muted">
+          <Badge
+            variant="secondary"
+            className="rounded bg-ohm-bg px-1.5 py-0.5 font-body text-[10px] font-medium uppercase tracking-wider text-ohm-muted"
+          >
             {card.category}
-          </span>
+          </Badge>
         )}
 
         {/* Next step indicator */}
@@ -68,6 +73,6 @@ export function Card({ card, onTap }: CardProps) {
             : card.whereILeftOff}
         </div>
       )}
-    </div>
+    </CardContainer>
   );
 }

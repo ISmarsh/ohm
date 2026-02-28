@@ -14,6 +14,7 @@ import type { OhmCard, ColumnStatus } from '../types/board';
 import { COLUMNS } from '../types/board';
 import { getColumnCards, isOverWipLimit } from '../utils/board-utils';
 import { useBoard } from '../hooks/useBoard';
+import { Button } from './ui/button';
 import { Column } from './Column';
 import { Card } from './Card';
 import { QuickCapture } from './QuickCapture';
@@ -102,14 +103,14 @@ export function Board() {
             </span>
           </div>
 
-          {/* Quick add FAB */}
-          <button
+          {/* Quick add */}
+          <Button
             onClick={() => setCaptureOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-ohm-spark/20 px-3 py-1.5 font-display text-xs uppercase tracking-wider text-ohm-spark transition-colors hover:bg-ohm-spark/30 active:bg-ohm-spark/40"
+            className="gap-1.5 bg-ohm-spark/20 font-display text-xs uppercase tracking-wider text-ohm-spark hover:bg-ohm-spark/30 active:bg-ohm-spark/40"
           >
             <span className="text-base leading-none">+</span>
             <span className="hidden sm:inline">Spark</span>
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -178,13 +179,14 @@ export function Board() {
       )}
 
       {/* Mobile FAB (visible on small screens) */}
-      <button
+      <Button
+        size="icon"
         onClick={() => setCaptureOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-ohm-spark text-2xl font-bold text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform active:scale-95 sm:hidden"
+        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-ohm-spark text-2xl font-bold text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform hover:bg-ohm-spark/90 active:scale-95 sm:hidden"
         aria-label="Quick spark"
       >
         +
-      </button>
+      </Button>
     </div>
   );
 }
