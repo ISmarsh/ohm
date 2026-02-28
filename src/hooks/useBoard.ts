@@ -94,7 +94,9 @@ export function useBoard() {
         ...prev,
         categories: prev.categories.filter((c) => c !== category),
         cards: prev.cards.map((card) =>
-          card.category === category ? { ...card, category: '' } : card,
+          card.category === category
+            ? { ...card, category: '', updatedAt: new Date().toISOString() }
+            : card,
         ),
         lastSaved: new Date().toISOString(),
       };

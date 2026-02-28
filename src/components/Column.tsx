@@ -23,16 +23,19 @@ export function Column({
   return (
     <div className="flex w-full min-w-0 flex-col rounded-xl md:w-auto md:flex-1">
       {/* Column header — tappable on mobile to toggle */}
-      <button
-        type="button"
-        onClick={() => setExpanded((prev) => !prev)}
-        aria-expanded={expanded}
-        aria-controls={`column-cards-${column.status}`}
-        className="sticky top-0 z-10 flex w-full items-center gap-2 bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm md:pointer-events-none"
-      >
-        <span className="text-ohm-muted md:hidden">
-          {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        </span>
+      {/* Mobile: tappable button to toggle collapse. Desktop: static header. */}
+      <div className="sticky top-0 z-10 flex w-full items-center gap-2 bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm">
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          aria-expanded={expanded}
+          aria-controls={`column-cards-${column.status}`}
+          className="flex items-center gap-2 md:hidden"
+        >
+          <span className="text-ohm-muted">
+            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </span>
+        </button>
         <div
           className="h-2 w-2 rounded-full"
           style={{ backgroundColor: `var(--color-${column.color}, currentColor)` }}
@@ -46,7 +49,7 @@ export function Column({
             WIP LIMIT
           </span>
         )}
-      </button>
+      </div>
 
       {/* Cards — hidden on mobile when collapsed, always visible on md+ */}
       <div
