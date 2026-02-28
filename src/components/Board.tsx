@@ -10,6 +10,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
+import { Zap } from 'lucide-react';
 import type { OhmCard, ColumnStatus } from '../types/board';
 import { COLUMNS } from '../types/board';
 import { getColumnCards, isOverWipLimit } from '../utils/board-utils';
@@ -97,7 +98,7 @@ export function Board() {
       <header className="sticky top-0 z-30 border-b border-ohm-border bg-ohm-bg/90 backdrop-blur-md">
         <div className="flex items-center justify-center px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="font-display text-base font-bold tracking-tight text-ohm-text">Ω</span>
+            <Zap size={18} className="text-ohm-spark" />
             <span className="font-display text-sm font-bold uppercase tracking-widest text-ohm-text">
               Ohm
             </span>
