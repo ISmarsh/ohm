@@ -16,17 +16,12 @@ export function Column({ column, cards, onCardTap, wipWarning }: ColumnProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`
-        flex flex-col min-w-[280px] w-[280px] shrink-0
-        md:min-w-0 md:w-auto md:flex-1
-        rounded-xl transition-colors duration-200
-        ${isOver ? 'bg-ohm-border/30' : ''}
-      `}
+      className={`flex w-[280px] min-w-[280px] shrink-0 flex-col rounded-xl transition-colors duration-200 md:w-auto md:min-w-0 md:flex-1 ${isOver ? 'bg-ohm-border/30' : ''} `}
     >
       {/* Column header */}
-      <div className="flex items-center gap-2 px-3 py-2 sticky top-0 z-10 bg-ohm-bg/80 backdrop-blur-sm">
+      <div className="sticky top-0 z-10 flex items-center gap-2 bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm">
         <div
-          className={`w-2 h-2 rounded-full bg-${column.color}`}
+          className={`h-2 w-2 rounded-full bg-${column.color}`}
           style={{
             // Fallback for dynamic Tailwind classes
             backgroundColor: `var(--color-${column.color}, currentColor)`,
@@ -35,27 +30,22 @@ export function Column({ column, cards, onCardTap, wipWarning }: ColumnProps) {
         <h2 className="font-display text-xs font-bold uppercase tracking-widest text-ohm-text">
           {column.label}
         </h2>
-        <span className="text-[10px] text-ohm-muted font-body ml-1">
-          {cards.length}
-        </span>
+        <span className="ml-1 font-body text-[10px] text-ohm-muted">{cards.length}</span>
         {wipWarning && (
-          <span className="text-[10px] text-ohm-live font-display font-bold ml-auto animate-pulse">
+          <span className="ml-auto animate-pulse font-display text-[10px] font-bold text-ohm-live">
             WIP LIMIT
           </span>
         )}
       </div>
 
       {/* Cards */}
-      <SortableContext
-        items={cards.map((c) => c.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="flex flex-col gap-2 px-2 pb-4 min-h-[100px]">
+      <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex min-h-[100px] flex-col gap-2 px-2 pb-4">
           {cards.map((card) => (
             <Card key={card.id} card={card} onTap={onCardTap} />
           ))}
           {cards.length === 0 && (
-            <div className="text-center text-xs text-ohm-muted/40 py-8 font-body italic">
+            <div className="py-8 text-center font-body text-xs italic text-ohm-muted/40">
               {column.description}
             </div>
           )}

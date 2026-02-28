@@ -20,22 +20,23 @@ export function GroundedPrompt({ card, onConfirm, onCancel }: GroundedPromptProp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
 
-      <div className="relative w-full sm:max-w-md mx-4 mb-4 sm:mb-0 animate-slide-up">
-        <div className="bg-ohm-surface border border-ohm-grounded/30 rounded-xl p-4 shadow-2xl">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-ohm-grounded text-lg">📍</span>
+      <div className="animate-slide-up relative mx-4 mb-4 w-full sm:mb-0 sm:max-w-md">
+        <div className="rounded-xl border border-ohm-grounded/30 bg-ohm-surface p-4 shadow-2xl">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-lg text-ohm-grounded">📍</span>
             <span className="font-display text-xs uppercase tracking-widest text-ohm-grounded">
               Grounding
             </span>
           </div>
 
-          <p className="text-sm text-ohm-text font-body mb-1">
+          <p className="mb-1 font-body text-sm text-ohm-text">
             <span className="font-medium">{card.title}</span>
           </p>
-          <p className="text-xs text-ohm-muted font-body mb-3">
+          <p className="mb-3 font-body text-xs text-ohm-muted">
             Leave a note for future you — where did you stop? What should you do next?
           </p>
 
@@ -52,31 +53,19 @@ export function GroundedPrompt({ card, onConfirm, onCancel }: GroundedPromptProp
             }}
             placeholder="I was in the middle of..."
             rows={3}
-            className="
-              w-full bg-ohm-bg border border-ohm-border rounded-lg
-              px-4 py-3 text-sm text-ohm-text font-body resize-none
-              placeholder:text-ohm-muted/50
-              focus:outline-none focus:border-ohm-grounded/50 focus:ring-1 focus:ring-ohm-grounded/20
-              transition-colors
-            "
+            className="w-full resize-none rounded-lg border border-ohm-border bg-ohm-bg px-4 py-3 font-body text-sm text-ohm-text transition-colors placeholder:text-ohm-muted/50 focus:border-ohm-grounded/50 focus:outline-none focus:ring-1 focus:ring-ohm-grounded/20"
           />
 
-          <div className="flex items-center justify-between mt-3">
+          <div className="mt-3 flex items-center justify-between">
             <button
               onClick={() => onConfirm(card.id, '')}
-              className="text-[10px] text-ohm-muted font-body hover:text-ohm-text transition-colors"
+              className="font-body text-[10px] text-ohm-muted transition-colors hover:text-ohm-text"
             >
               Skip (ground without note)
             </button>
             <button
               onClick={handleSubmit}
-              className="
-                font-display text-xs uppercase tracking-wider
-                px-4 py-1.5 rounded-lg
-                bg-ohm-grounded/20 text-ohm-grounded
-                hover:bg-ohm-grounded/30 active:bg-ohm-grounded/40
-                transition-colors
-              "
+              className="rounded-lg bg-ohm-grounded/20 px-4 py-1.5 font-display text-xs uppercase tracking-wider text-ohm-grounded transition-colors hover:bg-ohm-grounded/30 active:bg-ohm-grounded/40"
             >
               Ground it
             </button>

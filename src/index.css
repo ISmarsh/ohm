@@ -61,17 +61,41 @@ body {
 }
 
 /* Column accent dots — fallback for dynamic Tailwind */
-.bg-ohm-spark { background-color: var(--color-ohm-spark); }
-.bg-ohm-charge { background-color: var(--color-ohm-charge); }
-.bg-ohm-live { background-color: var(--color-ohm-live); }
-.bg-ohm-grounded { background-color: var(--color-ohm-grounded); }
-.bg-ohm-powered { background-color: var(--color-ohm-powered); }
+.bg-ohm-spark {
+  background-color: var(--color-ohm-spark);
+}
+.bg-ohm-charge {
+  background-color: var(--color-ohm-charge);
+}
+.bg-ohm-live {
+  background-color: var(--color-ohm-live);
+}
+.bg-ohm-grounded {
+  background-color: var(--color-ohm-grounded);
+}
+.bg-ohm-powered {
+  background-color: var(--color-ohm-powered);
+}
 
-.text-ohm-spark { color: var(--color-ohm-spark); }
-.text-ohm-charge { color: var(--color-ohm-charge); }
-.text-ohm-live { color: var(--color-ohm-live); }
-.text-ohm-grounded { color: var(--color-ohm-grounded); }
-.text-ohm-powered { color: var(--color-ohm-powered); }
+.text-ohm-spark {
+  color: var(--color-ohm-spark);
+}
+.text-ohm-charge {
+  color: var(--color-ohm-charge);
+}
+.text-ohm-live {
+  color: var(--color-ohm-live);
+}
+.text-ohm-grounded {
+  color: var(--color-ohm-grounded);
+}
+.text-ohm-powered {
+  color: var(--color-ohm-powered);
+}
 
-.border-ohm-spark\/30 { border-color: rgb(251 191 36 / 0.3); }
-.border-ohm-grounded\/30 { border-color: rgb(99 102 241 / 0.3); }
+.border-ohm-spark\/30 {
+  border-color: rgb(251 191 36 / 0.3);
+}
+.border-ohm-grounded\/30 {
+  border-color: rgb(99 102 241 / 0.3);
+}

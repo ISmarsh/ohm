@@ -75,7 +75,7 @@ export function Board() {
 
       move(cardId, targetStatus);
     },
-    [board.cards, move]
+    [board.cards, move],
   );
 
   const handleGroundConfirm = useCallback(
@@ -83,25 +83,21 @@ export function Board() {
       move(cardId, 'grounded', whereILeftOff);
       setGroundingCard(null);
     },
-    [move]
+    [move],
   );
 
-  const activeCard = activeId
-    ? board.cards.find((c) => c.id === activeId) ?? null
-    : null;
+  const activeCard = activeId ? (board.cards.find((c) => c.id === activeId) ?? null) : null;
 
   const wipWarning = isOverWipLimit(board);
 
   return (
-    <div className="min-h-screen bg-ohm-bg flex flex-col">
+    <div className="flex min-h-screen flex-col bg-ohm-bg">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-ohm-bg/90 backdrop-blur-md border-b border-ohm-border">
+      <header className="sticky top-0 z-30 border-b border-ohm-border bg-ohm-bg/90 backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="font-display text-base font-bold text-ohm-text tracking-tight">
-              Ω
-            </span>
-            <span className="font-display text-sm font-bold text-ohm-text tracking-widest uppercase">
+            <span className="font-display text-base font-bold tracking-tight text-ohm-text">Ω</span>
+            <span className="font-display text-sm font-bold uppercase tracking-widest text-ohm-text">
               Ohm
             </span>
           </div>
@@ -109,14 +105,7 @@ export function Board() {
           {/* Quick add FAB */}
           <button
             onClick={() => setCaptureOpen(true)}
-            className="
-              flex items-center gap-1.5
-              bg-ohm-spark/20 text-ohm-spark
-              px-3 py-1.5 rounded-lg
-              font-display text-xs uppercase tracking-wider
-              hover:bg-ohm-spark/30 active:bg-ohm-spark/40
-              transition-colors
-            "
+            className="flex items-center gap-1.5 rounded-lg bg-ohm-spark/20 px-3 py-1.5 font-display text-xs uppercase tracking-wider text-ohm-spark transition-colors hover:bg-ohm-spark/30 active:bg-ohm-spark/40"
           >
             <span className="text-base leading-none">+</span>
             <span className="hidden sm:inline">Spark</span>
@@ -132,7 +121,7 @@ export function Board() {
         onDragEnd={handleDragEnd}
       >
         <main className="flex-1 overflow-x-auto overflow-y-hidden">
-          <div className="flex gap-3 p-4 min-h-[calc(100vh-56px)] md:gap-4">
+          <div className="flex min-h-[calc(100vh-56px)] gap-3 p-4 md:gap-4">
             {COLUMNS.map((col) => (
               <Column
                 key={col.status}
@@ -191,14 +180,7 @@ export function Board() {
       {/* Mobile FAB (visible on small screens) */}
       <button
         onClick={() => setCaptureOpen(true)}
-        className="
-          fixed bottom-6 right-6 z-40 sm:hidden
-          w-14 h-14 rounded-full
-          bg-ohm-spark text-ohm-bg
-          flex items-center justify-center
-          text-2xl font-bold shadow-lg shadow-ohm-spark/30
-          active:scale-95 transition-transform
-        "
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-ohm-spark text-2xl font-bold text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform active:scale-95 sm:hidden"
         aria-label="Quick spark"
       >
         +

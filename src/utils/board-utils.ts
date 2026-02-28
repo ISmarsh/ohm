@@ -8,7 +8,7 @@ export function generateId(): string {
 /** Create a new card with minimal input (fast capture for Spark) */
 export function createCard(
   title: string,
-  overrides?: Partial<Pick<OhmCard, 'energy' | 'category' | 'nextStep'>>
+  overrides?: Partial<Pick<OhmCard, 'energy' | 'category' | 'nextStep'>>,
 ): OhmCard {
   const now = new Date().toISOString();
   return {
@@ -26,27 +26,19 @@ export function createCard(
 }
 
 /** Move a card to a new column */
-export function moveCard(
-  card: OhmCard,
-  newStatus: ColumnStatus,
-  whereILeftOff?: string
-): OhmCard {
+export function moveCard(card: OhmCard, newStatus: ColumnStatus, whereILeftOff?: string): OhmCard {
   return {
     ...card,
     status: newStatus,
     updatedAt: new Date().toISOString(),
     whereILeftOff:
-      newStatus === 'grounded' && whereILeftOff !== undefined
-        ? whereILeftOff
-        : card.whereILeftOff,
+      newStatus === 'grounded' && whereILeftOff !== undefined ? whereILeftOff : card.whereILeftOff,
   };
 }
 
 /** Get cards for a specific column, sorted by sortOrder */
 export function getColumnCards(board: OhmBoard, status: ColumnStatus): OhmCard[] {
-  return board.cards
-    .filter((c) => c.status === status)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  return board.cards.filter((c) => c.status === status).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 /** Check if Live column is at or over WIP limit */

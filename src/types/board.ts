@@ -83,7 +83,7 @@ export const COLUMNS: OhmColumn[] = [
 /** Energy tag display config */
 export const ENERGY_CONFIG: Record<EnergyTag, { label: string; icon: string }> = {
   'quick-win': { label: 'Quick Win', icon: '⚡' },
-  'medium': { label: 'Medium', icon: '🔋' },
+  medium: { label: 'Medium', icon: '🔋' },
   'deep-focus': { label: 'Deep Focus', icon: '🔥' },
 };
 

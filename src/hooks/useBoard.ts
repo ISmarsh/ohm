@@ -11,7 +11,7 @@ import {
 
 /** Debounce save to avoid excessive writes */
 function useDebouncedSave(board: OhmBoard, delayMs = 500) {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     timeoutRef.current = setTimeout(() => {
@@ -37,17 +37,14 @@ export function useBoard() {
   }, []);
 
   /** Move a card to a new status */
-  const move = useCallback(
-    (cardId: string, newStatus: ColumnStatus, whereILeftOff?: string) => {
-      setBoard((prev) => {
-        const card = prev.cards.find((c) => c.id === cardId);
-        if (!card) return prev;
-        const updated = moveCard(card, newStatus, whereILeftOff);
-        return updateCardInBoard(prev, updated);
-      });
-    },
-    []
-  );
+  const move = useCallback((cardId: string, newStatus: ColumnStatus, whereILeftOff?: string) => {
+    setBoard((prev) => {
+      const card = prev.cards.find((c) => c.id === cardId);
+      if (!card) return prev;
+      const updated = moveCard(card, newStatus, whereILeftOff);
+      return updateCardInBoard(prev, updated);
+    });
+  }, []);
 
   /** Update any card fields */
   const updateCard = useCallback((updatedCard: OhmCard) => {
@@ -60,20 +57,17 @@ export function useBoard() {
   }, []);
 
   /** Reorder a card within a column */
-  const reorder = useCallback(
-    (cardId: string, newSortOrder: number) => {
-      setBoard((prev) => {
-        const card = prev.cards.find((c) => c.id === cardId);
-        if (!card) return prev;
-        return updateCardInBoard(prev, {
-          ...card,
-          sortOrder: newSortOrder,
-          updatedAt: new Date().toISOString(),
-        });
+  const reorder = useCallback((cardId: string, newSortOrder: number) => {
+    setBoard((prev) => {
+      const card = prev.cards.find((c) => c.id === cardId);
+      if (!card) return prev;
+      return updateCardInBoard(prev, {
+        ...card,
+        sortOrder: newSortOrder,
+        updatedAt: new Date().toISOString(),
       });
-    },
-    []
-  );
+    });
+  }, []);
 
   /** Update WIP limit */
   const setWipLimit = useCallback((limit: number) => {

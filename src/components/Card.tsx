@@ -9,14 +9,9 @@ interface CardProps {
 }
 
 export function Card({ card, onTap }: CardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: card.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: card.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -31,21 +26,19 @@ export function Card({ card, onTap }: CardProps) {
       style={style}
       {...attributes}
       {...listeners}
+      role="button"
+      tabIndex={0}
       onClick={() => onTap(card)}
-      className={`
-        relative rounded-lg border border-ohm-border bg-ohm-surface p-3
-        active:scale-[0.98] transition-all duration-150
-        ${isDragging ? 'opacity-50 shadow-xl scale-105 z-50' : 'opacity-100'}
-        touch-manipulation cursor-grab active:cursor-grabbing
-      `}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onTap(card);
+      }}
+      className={`relative rounded-lg border border-ohm-border bg-ohm-surface p-3 transition-all duration-150 active:scale-[0.98] ${isDragging ? 'z-50 scale-105 opacity-50 shadow-xl' : 'opacity-100'} cursor-grab touch-manipulation active:cursor-grabbing`}
     >
       {/* Title */}
-      <p className="font-body text-sm font-medium text-ohm-text leading-snug pr-6">
-        {card.title}
-      </p>
+      <p className="pr-6 font-body text-sm font-medium leading-snug text-ohm-text">{card.title}</p>
 
       {/* Meta row */}
-      <div className="flex items-center gap-2 mt-2">
+      <div className="mt-2 flex items-center gap-2">
         {/* Energy tag */}
         <span className="text-xs opacity-70" title={energyInfo.label}>
           {energyInfo.icon}
@@ -53,14 +46,14 @@ export function Card({ card, onTap }: CardProps) {
 
         {/* Category pill */}
         {card.category && (
-          <span className="text-[10px] font-body font-medium uppercase tracking-wider text-ohm-muted bg-ohm-bg px-1.5 py-0.5 rounded">
+          <span className="rounded bg-ohm-bg px-1.5 py-0.5 font-body text-[10px] font-medium uppercase tracking-wider text-ohm-muted">
             {card.category}
           </span>
         )}
 
         {/* Next step indicator */}
         {card.nextStep && (
-          <span className="text-[10px] text-ohm-muted ml-auto" title={card.nextStep}>
+          <span className="ml-auto text-[10px] text-ohm-muted" title={card.nextStep}>
             → next
           </span>
         )}
@@ -68,8 +61,9 @@ export function Card({ card, onTap }: CardProps) {
 
       {/* Where I left off indicator for grounded cards */}
       {card.status === 'grounded' && card.whereILeftOff && (
-        <div className="mt-2 text-xs text-ohm-grounded/70 italic border-t border-ohm-border pt-1.5">
-          📍 {card.whereILeftOff.length > 60
+        <div className="mt-2 border-t border-ohm-border pt-1.5 text-xs italic text-ohm-grounded/70">
+          📍{' '}
+          {card.whereILeftOff.length > 60
             ? card.whereILeftOff.slice(0, 60) + '…'
             : card.whereILeftOff}
         </div>

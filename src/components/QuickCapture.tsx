@@ -39,8 +39,9 @@ export function QuickCapture({ onAdd, isOpen, onClose }: QuickCaptureProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       {/* Backdrop */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => {
@@ -50,10 +51,10 @@ export function QuickCapture({ onAdd, isOpen, onClose }: QuickCaptureProps) {
       />
 
       {/* Input panel */}
-      <div className="relative w-full sm:max-w-md mx-4 mb-4 sm:mb-0 animate-slide-up">
-        <div className="bg-ohm-surface border border-ohm-border rounded-xl p-4 shadow-2xl">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-ohm-spark text-lg">⚡</span>
+      <div className="animate-slide-up relative mx-4 mb-4 w-full sm:mb-0 sm:max-w-md">
+        <div className="rounded-xl border border-ohm-border bg-ohm-surface p-4 shadow-2xl">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-lg text-ohm-spark">⚡</span>
             <span className="font-display text-xs uppercase tracking-widest text-ohm-spark">
               Quick Spark
             </span>
@@ -65,29 +66,16 @@ export function QuickCapture({ onAdd, isOpen, onClose }: QuickCaptureProps) {
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="What's the idea?"
-            className="
-              w-full bg-ohm-bg border border-ohm-border rounded-lg
-              px-4 py-3 text-ohm-text font-body text-sm
-              placeholder:text-ohm-muted/50
-              focus:outline-none focus:border-ohm-spark/50 focus:ring-1 focus:ring-ohm-spark/20
-              transition-colors
-            "
+            className="w-full rounded-lg border border-ohm-border bg-ohm-bg px-4 py-3 font-body text-sm text-ohm-text transition-colors placeholder:text-ohm-muted/50 focus:border-ohm-spark/50 focus:outline-none focus:ring-1 focus:ring-ohm-spark/20"
           />
-          <div className="flex items-center justify-between mt-3">
-            <span className="text-[10px] text-ohm-muted font-body">
+          <div className="mt-3 flex items-center justify-between">
+            <span className="font-body text-[10px] text-ohm-muted">
               Enter to add · Esc to close
             </span>
             <button
               onClick={handleSubmit}
               disabled={!title.trim()}
-              className="
-                font-display text-xs uppercase tracking-wider
-                px-4 py-1.5 rounded-lg
-                bg-ohm-spark/20 text-ohm-spark
-                hover:bg-ohm-spark/30 active:bg-ohm-spark/40
-                disabled:opacity-30 disabled:cursor-not-allowed
-                transition-colors
-              "
+              className="rounded-lg bg-ohm-spark/20 px-4 py-1.5 font-display text-xs uppercase tracking-wider text-ohm-spark transition-colors hover:bg-ohm-spark/30 active:bg-ohm-spark/40 disabled:cursor-not-allowed disabled:opacity-30"
             >
               Spark it
             </button>

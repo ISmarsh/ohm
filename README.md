@@ -4,13 +4,13 @@
 
 Ohm uses an electrical metaphor to map ADHD energy cycles into a visual workflow:
 
-| Column | Metaphor | Purpose |
-|--------|----------|---------|
-| **Spark** ⚡ | The initial flash | Raw idea capture, zero friction |
-| **Charge** 🔋 | Building energy | Shaped with a clear next step |
-| **Live** 🔴 | Hot/active circuit | Currently working (WIP limited) |
-| **Grounded** 🟣 | Safely discharged | Paused with "where I left off" context |
-| **Powered** ✅ | Circuit complete | Done |
+| Column          | Metaphor           | Purpose                                |
+| --------------- | ------------------ | -------------------------------------- |
+| **Spark** ⚡    | The initial flash  | Raw idea capture, zero friction        |
+| **Charge** 🔋   | Building energy    | Shaped with a clear next step          |
+| **Live** 🔴     | Hot/active circuit | Currently working (WIP limited)        |
+| **Grounded** 🟣 | Safely discharged  | Paused with "where I left off" context |
+| **Powered** ✅  | Circuit complete   | Done                                   |
 
 ## Philosophy
 

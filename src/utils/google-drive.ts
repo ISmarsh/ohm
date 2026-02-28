@@ -23,10 +23,9 @@
 
 import type { OhmBoard } from '../types/board';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const DRIVE_FILE_NAME = 'ohm-board.json';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const DRIVE_MIME_TYPE = 'application/json';
+// Will be used when Drive sync is implemented
+// const DRIVE_FILE_NAME = 'ohm-board.json';
+// const DRIVE_MIME_TYPE = 'application/json';
 
 export interface DriveConfig {
   clientId: string;
@@ -35,26 +34,19 @@ export interface DriveConfig {
 }
 
 /** Placeholder — will implement OAuth flow */
-export async function authenticateDrive(
-  _config: DriveConfig
-): Promise<boolean> {
+export async function authenticateDrive(_config: DriveConfig): Promise<boolean> {
   console.log('[Ohm] Google Drive auth not yet implemented');
   return false;
 }
 
 /** Placeholder — will implement file read */
-export async function loadFromDrive(
-  _config: DriveConfig
-): Promise<OhmBoard | null> {
+export async function loadFromDrive(_config: DriveConfig): Promise<OhmBoard | null> {
   console.log('[Ohm] Google Drive load not yet implemented');
   return null;
 }
 
 /** Placeholder — will implement file write */
-export async function saveToDrive(
-  _config: DriveConfig,
-  _board: OhmBoard
-): Promise<boolean> {
+export async function saveToDrive(_config: DriveConfig, _board: OhmBoard): Promise<boolean> {
   console.log('[Ohm] Google Drive save not yet implemented');
   return false;
 }
