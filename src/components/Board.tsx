@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Zap, Settings } from 'lucide-react';
 import type { OhmCard } from '../types/board';
 import { COLUMNS } from '../types/board';
@@ -8,33 +8,15 @@ import { Button } from './ui/button';
 import { Column } from './Column';
 import { QuickCapture } from './QuickCapture';
 import { CardDetail } from './CardDetail';
-import { GroundedPrompt } from './GroundedPrompt';
 import { SettingsDialog } from './SettingsDialog';
 
 export function Board() {
-  const {
-    board,
-    quickAdd,
-    move,
-    updateCard,
-    deleteCard,
-    addCategory,
-    removeCategory,
-    setWipLimit,
-  } = useBoard();
+  const { board, quickAdd, updateCard, deleteCard, addCategory, removeCategory, setWipLimit } =
+    useBoard();
 
   const [captureOpen, setCaptureOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
-  const [groundingCard, setGroundingCard] = useState<OhmCard | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  const handleGroundConfirm = useCallback(
-    (cardId: string, whereILeftOff: string) => {
-      move(cardId, 'grounded', whereILeftOff);
-      setGroundingCard(null);
-    },
-    [move],
-  );
 
   const wipWarning = isOverWipLimit(board);
 
@@ -106,15 +88,6 @@ export function Board() {
         wipLimit={board.liveWipLimit}
         onSetWipLimit={setWipLimit}
       />
-
-      {/* Grounded prompt modal */}
-      {groundingCard && (
-        <GroundedPrompt
-          card={groundingCard}
-          onConfirm={handleGroundConfirm}
-          onCancel={() => setGroundingCard(null)}
-        />
-      )}
 
       {/* Settings FAB — bottom left */}
       <Button

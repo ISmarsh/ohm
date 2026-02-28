@@ -18,8 +18,12 @@ export function loadFromLocal(): OhmBoard {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as OhmBoard;
-      // Basic version check for future migrations
       if (parsed.version === 1) {
+        // Backfill fields added after initial release
+        parsed.cards = parsed.cards.map((card) => ({
+          ...card,
+          description: card.description ?? '',
+        }));
         return parsed;
       }
     }

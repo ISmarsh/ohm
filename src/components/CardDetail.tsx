@@ -36,7 +36,7 @@ export function CardDetail({
   onClose,
   onOpenSettings,
 }: CardDetailProps) {
-  const [editing, setEditing] = useState(card);
+  const [editing, setEditing] = useState({ ...card, description: card.description ?? '' });
 
   const autoSize = (el: HTMLTextAreaElement) => {
     el.style.height = 'auto';
