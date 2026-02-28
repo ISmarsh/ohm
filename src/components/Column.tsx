@@ -34,7 +34,7 @@ export function Column({
         onClick={() => setExpanded((prev) => !prev)}
         aria-expanded={expanded}
         aria-controls={`column-cards-${column.status}`}
-        className="sticky top-0 z-10 flex w-full items-center gap-2 bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm md:cursor-default"
+        className="sticky top-0 z-10 flex w-full items-center gap-2 bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm md:pointer-events-none"
       >
         <span className="text-ohm-muted md:hidden">
           {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

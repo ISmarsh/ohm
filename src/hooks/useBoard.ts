@@ -71,7 +71,7 @@ export function useBoard() {
 
   /** Update WIP limit */
   const setWipLimit = useCallback((limit: number) => {
-    setBoard((prev) => ({ ...prev, liveWipLimit: limit }));
+    setBoard((prev) => ({ ...prev, liveWipLimit: limit, lastSaved: new Date().toISOString() }));
   }, []);
 
   /** Add a category to the board */

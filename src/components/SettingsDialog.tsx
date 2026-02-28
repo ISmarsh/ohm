@@ -37,7 +37,10 @@ export function SettingsDialog({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open) {
+          setNewCategoryName('');
+          onClose();
+        }
       }}
     >
       <DialogContent className="sm:max-w-md">
