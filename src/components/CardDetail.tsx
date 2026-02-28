@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { OhmCard, ColumnStatus, EnergyTag } from '../types/board';
 import { COLUMNS, ENERGY_CONFIG } from '../types/board';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
+import { X } from 'lucide-react';
+import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from './ui/dialog';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
@@ -48,6 +49,8 @@ export function CardDetail({ card, categories, onUpdate, onDelete, onClose }: Ca
     >
       <DialogContent>
         {/* Header */}
+        <DialogTitle className="sr-only">{editing.title || 'Card details'}</DialogTitle>
+        <DialogDescription className="sr-only">Edit card details</DialogDescription>
         <div className="mb-4 flex items-start justify-between">
           <div className="flex items-center gap-2">
             <div
@@ -56,12 +59,15 @@ export function CardDetail({ card, categories, onUpdate, onDelete, onClose }: Ca
                 backgroundColor: `var(--color-${currentColumn?.color ?? 'ohm-muted'})`,
               }}
             />
-            <DialogTitle className="font-display text-[10px] uppercase tracking-widest text-ohm-muted">
+            <span className="font-display text-[10px] uppercase tracking-widest text-ohm-muted">
               {currentColumn?.label}
-            </DialogTitle>
+            </span>
           </div>
+          <DialogClose className="rounded-sm text-ohm-muted opacity-70 transition-opacity hover:opacity-100">
+            <X size={16} />
+            <span className="sr-only">Close</span>
+          </DialogClose>
         </div>
-        <DialogDescription className="sr-only">Edit card details</DialogDescription>
 
         {/* Title */}
         <Input
@@ -207,7 +213,7 @@ export function CardDetail({ card, categories, onUpdate, onDelete, onClose }: Ca
               <AlertDialogHeader>
                 <AlertTitle className="text-ohm-text">Delete this card?</AlertTitle>
                 <AlertDialogDescription>
-                  This will permanently remove &ldquo;{card.title}&rdquo;.
+                  This will permanently remove &ldquo;{editing.title || card.title}&rdquo;.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

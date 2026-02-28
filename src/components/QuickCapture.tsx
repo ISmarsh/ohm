@@ -62,6 +62,7 @@ export function QuickCapture({ onAdd, isOpen, onClose }: QuickCaptureProps) {
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="What's the idea?"
+          aria-label="New spark title"
           className="border-ohm-border bg-ohm-bg px-4 py-3 font-body text-sm text-ohm-text placeholder:text-ohm-muted/50 focus-visible:ring-ohm-spark/20 focus-visible:ring-offset-0"
         />
         <div className="mt-1 flex items-center justify-between">

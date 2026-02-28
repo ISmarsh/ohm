@@ -52,6 +52,7 @@ export function GroundedPrompt({ card, onConfirm, onCancel }: GroundedPromptProp
           ref={inputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          aria-label="Where I left off"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
