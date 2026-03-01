@@ -27,7 +27,6 @@ Ohm uses an electrical metaphor to map ADHD energy cycles into a visual workflow
 - **Aging indicators** -- cards untouched for 14+ days fade to surface stale work
 - **Completion flash** -- green pulse on the Powered column when a card arrives
 - **Welcome-back summary** -- re-engagement banner after 24+ hours away
-- **PWA badge** -- Live card count on the app icon (Chrome/Edge)
 - **Maskable icon** -- safe-zone-compliant icon for adaptive launchers
 - **Google Drive sync** -- optional cross-device persistence via app data storage
 - **Energy/category/search filtering** with mobile-friendly collapsible filter bar
@@ -47,7 +46,7 @@ Based on the six core practices from the [Kanban Guide](https://kanban.universit
 | **Limit WIP**               | Per-column energy capacity with green-to-red gradient indicators                           |
 | **Manage flow**             | Aging indicators surface stale cards; contextual status transitions prevent skipping steps |
 | **Make policies explicit**  | NextStep nudge on Live transition; "Where I Left Off" prompt on Grounded                   |
-| **Feedback loops**          | Completion flash, welcome-back summary, PWA badge for ambient awareness                    |
+| **Feedback loops**          | Completion flash, welcome-back summary for ambient awareness                               |
 | **Improve collaboratively** | Single-user tool -- N/A by design                                                          |
 
 ### ADHD Productivity Research
