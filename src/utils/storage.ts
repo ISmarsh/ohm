@@ -30,5 +30,9 @@ export function loadFromLocal(): OhmBoard {
 
 /** Clear local storage */
 export function clearLocal(): void {
-  localStorage.removeItem(STORAGE_KEY);
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    console.error('[Ohm] Failed to clear localStorage:', e);
+  }
 }

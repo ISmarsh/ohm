@@ -15,7 +15,11 @@ export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'offline';
 const SYNC_FLAG_KEY = 'ohm-drive-synced';
 
 function wasPreviouslySynced(): boolean {
-  return localStorage.getItem(SYNC_FLAG_KEY) === '1';
+  try {
+    return localStorage.getItem(SYNC_FLAG_KEY) === '1';
+  } catch {
+    return false;
+  }
 }
 
 interface UseDriveSyncReturn {
@@ -114,7 +118,11 @@ export function useDriveSync(
 
     setDriveConnected(true);
     setNeedsReconnect(false);
-    localStorage.setItem(SYNC_FLAG_KEY, '1');
+    try {
+      localStorage.setItem(SYNC_FLAG_KEY, '1');
+    } catch {
+      /* quota/access */
+    }
     setSyncStatus('syncing');
 
     try {
@@ -137,7 +145,11 @@ export function useDriveSync(
     disconnectDrive();
     setDriveConnected(false);
     setNeedsReconnect(false);
-    localStorage.removeItem(SYNC_FLAG_KEY);
+    try {
+      localStorage.removeItem(SYNC_FLAG_KEY);
+    } catch {
+      /* access */
+    }
     setSyncStatus('idle');
   }, []);
 

@@ -52,6 +52,7 @@ function CategoryFilter({
             type="button"
             onClick={() => onToggle(cat)}
             className="text-ohm-muted hover:text-ohm-text"
+            aria-label={`Remove ${cat}`}
           >
             <X size={10} />
           </button>
@@ -70,6 +71,7 @@ function CategoryFilter({
               }}
               onFocus={() => setOpen(true)}
               placeholder={selected.length ? '+ Add' : 'Category...'}
+              aria-label="Filter categories"
               className={`${selected.length ? 'w-16' : 'w-24'} rounded-full border border-ohm-border bg-transparent py-1 pl-6 pr-2 font-body text-[11px] text-ohm-text placeholder:text-ohm-muted/40 focus:outline-none focus:ring-1 focus:ring-ohm-text/10`}
             />
           </div>
@@ -285,8 +287,7 @@ export function Board() {
           {/* Mobile: active advanced filter indicator (when collapsed) */}
           {!filtersExpanded && hasAdvancedFilter && (
             <span className="flex items-center gap-1 rounded-full bg-ohm-text/10 px-2 py-0.5 font-body text-[10px] text-ohm-text md:hidden">
-              +{advancedFilterCount - (energyFilter ? 1 : 0)} filter
-              {advancedFilterCount - (energyFilter ? 1 : 0) > 1 ? 's' : ''}
+              +{advancedFilterCount} filter{advancedFilterCount > 1 ? 's' : ''}
             </span>
           )}
 
