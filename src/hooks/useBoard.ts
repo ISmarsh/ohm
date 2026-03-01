@@ -103,6 +103,12 @@ export function useBoard() {
     });
   }, []);
 
+  /** Replace the entire board (used by Drive sync when remote is newer) */
+  const replaceBoard = useCallback((newBoard: OhmBoard) => {
+    setBoard(newBoard);
+    saveToLocal(newBoard);
+  }, []);
+
   return {
     board,
     quickAdd,
@@ -113,5 +119,6 @@ export function useBoard() {
     setWipLimit,
     addCategory,
     removeCategory,
+    replaceBoard,
   };
 }

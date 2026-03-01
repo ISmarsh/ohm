@@ -12,6 +12,10 @@ interface SettingsDialogProps {
   onRemoveCategory: (category: string) => void;
   wipLimit: number;
   onSetWipLimit: (limit: number) => void;
+  driveAvailable?: boolean;
+  driveConnected?: boolean;
+  onConnectDrive?: () => void;
+  onDisconnectDrive?: () => void;
 }
 
 export function SettingsDialog({
@@ -22,6 +26,10 @@ export function SettingsDialog({
   onRemoveCategory,
   wipLimit,
   onSetWipLimit,
+  driveAvailable,
+  driveConnected,
+  onConnectDrive,
+  onDisconnectDrive,
 }: SettingsDialogProps) {
   const [newCategoryName, setNewCategoryName] = useState('');
 
@@ -130,6 +138,37 @@ export function SettingsDialog({
             <span className="font-body text-xs text-ohm-muted">max cards in Live</span>
           </div>
         </div>
+
+        {/* Google Drive */}
+        {driveAvailable && (
+          <div className="mt-5 border-t border-ohm-border pt-5">
+            <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
+              Google Drive Sync
+            </span>
+            {driveConnected ? (
+              <div className="flex items-center justify-between">
+                <span className="font-body text-sm text-ohm-powered">Connected</span>
+                <Button
+                  variant="outline"
+                  onClick={onDisconnectDrive}
+                  className="border-ohm-border text-xs text-ohm-muted hover:text-ohm-live"
+                >
+                  Disconnect
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={onConnectDrive}
+                className="w-full bg-ohm-spark/20 font-display text-xs uppercase tracking-wider text-ohm-spark hover:bg-ohm-spark/30"
+              >
+                Connect Google Drive
+              </Button>
+            )}
+            <p className="mt-1.5 font-body text-[11px] text-ohm-muted/60">
+              Sync your board across devices. Data stored privately in app storage.
+            </p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

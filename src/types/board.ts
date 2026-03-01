@@ -14,7 +14,7 @@ export interface OhmCard {
   /** Free-form notes or context about the card */
   description: string;
   status: ColumnStatus;
-  /** The single next concrete action — always filled for charge+ */
+  /** The single next concrete action — may be empty at capture, expected before going live */
   nextStep: string;
   /** Context note captured when moving to grounded */
   whereILeftOff: string;
