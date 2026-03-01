@@ -111,7 +111,7 @@ async function findBoardFileId(): Promise<string | null> {
   const headers = await getHeaders();
   const params = new URLSearchParams({
     spaces: 'appDataFolder',
-    q: `name='${DRIVE_FILE_NAME}'`,
+    q: `name='${DRIVE_FILE_NAME}' and trashed=false`,
     fields: 'files(id,modifiedTime)',
     orderBy: 'modifiedTime desc',
     pageSize: '1',
@@ -167,6 +167,10 @@ export async function saveToDrive(board: OhmBoard): Promise<boolean> {
       if (res.status === 404) {
         // File was deleted externally -- clear cache and fall through to create
         cachedFileId = null;
+      } else if (res.status === 401 || res.status === 403) {
+        accessToken = null;
+        tokenExpiry = 0;
+        return false;
       } else {
         return false;
       }
