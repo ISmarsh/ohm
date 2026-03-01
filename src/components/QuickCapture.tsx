@@ -131,6 +131,7 @@ export function QuickCapture({ onAdd, isOpen, onClose, categories }: QuickCaptur
                   variant="outline"
                   size="sm"
                   onClick={() => setEnergy(key)}
+                  aria-pressed={energy === key}
                   className={`h-6 gap-1 px-2 font-body text-[10px] ${
                     energy === key
                       ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'

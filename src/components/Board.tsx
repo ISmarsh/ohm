@@ -240,6 +240,7 @@ export function Board() {
                 key={key}
                 type="button"
                 onClick={() => setEnergyFilter(active ? null : key)}
+                aria-pressed={active}
                 className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-body text-[11px] transition-colors ${
                   active ? 'bg-ohm-text/10 text-ohm-text' : 'text-ohm-muted hover:text-ohm-text'
                 }`}
