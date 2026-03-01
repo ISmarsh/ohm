@@ -57,24 +57,6 @@ export function useDriveSync(
     boardRef.current = currentBoard;
   }, [currentBoard]);
 
-  // Try silent reconnect -- reuse existing Google session grant
-  const trySilentReconnect = useCallback(async () => {
-    const token = await requestAccessToken(true);
-    if (!token) {
-      // Silent auth failed -- show reconnect banner
-      setNeedsReconnect(true);
-      return;
-    }
-    setDriveConnected(true);
-    setNeedsReconnect(false);
-    setSyncStatus('syncing');
-    try {
-      await mergeWithRemote();
-    } catch {
-      setSyncStatus('error');
-    }
-  }, [mergeWithRemote]);
-
   // Initialize GIS on mount
   useEffect(() => {
     if (!DRIVE_CLIENT_ID) return;
@@ -90,8 +72,10 @@ export function useDriveSync(
     };
 
     const onReady = () => {
+      // GIS implicit flow can't silently refresh tokens (requires a popup),
+      // so just prompt the user to reconnect via a button click.
       if (wasPreviouslySynced()) {
-        trySilentReconnect();
+        setNeedsReconnect(true);
       }
     };
 
@@ -113,7 +97,7 @@ export function useDriveSync(
     }, 500);
 
     return () => clearInterval(interval);
-  }, [trySilentReconnect]);
+  }, []);
 
   // Online/offline detection
   useEffect(() => {
@@ -145,7 +129,9 @@ export function useDriveSync(
   }, []);
 
   const connect = useCallback(async () => {
-    const token = await requestAccessToken();
+    // Try silent refresh first (reuses existing grant without consent screen),
+    // fall back to full consent popup if the grant has expired.
+    const token = (await requestAccessToken('')) ?? (await requestAccessToken('consent'));
     if (!token) return;
 
     setDriveConnected(true);

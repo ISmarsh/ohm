@@ -25,6 +25,7 @@ export function Card({ card, onTap }: CardProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    touchAction: 'none' as const,
   };
 
   const [isStale, setIsStale] = useState(false);
