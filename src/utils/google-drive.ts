@@ -8,6 +8,7 @@
 
 import type { OhmBoard } from '../types/board';
 import { DRIVE_CLIENT_ID, DRIVE_FILE_NAME, DRIVE_MIME_TYPE, DRIVE_SCOPE } from '../config/drive';
+import { sanitizeBoard } from './storage';
 
 // --- Token state (module-level, not persisted) ---
 
@@ -56,8 +57,12 @@ export function initDriveAuth(): boolean {
   return true;
 }
 
-/** Request an access token (shows consent popup on first call, silent refresh after). */
-export function requestAccessToken(): Promise<string | null> {
+/**
+ * Request an access token.
+ * @param silent — when true, skip the consent prompt (re-auth with existing grant).
+ *                 Falls back to null if the user must re-consent.
+ */
+export function requestAccessToken(silent = false): Promise<string | null> {
   return new Promise((resolve) => {
     if (!tokenClient) {
       resolve(null);
@@ -66,7 +71,9 @@ export function requestAccessToken(): Promise<string | null> {
 
     tokenClient.callback = (response) => {
       if (response.error) {
-        console.error('[Ohm] Drive auth error:', response.error_description);
+        if (!silent) {
+          console.error('[Ohm] Drive auth error:', response.error_description);
+        }
         accessToken = null;
         resolve(null);
         return;
@@ -76,8 +83,7 @@ export function requestAccessToken(): Promise<string | null> {
       resolve(accessToken);
     };
 
-    // First time: consent prompt. Subsequent: silent (empty string = no prompt).
-    tokenClient.requestAccessToken({ prompt: accessToken ? '' : 'consent' });
+    tokenClient.requestAccessToken({ prompt: silent ? '' : 'consent' });
   });
 }
 
@@ -142,7 +148,8 @@ export async function loadFromDrive(): Promise<OhmBoard | null> {
   });
   if (!res.ok) return null;
 
-  return res.json() as Promise<OhmBoard>;
+  const board = (await res.json()) as OhmBoard;
+  return sanitizeBoard(board);
 }
 
 /** Save board to Drive. Creates the file if it doesn't exist, updates if it does. */

@@ -9,8 +9,6 @@ const DialogTrigger = DialogPrimitive.Trigger;
 
 const DialogPortal = DialogPrimitive.Portal;
 
-const DialogClose = DialogPrimitive.Close;
-
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -36,7 +34,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          'animate-slide-up relative max-h-[90vh] w-full overflow-y-auto rounded-t-xl border border-ohm-border bg-ohm-surface p-5 shadow-2xl sm:max-w-lg sm:rounded-xl',
+          'animate-slide-up relative max-h-[90dvh] w-full overflow-y-auto rounded-t-xl border border-ohm-border bg-ohm-surface p-5 shadow-2xl sm:max-w-lg sm:rounded-xl',
           className,
         )}
         {...props}
@@ -90,7 +88,6 @@ export {
   DialogPortal,
   DialogOverlay,
   DialogTrigger,
-  DialogClose,
   DialogContent,
   DialogHeader,
   DialogFooter,

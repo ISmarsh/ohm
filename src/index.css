@@ -3,14 +3,6 @@
 @tailwind utilities;
 
 :root {
-  /* ohm electrical accent colors */
-  --color-ohm-spark: #fbbf24;
-  --color-ohm-charging: #f97316;
-  --color-ohm-live: #ef4444;
-  --color-ohm-grounded: #6366f1;
-  --color-ohm-powered: #22c55e;
-  --color-ohm-muted: #6b6b80;
-
   /* shadcn/ui semantic tokens — mapped to ohm palette */
   --background: 240 27% 5%; /* ohm-bg #0a0a0f */
   --foreground: 240 14% 89%; /* ohm-text #e0e0e8 */
@@ -81,44 +73,4 @@ body {
 
 .animate-slide-up {
   animation: slide-up 0.2s ease-out;
-}
-
-/* Column accent dots — fallback for dynamic Tailwind */
-.bg-ohm-spark {
-  background-color: var(--color-ohm-spark);
-}
-.bg-ohm-charging {
-  background-color: var(--color-ohm-charging);
-}
-.bg-ohm-live {
-  background-color: var(--color-ohm-live);
-}
-.bg-ohm-grounded {
-  background-color: var(--color-ohm-grounded);
-}
-.bg-ohm-powered {
-  background-color: var(--color-ohm-powered);
-}
-
-.text-ohm-spark {
-  color: var(--color-ohm-spark);
-}
-.text-ohm-charging {
-  color: var(--color-ohm-charging);
-}
-.text-ohm-live {
-  color: var(--color-ohm-live);
-}
-.text-ohm-grounded {
-  color: var(--color-ohm-grounded);
-}
-.text-ohm-powered {
-  color: var(--color-ohm-powered);
-}
-
-.border-ohm-spark\/30 {
-  border-color: rgb(251 191 36 / 0.3);
-}
-.border-ohm-grounded\/30 {
-  border-color: rgb(99 102 241 / 0.3);
 }

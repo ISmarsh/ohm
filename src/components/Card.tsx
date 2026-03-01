@@ -1,6 +1,6 @@
-import { MapPin } from 'lucide-react';
+import { ArrowRight, MapPin } from 'lucide-react';
 import type { OhmCard } from '../types/board';
-import { ENERGY_CONFIG } from '../types/board';
+import { STATUS, ENERGY_CONFIG, ENERGY_CLASSES } from '../types/board';
 import { Card as CardContainer } from './ui/card';
 import { Badge } from './ui/badge';
 
@@ -10,7 +10,7 @@ interface CardProps {
 }
 
 export function Card({ card, onTap }: CardProps) {
-  const energyInfo = ENERGY_CONFIG[card.energy];
+  const energyInfo = ENERGY_CONFIG[card.energy]!;
   const EnergyIcon = energyInfo.icon;
 
   return (
@@ -28,9 +28,12 @@ export function Card({ card, onTap }: CardProps) {
 
       {/* Meta row */}
       <div className="mt-2 flex items-center gap-2">
-        {/* Energy tag */}
-        <span className="opacity-70" title={energyInfo.label}>
-          <EnergyIcon size={12} />
+        <span
+          className={`flex items-center gap-1 ${ENERGY_CLASSES[card.energy]!.text}`}
+          title={energyInfo.label}
+        >
+          <EnergyIcon size={10} />
+          <span className="font-body text-[10px] uppercase tracking-wider">{energyInfo.label}</span>
         </span>
 
         {/* Category pill */}
@@ -44,8 +47,18 @@ export function Card({ card, onTap }: CardProps) {
         )}
       </div>
 
+      {/* Next step for active cards (not powered) */}
+      {card.status !== STATUS.POWERED && card.nextStep && (
+        <div className="mt-2 flex items-start gap-1 border-t border-ohm-border pt-1.5 text-xs text-ohm-muted">
+          <ArrowRight size={12} className="mt-0.5 shrink-0" />
+          <span>
+            {card.nextStep.length > 60 ? card.nextStep.slice(0, 60) + '...' : card.nextStep}
+          </span>
+        </div>
+      )}
+
       {/* Where I left off indicator for grounded cards */}
-      {card.status === 'grounded' && card.whereILeftOff && (
+      {card.status === STATUS.GROUNDED && card.whereILeftOff && (
         <div className="mt-2 flex items-start gap-1 border-t border-ohm-border pt-1.5 text-xs italic text-ohm-grounded/70">
           <MapPin size={12} className="mt-0.5 shrink-0" />
           <span>

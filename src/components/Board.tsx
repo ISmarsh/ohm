@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Zap, Settings, Plus, CloudOff, SlidersHorizontal, Search, X, Tag } from 'lucide-react';
 import type { OhmCard, EnergyTag, ColumnStatus } from '../types/board';
-import { COLUMNS, ENERGY_CONFIG } from '../types/board';
-import { getColumnCards, isOverWipLimit } from '../utils/board-utils';
+import { STATUS, COLUMNS, ENERGY_CONFIG, ENERGY_CLASSES } from '../types/board';
+import { createCard, getColumnCards, getLiveCapacity } from '../utils/board-utils';
 import { useBoard } from '../hooks/useBoard';
 import { useDriveSync } from '../hooks/useDriveSync';
 import { Button } from './ui/button';
 import { Column } from './Column';
-import { QuickCapture } from './QuickCapture';
 import { CardDetail } from './CardDetail';
 import { SettingsDialog } from './SettingsDialog';
 import { SyncIndicator } from './SyncIndicator';
@@ -107,7 +106,7 @@ export function Board() {
     deleteCard,
     addCategory,
     removeCategory,
-    setWipLimit,
+    setCapacity,
     replaceBoard,
   } = useBoard();
 
@@ -127,8 +126,8 @@ export function Board() {
     queueSync(board);
   }, [board, queueSync]);
 
-  const [captureOpen, setCaptureOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
+  const [newCard, setNewCard] = useState<OhmCard | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [energyFilter, setEnergyFilter] = useState<EnergyTag | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
@@ -136,11 +135,11 @@ export function Board() {
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const wipWarning = isOverWipLimit(board);
+  const liveCapacity = getLiveCapacity(board);
 
   const filteredCards = (status: ColumnStatus) => {
     let cards = getColumnCards(board, status);
-    if (energyFilter) cards = cards.filter((c) => c.energy === energyFilter);
+    if (energyFilter !== null) cards = cards.filter((c) => c.energy === energyFilter);
     if (categoryFilter.length > 0) cards = cards.filter((c) => categoryFilter.includes(c.category));
     if (searchFilter) {
       const q = searchFilter.toLowerCase();
@@ -167,12 +166,18 @@ export function Board() {
     setSearchFilter('');
   };
 
+  const handleQuickSpark = () => {
+    setNewCard(createCard(''));
+  };
+
+  const activeCard = selectedCard || newCard;
+
   return (
     <div className="flex min-h-screen flex-col bg-ohm-bg">
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-ohm-border bg-ohm-bg/90 backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Left — settings (desktop only) */}
+          {/* Left -- settings (desktop only) */}
           <div className="flex w-20 items-center">
             <button
               type="button"
@@ -184,7 +189,7 @@ export function Board() {
             </button>
           </div>
 
-          {/* Center — title */}
+          {/* Center -- title */}
           <div className="flex items-center gap-2">
             <Zap size={18} className="text-ohm-spark" />
             <span className="font-display text-sm font-bold uppercase tracking-widest text-ohm-text">
@@ -192,11 +197,11 @@ export function Board() {
             </span>
           </div>
 
-          {/* Right — quick spark (desktop) + sync indicator */}
+          {/* Right -- quick spark (desktop) + sync indicator */}
           <div className="flex w-20 items-center justify-end gap-1">
             <button
               type="button"
-              onClick={() => setCaptureOpen(true)}
+              onClick={handleQuickSpark}
               className="hidden rounded-md p-1.5 text-ohm-spark transition-colors hover:bg-ohm-spark/10 md:block"
               aria-label="Quick spark"
             >
@@ -230,22 +235,22 @@ export function Board() {
       <div className="border-b border-ohm-border px-4 py-2">
         {/* Row 1: Energy chips (always visible) + expand toggle (mobile) */}
         <div className="flex items-center gap-2">
-          {(
-            Object.entries(ENERGY_CONFIG) as [EnergyTag, { label: string; icon: typeof Zap }][]
-          ).map(([key, config]) => {
+          {ENERGY_CONFIG.map((config, index) => {
             const Icon = config.icon;
-            const active = energyFilter === key;
+            const active = energyFilter === index;
             return (
               <button
-                key={key}
+                key={index}
                 type="button"
-                onClick={() => setEnergyFilter(active ? null : key)}
+                onClick={() => setEnergyFilter(active ? null : (index as EnergyTag))}
                 aria-pressed={active}
                 className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-body text-[11px] transition-colors ${
                   active ? 'bg-ohm-text/10 text-ohm-text' : 'text-ohm-muted hover:text-ohm-text'
                 }`}
               >
-                <Icon size={12} />
+                <span className={ENERGY_CLASSES[index]!.text}>
+                  <Icon size={12} />
+                </span>
                 {config.label}
               </button>
             );
@@ -348,43 +353,50 @@ export function Board() {
       {/* Board */}
       <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
         <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
-          {COLUMNS.map((col) => (
+          {COLUMNS.map((col, index) => (
             <Column
-              key={col.status}
+              key={index}
               column={col}
-              cards={filteredCards(col.status)}
+              cards={filteredCards(index as ColumnStatus)}
               onCardTap={setSelectedCard}
-              wipWarning={col.status === 'live' && wipWarning}
-              defaultExpanded={col.status === 'live'}
+              capacity={index === STATUS.LIVE ? liveCapacity : undefined}
+              defaultExpanded={index === STATUS.LIVE}
             />
           ))}
         </div>
       </main>
 
-      {/* Quick capture modal */}
-      <QuickCapture
-        isOpen={captureOpen}
-        onAdd={(title, overrides) => quickAdd(title, overrides)}
-        onClose={() => setCaptureOpen(false)}
-        categories={board.categories}
-      />
-
-      {/* Card detail modal */}
-      {selectedCard && (
+      {/* Card detail / new card modal */}
+      {activeCard && (
         <CardDetail
-          card={selectedCard}
+          card={activeCard}
+          isNew={!!newCard}
           categories={board.categories}
-          onUpdate={(updated) => {
-            updateCard(updated);
+          onSave={(updated) => {
+            if (newCard) {
+              quickAdd(updated.title, {
+                description: updated.description || undefined,
+                nextStep: updated.nextStep || undefined,
+                energy: updated.energy,
+                category: updated.category || undefined,
+              });
+            } else {
+              updateCard(updated);
+            }
             setSelectedCard(null);
+            setNewCard(null);
           }}
           onDelete={(id) => {
             deleteCard(id);
             setSelectedCard(null);
           }}
-          onClose={() => setSelectedCard(null)}
+          onClose={() => {
+            setSelectedCard(null);
+            setNewCard(null);
+          }}
           onOpenSettings={() => {
             setSelectedCard(null);
+            setNewCard(null);
             setSettingsOpen(true);
           }}
         />
@@ -397,28 +409,28 @@ export function Board() {
         categories={board.categories}
         onAddCategory={addCategory}
         onRemoveCategory={removeCategory}
-        wipLimit={board.liveWipLimit}
-        onSetWipLimit={setWipLimit}
+        capacity={board.liveCapacity}
+        onSetCapacity={setCapacity}
         driveAvailable={driveAvailable}
         driveConnected={driveConnected}
         onConnectDrive={connect}
         onDisconnectDrive={disconnect}
       />
 
-      {/* Settings FAB — mobile only */}
+      {/* Settings FAB -- mobile only */}
       <Button
         size="icon"
         onClick={() => setSettingsOpen(true)}
-        className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full border border-ohm-border bg-ohm-muted/10 text-ohm-muted shadow-md transition-transform hover:text-ohm-text active:scale-95 md:hidden"
+        className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full border border-ohm-border bg-ohm-surface text-ohm-muted shadow-md transition-transform hover:text-ohm-text active:scale-95 md:hidden"
         aria-label="Settings"
       >
         <Settings size={20} />
       </Button>
 
-      {/* Quick spark FAB — mobile only */}
+      {/* Quick spark FAB -- mobile only */}
       <Button
         size="icon"
-        onClick={() => setCaptureOpen(true)}
+        onClick={handleQuickSpark}
         className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-ohm-spark text-ohm-bg shadow-lg shadow-ohm-spark/30 transition-transform hover:bg-ohm-spark/90 active:scale-95 md:hidden"
         aria-label="Quick spark"
       >

@@ -75,9 +75,9 @@ export function useBoard() {
     });
   }, []);
 
-  /** Update WIP limit */
-  const setWipLimit = useCallback((limit: number) => {
-    setBoard((prev) => ({ ...prev, liveWipLimit: limit, lastSaved: new Date().toISOString() }));
+  /** Update Live column capacity (energy segments) */
+  const setCapacity = useCallback((capacity: number) => {
+    setBoard((prev) => ({ ...prev, liveCapacity: capacity, lastSaved: new Date().toISOString() }));
   }, []);
 
   /** Add a category to the board */
@@ -122,7 +122,7 @@ export function useBoard() {
     updateCard,
     deleteCard,
     reorder,
-    setWipLimit,
+    setCapacity,
     addCategory,
     removeCategory,
     replaceBoard,
