@@ -74,3 +74,16 @@ body {
 .animate-slide-up {
   animation: slide-up 0.2s ease-out;
 }
+
+@keyframes completion-flash {
+  from {
+    background-color: rgba(34, 197, 94, 0.3);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.animate-completion-flash {
+  animation: completion-flash 1s ease-out;
+}

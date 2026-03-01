@@ -46,6 +46,7 @@ export function CardDetail({
   isNew,
 }: CardDetailProps) {
   const [editing, setEditing] = useState(card);
+  const [nextStepNudge, setNextStepNudge] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
 
   // Auto-focus title for new cards
@@ -71,6 +72,13 @@ export function CardDetail({
   };
 
   const handleStatusChange = (newStatus: ColumnStatus) => {
+    // Nudge if moving to Live without a nextStep
+    if (newStatus === STATUS.LIVE && !editing.nextStep.trim()) {
+      setNextStepNudge(true);
+    } else {
+      setNextStepNudge(false);
+    }
+
     setEditing((prev) => {
       const updated = { ...prev, status: newStatus };
       // Clear whereILeftOff when leaving grounded
@@ -86,7 +94,10 @@ export function CardDetail({
   };
 
   const accent = isNew ? SPARK_CLASSES : STATUS_CLASSES[editing.status]!;
-  const availableTransitions = VALID_TRANSITIONS[editing.status] ?? [];
+  const hasChangedStatus = editing.status !== card.status;
+  const availableTransitions = hasChangedStatus
+    ? [card.status]
+    : (VALID_TRANSITIONS[card.status] ?? []);
 
   // Conditional field visibility
   const showNextStep = editing.status === STATUS.CHARGING || editing.status === STATUS.LIVE;
@@ -154,11 +165,19 @@ export function CardDetail({
             <Input
               id="card-next-step"
               value={editing.nextStep}
-              onChange={(e) => setEditing((prev) => ({ ...prev, nextStep: e.target.value }))}
+              onChange={(e) => {
+                setEditing((prev) => ({ ...prev, nextStep: e.target.value }));
+                if (nextStepNudge && e.target.value.trim()) setNextStepNudge(false);
+              }}
               placeholder="What's the one concrete action?"
               autoComplete="off"
-              className={`${accent.border} bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/50 ${accent.ring} focus-visible:ring-offset-0`}
+              className={`${nextStepNudge ? 'border-ohm-spark/60 ring-1 ring-ohm-spark/20' : accent.border} bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/50 ${accent.ring} focus-visible:ring-offset-0`}
             />
+            {nextStepNudge && (
+              <p className="mt-1 font-body text-[10px] text-ohm-spark/80">
+                Tip: defining your next step helps you start faster
+              </p>
+            )}
           </div>
         )}
 

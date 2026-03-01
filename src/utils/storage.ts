@@ -5,8 +5,14 @@ const STORAGE_KEY = 'ohm-board';
 
 /** Coerce invalid field values to safe defaults -- index-range validation */
 export function sanitizeBoard(board: OhmBoard): OhmBoard {
+  if (typeof board.chargingCapacity !== 'number' || board.chargingCapacity < 1) {
+    board.chargingCapacity = 12;
+  }
   if (typeof board.liveCapacity !== 'number' || board.liveCapacity < 1) {
     board.liveCapacity = 6;
+  }
+  if (typeof board.groundedCapacity !== 'number' || board.groundedCapacity < 1) {
+    board.groundedCapacity = 6;
   }
 
   for (const card of board.cards) {

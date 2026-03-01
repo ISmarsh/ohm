@@ -50,12 +50,25 @@ export function getColumnCards(board: OhmBoard, status: ColumnStatus): OhmCard[]
   return board.cards.filter((c) => c.status === status).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-/** Get Live column capacity usage in energy segments */
-export function getLiveCapacity(board: OhmBoard): { used: number; total: number } {
+/** Capacity field names indexed by ColumnStatus (Powered has no capacity) */
+const CAPACITY_FIELDS: readonly (keyof OhmBoard | null)[] = [
+  'chargingCapacity', // STATUS.CHARGING = 0
+  'liveCapacity', // STATUS.LIVE = 1
+  'groundedCapacity', // STATUS.GROUNDED = 2
+  null, // STATUS.POWERED = 3 (no capacity)
+];
+
+/** Get column capacity usage in energy segments. Returns null for columns without capacity. */
+export function getColumnCapacity(
+  board: OhmBoard,
+  status: ColumnStatus,
+): { used: number; total: number } | null {
+  const field = CAPACITY_FIELDS[status];
+  if (!field) return null;
   const used = board.cards
-    .filter((c) => c.status === STATUS.LIVE)
+    .filter((c) => c.status === status)
     .reduce((sum, c) => sum + ENERGY_SEGMENTS[c.energy]!, 0);
-  return { used, total: board.liveCapacity };
+  return { used, total: board[field] as number };
 }
 
 /** Update a card in the board immutably */

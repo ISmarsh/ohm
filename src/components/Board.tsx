@@ -1,10 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Zap, Settings, Plus, CloudOff, SlidersHorizontal, Search, X, Tag } from 'lucide-react';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import type { OhmCard, EnergyTag, ColumnStatus } from '../types/board';
 import { STATUS, COLUMNS, ENERGY_CONFIG, ENERGY_CLASSES } from '../types/board';
-import { createCard, getColumnCards, getLiveCapacity } from '../utils/board-utils';
+import { createCard, getColumnCards, getColumnCapacity } from '../utils/board-utils';
 import { useBoard } from '../hooks/useBoard';
 import { useDriveSync } from '../hooks/useDriveSync';
+import { useWelcomeBack } from '../hooks/useWelcomeBack';
 import { Button } from './ui/button';
 import { Column } from './Column';
 import { CardDetail } from './CardDetail';
@@ -104,11 +117,58 @@ export function Board() {
     quickAdd,
     updateCard,
     deleteCard,
+    reorderBatch,
     addCategory,
     removeCategory,
     setCapacity,
     replaceBoard,
   } = useBoard();
+
+  // Drag-and-drop sensors
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: { distance: 8 },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: { delay: 250, tolerance: 5 },
+  });
+  const sensors = useSensors(pointerSensor, touchSensor);
+
+  const [draggingCard, setDraggingCard] = useState<OhmCard | null>(null);
+
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const card = board.cards.find((c) => c.id === event.active.id);
+      setDraggingCard(card ?? null);
+    },
+    [board.cards],
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setDraggingCard(null);
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const draggedCard = board.cards.find((c) => c.id === active.id);
+      const overCard = board.cards.find((c) => c.id === over.id);
+      if (!draggedCard || !overCard) return;
+
+      // Only reorder within same column
+      if (draggedCard.status !== overCard.status) return;
+
+      const columnCards = getColumnCards(board, draggedCard.status);
+      const oldIndex = columnCards.findIndex((c) => c.id === active.id);
+      const newIndex = columnCards.findIndex((c) => c.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reordered = arrayMove(columnCards, oldIndex, newIndex);
+      reorderBatch(
+        reordered.map((c) => c.id),
+        String(active.id),
+      );
+    },
+    [board, reorderBatch],
+  );
 
   const {
     driveAvailable,
@@ -126,6 +186,40 @@ export function Board() {
     queueSync(board);
   }, [board, queueSync]);
 
+  const { summary: welcomeBack, dismiss: dismissWelcome } = useWelcomeBack(board);
+
+  // Completion flash — trigger when Powered card count increases
+  const [poweredFlash, setPoweredFlash] = useState(false);
+  const prevPoweredCountRef = useRef<number | null>(null);
+  const poweredCount = board.cards.filter((c) => c.status === STATUS.POWERED).length;
+
+  useEffect(() => {
+    const shouldFlash =
+      prevPoweredCountRef.current !== null && poweredCount > prevPoweredCountRef.current;
+    prevPoweredCountRef.current = poweredCount;
+
+    if (shouldFlash) {
+      const start = setTimeout(() => setPoweredFlash(true), 0);
+      const end = setTimeout(() => setPoweredFlash(false), 1000);
+      return () => {
+        clearTimeout(start);
+        clearTimeout(end);
+      };
+    }
+  }, [poweredCount]);
+
+  // Badge API — show Live card count on PWA icon
+  const liveCount = board.cards.filter((c) => c.status === STATUS.LIVE).length;
+  useEffect(() => {
+    if (navigator.setAppBadge) {
+      if (liveCount > 0) {
+        navigator.setAppBadge(liveCount).catch(() => {});
+      } else {
+        navigator.clearAppBadge?.().catch(() => {});
+      }
+    }
+  }, [liveCount]);
+
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
   const [newCard, setNewCard] = useState<OhmCard | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -134,8 +228,6 @@ export function Board() {
   const [searchFilter, setSearchFilter] = useState('');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
-
-  const liveCapacity = getLiveCapacity(board);
 
   const filteredCards = (status: ColumnStatus) => {
     let cards = getColumnCards(board, status);
@@ -227,6 +319,42 @@ export function Board() {
             className="font-display text-xs uppercase tracking-wider text-ohm-spark transition-colors hover:text-ohm-spark/80"
           >
             Reconnect
+          </button>
+        </div>
+      )}
+
+      {/* Welcome-back summary */}
+      {welcomeBack && (
+        <div className="flex items-center justify-between border-b border-ohm-border bg-ohm-surface px-4 py-2">
+          <div className="flex items-center gap-3 font-body text-xs text-ohm-muted">
+            <Zap size={14} className="shrink-0 text-ohm-spark" />
+            <span>
+              Welcome back!{' '}
+              <span className="text-ohm-charging">{welcomeBack.charging} charging</span>
+              {welcomeBack.live > 0 && (
+                <>
+                  , <span className="text-ohm-live">{welcomeBack.live} live</span>
+                </>
+              )}
+              {welcomeBack.grounded > 0 && (
+                <>
+                  , <span className="text-ohm-grounded">{welcomeBack.grounded} grounded</span>
+                </>
+              )}
+              {welcomeBack.powered > 0 && (
+                <>
+                  , <span className="text-ohm-powered">{welcomeBack.powered} powered</span>
+                </>
+              )}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={dismissWelcome}
+            className="shrink-0 text-ohm-muted hover:text-ohm-text"
+            aria-label="Dismiss welcome summary"
+          >
+            <X size={14} />
           </button>
         </div>
       )}
@@ -351,20 +479,38 @@ export function Board() {
       </div>
 
       {/* Board */}
-      <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
-        <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
-          {COLUMNS.map((col, index) => (
-            <Column
-              key={index}
-              column={col}
-              cards={filteredCards(index as ColumnStatus)}
-              onCardTap={setSelectedCard}
-              capacity={index === STATUS.LIVE ? liveCapacity : undefined}
-              defaultExpanded={index === STATUS.LIVE}
-            />
-          ))}
-        </div>
-      </main>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
+          <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
+            {COLUMNS.map((col, index) => {
+              const status = index as ColumnStatus;
+              return (
+                <Column
+                  key={index}
+                  column={col}
+                  cards={filteredCards(status)}
+                  onCardTap={setSelectedCard}
+                  capacity={getColumnCapacity(board, status) ?? undefined}
+                  defaultExpanded={index === STATUS.LIVE}
+                  flash={index === STATUS.POWERED ? poweredFlash : undefined}
+                />
+              );
+            })}
+          </div>
+        </main>
+        <DragOverlay>
+          {draggingCard && (
+            <div className="rounded-lg border border-ohm-border bg-ohm-surface p-3 shadow-xl">
+              <p className="font-body text-sm font-medium text-ohm-text">{draggingCard.title}</p>
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
 
       {/* Card detail / new card modal */}
       {activeCard && (
@@ -409,7 +555,11 @@ export function Board() {
         categories={board.categories}
         onAddCategory={addCategory}
         onRemoveCategory={removeCategory}
-        capacity={board.liveCapacity}
+        capacities={{
+          charging: board.chargingCapacity,
+          live: board.liveCapacity,
+          grounded: board.groundedCapacity,
+        }}
         onSetCapacity={setCapacity}
         driveAvailable={driveAvailable}
         driveConnected={driveConnected}
