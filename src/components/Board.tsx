@@ -41,7 +41,7 @@ function CategoryFilter({
   }, []);
 
   return (
-    <div ref={wrapperRef} className="relative flex flex-wrap items-center gap-1">
+    <div ref={wrapperRef} className="relative flex flex-wrap items-center gap-1.5">
       {selected.map((cat) => (
         <span
           key={cat}
@@ -69,8 +69,8 @@ function CategoryFilter({
                 setOpen(true);
               }}
               onFocus={() => setOpen(true)}
-              placeholder={selected.length ? '+' : 'Category...'}
-              className={`${selected.length ? 'w-12' : 'w-24'} rounded-full border border-ohm-border bg-transparent py-1 pl-6 pr-2 font-body text-[11px] text-ohm-text placeholder:text-ohm-muted/40 focus:outline-none focus:ring-1 focus:ring-ohm-text/10`}
+              placeholder={selected.length ? '+ Add' : 'Category...'}
+              className={`${selected.length ? 'w-16' : 'w-24'} rounded-full border border-ohm-border bg-transparent py-1 pl-6 pr-2 font-body text-[11px] text-ohm-text placeholder:text-ohm-muted/40 focus:outline-none focus:ring-1 focus:ring-ohm-text/10`}
             />
           </div>
           {open && matches.length > 0 && (
