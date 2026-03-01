@@ -51,7 +51,9 @@ export function getColumnCards(board: OhmBoard, status: ColumnStatus): OhmCard[]
 }
 
 /** Capacity field names indexed by ColumnStatus (Powered has no capacity) */
-const CAPACITY_FIELDS: readonly (keyof OhmBoard | null)[] = [
+type CapacityField = 'chargingCapacity' | 'liveCapacity' | 'groundedCapacity';
+
+const CAPACITY_FIELDS: readonly (CapacityField | null)[] = [
   'chargingCapacity', // STATUS.CHARGING = 0
   'liveCapacity', // STATUS.LIVE = 1
   'groundedCapacity', // STATUS.GROUNDED = 2
@@ -68,7 +70,7 @@ export function getColumnCapacity(
   const used = board.cards
     .filter((c) => c.status === status)
     .reduce((sum, c) => sum + ENERGY_SEGMENTS[c.energy]!, 0);
-  return { used, total: board[field] as number };
+  return { used, total: board[field] };
 }
 
 /** Update a card in the board immutably */
