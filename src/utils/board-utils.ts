@@ -51,14 +51,12 @@ export function getColumnCards(board: OhmBoard, status: ColumnStatus): OhmCard[]
 }
 
 /** Capacity field names indexed by ColumnStatus (Powered has no capacity) */
-type CapacityField = 'chargingCapacity' | 'liveCapacity' | 'groundedCapacity';
-
-const CAPACITY_FIELDS: readonly (CapacityField | null)[] = [
+const CAPACITY_FIELDS = [
   'chargingCapacity', // STATUS.CHARGING = 0
   'liveCapacity', // STATUS.LIVE = 1
   'groundedCapacity', // STATUS.GROUNDED = 2
   null, // STATUS.POWERED = 3 (no capacity)
-];
+] as const satisfies readonly (keyof OhmBoard | null)[];
 
 /** Get column capacity usage in energy segments. Returns null for columns without capacity. */
 export function getColumnCapacity(
