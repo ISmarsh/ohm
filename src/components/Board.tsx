@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Zap, Settings, Plus } from 'lucide-react';
-import type { OhmCard } from '../types/board';
-import { COLUMNS } from '../types/board';
+import { Zap, Settings, Plus, CloudOff } from 'lucide-react';
+import type { OhmCard, EnergyTag, ColumnStatus } from '../types/board';
+import { COLUMNS, ENERGY_CONFIG } from '../types/board';
 import { getColumnCards, isOverWipLimit } from '../utils/board-utils';
 import { useBoard } from '../hooks/useBoard';
 import { useDriveSync } from '../hooks/useDriveSync';
@@ -24,8 +24,16 @@ export function Board() {
     replaceBoard,
   } = useBoard();
 
-  const { driveAvailable, driveConnected, syncStatus, connect, disconnect, manualSync, queueSync } =
-    useDriveSync(board, replaceBoard);
+  const {
+    driveAvailable,
+    driveConnected,
+    syncStatus,
+    needsReconnect,
+    connect,
+    disconnect,
+    manualSync,
+    queueSync,
+  } = useDriveSync(board, replaceBoard);
 
   // Queue Drive sync whenever board changes
   useEffect(() => {
@@ -35,8 +43,19 @@ export function Board() {
   const [captureOpen, setCaptureOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [energyFilter, setEnergyFilter] = useState<EnergyTag | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   const wipWarning = isOverWipLimit(board);
+
+  const filteredCards = (status: ColumnStatus) => {
+    let cards = getColumnCards(board, status);
+    if (energyFilter) cards = cards.filter((c) => c.energy === energyFilter);
+    if (categoryFilter) cards = cards.filter((c) => c.category === categoryFilter);
+    return cards;
+  };
+
+  const hasActiveFilter = energyFilter !== null || categoryFilter !== null;
 
   return (
     <div className="flex min-h-screen flex-col bg-ohm-bg">
@@ -80,6 +99,79 @@ export function Board() {
         </div>
       </header>
 
+      {/* Reconnect banner */}
+      {needsReconnect && !driveConnected && (
+        <div className="flex items-center justify-center gap-3 border-b border-ohm-border bg-ohm-surface px-4 py-2">
+          <CloudOff size={14} className="text-ohm-muted" />
+          <span className="font-body text-xs text-ohm-muted">
+            This board was previously synced with Google Drive.
+          </span>
+          <button
+            type="button"
+            onClick={connect}
+            className="font-display text-xs uppercase tracking-wider text-ohm-spark transition-colors hover:text-ohm-spark/80"
+          >
+            Reconnect
+          </button>
+        </div>
+      )}
+
+      {/* Filter bar */}
+      {(board.categories.length > 0 || true) && (
+        <div className="flex items-center gap-2 overflow-x-auto border-b border-ohm-border px-4 py-2">
+          <span className="shrink-0 font-display text-[10px] uppercase tracking-widest text-ohm-muted">
+            Filter
+          </span>
+          {(
+            Object.entries(ENERGY_CONFIG) as [EnergyTag, { label: string; icon: typeof Zap }][]
+          ).map(([key, config]) => {
+            const Icon = config.icon;
+            const active = energyFilter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setEnergyFilter(active ? null : key)}
+                className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-body text-[11px] transition-colors ${
+                  active ? 'bg-ohm-text/10 text-ohm-text' : 'text-ohm-muted hover:text-ohm-text'
+                }`}
+              >
+                <Icon size={12} />
+                {config.label}
+              </button>
+            );
+          })}
+          {board.categories.length > 0 && <div className="mx-1 h-3 w-px shrink-0 bg-ohm-border" />}
+          {board.categories.map((cat) => {
+            const active = categoryFilter === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setCategoryFilter(active ? null : cat)}
+                className={`shrink-0 rounded-full px-2.5 py-1 font-body text-[11px] transition-colors ${
+                  active ? 'bg-ohm-text/10 text-ohm-text' : 'text-ohm-muted hover:text-ohm-text'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
+          {hasActiveFilter && (
+            <button
+              type="button"
+              onClick={() => {
+                setEnergyFilter(null);
+                setCategoryFilter(null);
+              }}
+              className="shrink-0 font-display text-[10px] uppercase tracking-wider text-ohm-muted hover:text-ohm-text"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Board */}
       <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
         <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
@@ -87,7 +179,7 @@ export function Board() {
             <Column
               key={col.status}
               column={col}
-              cards={getColumnCards(board, col.status)}
+              cards={filteredCards(col.status)}
               onCardTap={setSelectedCard}
               wipWarning={col.status === 'live' && wipWarning}
               defaultExpanded={col.status === 'live'}
@@ -99,8 +191,9 @@ export function Board() {
       {/* Quick capture modal */}
       <QuickCapture
         isOpen={captureOpen}
-        onAdd={(title) => quickAdd(title)}
+        onAdd={(title, overrides) => quickAdd(title, overrides)}
         onClose={() => setCaptureOpen(false)}
+        categories={board.categories}
       />
 
       {/* Card detail modal */}

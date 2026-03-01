@@ -29,12 +29,18 @@ export function useBoard() {
   // Auto-save on changes
   useDebouncedSave(board);
 
-  /** Quick-add a card to Spark (minimal friction) */
-  const quickAdd = useCallback((title: string) => {
-    const card = createCard(title);
-    setBoard((prev) => addCardToBoard(prev, card));
-    return card;
-  }, []);
+  /** Quick-add a card to Charging (minimal friction, optional details) */
+  const quickAdd = useCallback(
+    (
+      title: string,
+      overrides?: Partial<Pick<OhmCard, 'description' | 'energy' | 'category' | 'nextStep'>>,
+    ) => {
+      const card = createCard(title, overrides);
+      setBoard((prev) => addCardToBoard(prev, card));
+      return card;
+    },
+    [],
+  );
 
   /** Move a card to a new status */
   const move = useCallback((cardId: string, newStatus: ColumnStatus, whereILeftOff?: string) => {
