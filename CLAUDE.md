@@ -31,3 +31,6 @@ A kanban app using an electrical metaphor to map energy cycles into a visual wor
 - Debounced localStorage saves (500ms)
 - Dark theme with electrical color accents (amber, orange, red, indigo, green)
 - Mobile-first responsive layout
+- Contextual field visibility and status transitions per card state
+- Filter bar: energy chips (always visible), category autocomplete + search (expandable on mobile, inline on desktop)
+- Drive reconnect banner when `ohm-drive-synced` localStorage flag is set but not connected

@@ -13,11 +13,12 @@ Ohm uses an electrical metaphor to map ADHD energy cycles into a visual workflow
 
 ## Philosophy
 
-- **Capture fast** — Quick Spark accepts just a title. Think later.
+- **Capture fast** — Quick Spark captures a title plus optional details. Think later.
 - **Always know what's next** — Every card has a "Next Step" field.
 - **Don't abandon, ground** — Moving to Grounded prompts you to leave context for future you.
 - **Match energy to tasks** — Energy tags (Quick Win / Medium / Deep Focus) let you filter by current state.
 - **Limit WIP** — Soft limit on Live column prevents overcommitting during hyperfocus bursts.
+- **Contextual UI** — Only relevant fields and status transitions are shown per card state.
 
 ## Tech Stack
 
@@ -38,8 +39,10 @@ npm run dev
 
 - [x] PWA support (installable on mobile)
 - [x] Google Drive sync (cross-device persistence)
-- [ ] Energy-based filtering
-- [ ] Quick wins view (low-energy day mode)
+- [x] Energy/category/search filtering
+- [x] Contextual fields and status transitions
+- [x] Expanded Quick Spark with optional details
+- [x] Drive reconnect prompt for previously synced boards
 - [ ] Card archive (Powered cards older than 30 days)
 - [ ] Keyboard shortcuts
 - [ ] Analytics (completion rates, time-in-column)
