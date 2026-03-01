@@ -58,11 +58,10 @@ export function initDriveAuth(): boolean {
 }
 
 /**
- * Request an access token.
- * @param silent — when true, skip the consent prompt (re-auth with existing grant).
- *                 Falls back to null if the user must re-consent.
+ * Request an access token (requires user gesture — browser blocks popups otherwise).
+ * @param prompt — '' skips consent if grant exists, 'consent' always prompts.
  */
-export function requestAccessToken(silent = false): Promise<string | null> {
+export function requestAccessToken(prompt: '' | 'consent' = 'consent'): Promise<string | null> {
   return new Promise((resolve) => {
     if (!tokenClient) {
       resolve(null);
@@ -71,7 +70,7 @@ export function requestAccessToken(silent = false): Promise<string | null> {
 
     tokenClient.callback = (response) => {
       if (response.error) {
-        if (!silent) {
+        if (prompt === 'consent') {
           console.error('[Ohm] Drive auth error:', response.error_description);
         }
         accessToken = null;
@@ -83,7 +82,7 @@ export function requestAccessToken(silent = false): Promise<string | null> {
       resolve(accessToken);
     };
 
-    tokenClient.requestAccessToken({ prompt: silent ? '' : 'consent' });
+    tokenClient.requestAccessToken({ prompt });
   });
 }
 

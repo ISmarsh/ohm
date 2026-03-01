@@ -36,13 +36,13 @@ export function Column({
       <div
         className={`sticky top-0 z-10 mb-1 flex w-full items-center rounded-lg bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm ${flash ? 'animate-completion-flash' : ''}`}
       >
-        {/* Mobile toggle button */}
+        {/* Mobile toggle button — full width for easy tapping */}
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
           aria-expanded={expanded}
           aria-controls={`column-cards-${column.label}`}
-          className="flex items-center gap-2 md:hidden"
+          className="flex w-full items-center gap-2 md:hidden"
         >
           <span className="text-ohm-muted">
             {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -52,23 +52,31 @@ export function Column({
             {column.label}
           </span>
           <span className="ml-1 font-body text-[10px] text-ohm-muted">{cards.length}</span>
+          {capacity && (
+            <span
+              className={`ml-auto shrink-0 font-display text-[10px] font-bold ${capacity.used > capacity.total ? 'animate-pulse' : ''}`}
+              style={{ color: capacityColor(capacity.used, capacity.total) }}
+            >
+              {capacity.used}/{capacity.total}
+            </span>
+          )}
         </button>
         {/* Desktop static header */}
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 md:flex md:w-full">
           <div className={`h-2 w-2 rounded-full bg-${column.color}`} />
           <span className="font-display text-xs font-bold uppercase tracking-widest text-ohm-text">
             {column.label}
           </span>
           <span className="ml-1 font-body text-[10px] text-ohm-muted">{cards.length}</span>
+          {capacity && (
+            <span
+              className={`ml-auto shrink-0 font-display text-[10px] font-bold ${capacity.used > capacity.total ? 'animate-pulse' : ''}`}
+              style={{ color: capacityColor(capacity.used, capacity.total) }}
+            >
+              {capacity.used}/{capacity.total}
+            </span>
+          )}
         </div>
-        {capacity && (
-          <span
-            className={`ml-auto shrink-0 font-display text-[10px] font-bold ${capacity.used > capacity.total ? 'animate-pulse' : ''}`}
-            style={{ color: capacityColor(capacity.used, capacity.total) }}
-          >
-            {capacity.used}/{capacity.total}
-          </span>
-        )}
       </div>
 
       {/* Cards — hidden on mobile when collapsed, always visible on md+ */}

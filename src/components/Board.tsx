@@ -170,6 +170,10 @@ export function Board() {
     [board, reorderBatch],
   );
 
+  const handleDragCancel = useCallback(() => {
+    setDraggingCard(null);
+  }, []);
+
   const {
     driveAvailable,
     driveConnected,
@@ -207,18 +211,6 @@ export function Board() {
       };
     }
   }, [poweredCount]);
-
-  // Badge API — show Live card count on PWA icon
-  const liveCount = board.cards.filter((c) => c.status === STATUS.LIVE).length;
-  useEffect(() => {
-    if (navigator.setAppBadge) {
-      if (liveCount > 0) {
-        navigator.setAppBadge(liveCount).catch(() => {});
-      } else {
-        navigator.clearAppBadge?.().catch(() => {});
-      }
-    }
-  }, [liveCount]);
 
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
   const [newCard, setNewCard] = useState<OhmCard | null>(null);
@@ -484,6 +476,7 @@ export function Board() {
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
       >
         <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
           <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
