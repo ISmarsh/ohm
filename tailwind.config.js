@@ -14,7 +14,7 @@ export default {
           text: '#e0e0e8',
           // Column accent colors — electrical theme
           spark: '#fbbf24', // amber/yellow — the initial flash
-          charge: '#f97316', // orange — building energy
+          charging: '#f97316', // orange — building energy
           live: '#ef4444', // red — hot/active
           grounded: '#6366f1', // indigo — calm/stable
           powered: '#22c55e', // green — complete/success

@@ -5,17 +5,17 @@ export function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/** Create a new card with minimal input (fast capture for Spark) */
+/** Create a new card with minimal input (quick capture) */
 export function createCard(
   title: string,
-  overrides?: Partial<Pick<OhmCard, 'energy' | 'category' | 'nextStep'>>,
+  overrides?: Partial<Pick<OhmCard, 'description' | 'energy' | 'category' | 'nextStep'>>,
 ): OhmCard {
   const now = new Date().toISOString();
   return {
     id: generateId(),
     title,
-    description: '',
-    status: 'spark',
+    description: overrides?.description ?? '',
+    status: 'charging',
     nextStep: overrides?.nextStep ?? '',
     whereILeftOff: '',
     energy: overrides?.energy ?? 'medium',
@@ -26,14 +26,21 @@ export function createCard(
   };
 }
 
-/** Move a card to a new column */
+/** Move a card to a new column, applying transition side effects */
 export function moveCard(card: OhmCard, newStatus: ColumnStatus, whereILeftOff?: string): OhmCard {
   return {
     ...card,
     status: newStatus,
     updatedAt: new Date().toISOString(),
+    // Set whereILeftOff when grounding, clear when leaving grounded
     whereILeftOff:
-      newStatus === 'grounded' && whereILeftOff !== undefined ? whereILeftOff : card.whereILeftOff,
+      newStatus === 'grounded'
+        ? whereILeftOff !== undefined
+          ? whereILeftOff
+          : card.whereILeftOff
+        : '',
+    // Clear nextStep when completing
+    nextStep: newStatus === 'powered' ? '' : card.nextStep,
   };
 }
 

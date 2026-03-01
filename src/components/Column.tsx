@@ -45,7 +45,7 @@ export function Column({
         </h2>
         <span className="ml-1 font-body text-[10px] text-ohm-muted">{cards.length}</span>
         {wipWarning && (
-          <span className="ml-auto animate-pulse font-display text-[10px] font-bold text-ohm-live">
+          <span className="ml-auto shrink-0 animate-pulse font-display text-[10px] font-bold text-ohm-live">
             WIP LIMIT
           </span>
         )}

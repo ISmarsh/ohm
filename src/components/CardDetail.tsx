@@ -53,10 +53,35 @@ export function CardDetail({
   };
 
   const handleStatusChange = (newStatus: ColumnStatus) => {
-    setEditing((prev) => ({ ...prev, status: newStatus }));
+    setEditing((prev) => {
+      const updated = { ...prev, status: newStatus };
+      // Clear whereILeftOff when leaving grounded
+      if (prev.status === 'grounded' && newStatus !== 'grounded') {
+        updated.whereILeftOff = '';
+      }
+      // Clear nextStep when completing
+      if (newStatus === 'powered') {
+        updated.nextStep = '';
+      }
+      return updated;
+    });
   };
 
   const currentColumn = COLUMNS.find((c) => c.status === editing.status);
+
+  // Contextual transitions — only show valid moves from current status
+  const validTransitions: Record<ColumnStatus, ColumnStatus[]> = {
+    charging: ['live'],
+    live: ['grounded', 'powered'],
+    grounded: ['live'],
+    powered: ['charging'],
+  };
+  const availableTransitions = validTransitions[editing.status] ?? [];
+
+  // Conditional field visibility
+  const showNextStep = editing.status === 'charging' || editing.status === 'live';
+  const showWhereILeftOff = editing.status === 'grounded';
+  const showEnergy = editing.status === 'charging' || editing.status === 'live';
 
   return (
     <Dialog
@@ -119,74 +144,80 @@ export function CardDetail({
           />
         </div>
 
-        {/* Next Step */}
-        <div className="mb-3">
-          <label
-            htmlFor="card-next-step"
-            className="mb-1 flex items-center gap-1 font-display text-[10px] uppercase tracking-widest text-ohm-muted"
-          >
-            <ArrowRight size={10} />
-            Next Step
-          </label>
-          <Input
-            id="card-next-step"
-            value={editing.nextStep}
-            onChange={(e) => setEditing((prev) => ({ ...prev, nextStep: e.target.value }))}
-            placeholder="What's the one concrete action?"
-            autoComplete="off"
-            className="border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
-          />
-        </div>
-
-        {/* Where I Left Off */}
-        <div className="mb-3">
-          <label
-            htmlFor="card-where-left-off"
-            className="mb-1 flex items-center gap-1 font-display text-[10px] uppercase tracking-widest text-ohm-muted"
-          >
-            <MapPin size={10} />
-            Where I Left Off
-          </label>
-          <Textarea
-            id="card-where-left-off"
-            value={editing.whereILeftOff}
-            onChange={(e) => setEditing((prev) => ({ ...prev, whereILeftOff: e.target.value }))}
-            placeholder="Context for future you..."
-            autoComplete="off"
-            rows={2}
-            className="resize-none border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
-          />
-        </div>
-
-        {/* Energy tag */}
-        <div className="mb-3">
-          <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-            Energy Level
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {(
-              Object.entries(ENERGY_CONFIG) as [EnergyTag, { label: string; icon: LucideIcon }][]
-            ).map(([key, config]) => {
-              const Icon = config.icon;
-              return (
-                <Button
-                  key={key}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditing((prev) => ({ ...prev, energy: key }))}
-                  className={`gap-1.5 font-body text-xs ${
-                    editing.energy === key
-                      ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
-                      : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
-                  }`}
-                >
-                  <Icon size={14} />
-                  <span>{config.label}</span>
-                </Button>
-              );
-            })}
+        {/* Next Step — visible for charging and live */}
+        {showNextStep && (
+          <div className="mb-3">
+            <label
+              htmlFor="card-next-step"
+              className="mb-1 flex items-center gap-1 font-display text-[10px] uppercase tracking-widest text-ohm-muted"
+            >
+              <ArrowRight size={10} />
+              Next Step
+            </label>
+            <Input
+              id="card-next-step"
+              value={editing.nextStep}
+              onChange={(e) => setEditing((prev) => ({ ...prev, nextStep: e.target.value }))}
+              placeholder="What's the one concrete action?"
+              autoComplete="off"
+              className="border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
+            />
           </div>
-        </div>
+        )}
+
+        {/* Where I Left Off — visible only for grounded */}
+        {showWhereILeftOff && (
+          <div className="mb-3">
+            <label
+              htmlFor="card-where-left-off"
+              className="mb-1 flex items-center gap-1 font-display text-[10px] uppercase tracking-widest text-ohm-muted"
+            >
+              <MapPin size={10} />
+              Where I Left Off
+            </label>
+            <Textarea
+              id="card-where-left-off"
+              value={editing.whereILeftOff}
+              onChange={(e) => setEditing((prev) => ({ ...prev, whereILeftOff: e.target.value }))}
+              placeholder="Context for future you..."
+              autoComplete="off"
+              rows={2}
+              className="resize-none border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
+            />
+          </div>
+        )}
+
+        {/* Energy tag — visible for charging and live */}
+        {showEnergy && (
+          <div className="mb-3">
+            <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
+              Energy Level
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {(
+                Object.entries(ENERGY_CONFIG) as [EnergyTag, { label: string; icon: LucideIcon }][]
+              ).map(([key, config]) => {
+                const Icon = config.icon;
+                return (
+                  <Button
+                    key={key}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditing((prev) => ({ ...prev, energy: key }))}
+                    className={`gap-1.5 font-body text-xs ${
+                      editing.energy === key
+                        ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
+                        : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    <span>{config.label}</span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Category */}
         <div className="mb-4">
@@ -232,32 +263,30 @@ export function CardDetail({
           </div>
         </div>
 
-        {/* Status (move between columns) */}
-        <div className="mb-5">
-          <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-            Status
-          </span>
-          <div className="flex justify-between gap-2">
-            {(['grounded', 'live', 'powered'] as const).map((status) => {
-              const col = COLUMNS.find((c) => c.status === status)!;
-              return (
-                <Button
-                  key={status}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleStatusChange(status)}
-                  className={`font-body text-xs uppercase ${
-                    editing.status === status
-                      ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
-                      : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
-                  }`}
-                >
-                  {col.label}
-                </Button>
-              );
-            })}
+        {/* Status — contextual transitions only */}
+        {availableTransitions.length > 0 && (
+          <div className="mb-5">
+            <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
+              Move to
+            </span>
+            <div className="flex gap-2">
+              {availableTransitions.map((status) => {
+                const col = COLUMNS.find((c) => c.status === status)!;
+                return (
+                  <Button
+                    key={status}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStatusChange(status)}
+                    className="border-ohm-border bg-ohm-bg font-body text-xs uppercase text-ohm-muted hover:text-ohm-text"
+                  >
+                    {col.label}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
         <div className="flex items-center justify-between border-t border-ohm-border pt-3">
