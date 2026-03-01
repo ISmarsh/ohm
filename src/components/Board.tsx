@@ -14,20 +14,21 @@ import { SyncIndicator } from './SyncIndicator';
 
 function CategoryFilter({
   categories,
-  value,
-  onChange,
+  selected,
+  onToggle,
 }: {
   categories: string[];
-  value: string | null;
-  onChange: (cat: string | null) => void;
+  selected: string[];
+  onToggle: (cat: string) => void;
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  const available = categories.filter((c) => !selected.includes(c));
   const matches = query
-    ? categories.filter((c) => c.toLowerCase().includes(query.toLowerCase()))
-    : categories;
+    ? available.filter((c) => c.toLowerCase().includes(query.toLowerCase()))
+    : available;
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -39,54 +40,57 @@ function CategoryFilter({
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  if (value) {
-    return (
-      <span className="flex items-center gap-1 rounded-full bg-ohm-text/10 px-2 py-0.5 font-body text-[11px] text-ohm-text">
-        <Tag size={10} />
-        {value}
-        <button
-          type="button"
-          onClick={() => onChange(null)}
-          className="ml-0.5 text-ohm-muted hover:text-ohm-text"
-        >
-          <X size={10} />
-        </button>
-      </span>
-    );
-  }
-
   return (
-    <div ref={wrapperRef} className="relative">
-      <div className="relative flex items-center">
-        <Tag size={10} className="absolute left-2 text-ohm-muted" />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          placeholder="Category..."
-          className="w-28 rounded-full border border-ohm-border bg-transparent py-1 pl-6 pr-2 font-body text-[11px] text-ohm-text placeholder:text-ohm-muted/40 focus:outline-none focus:ring-1 focus:ring-ohm-text/10"
-        />
-      </div>
-      {open && matches.length > 0 && (
-        <div className="absolute left-0 top-full z-50 mt-1 max-h-40 w-36 overflow-y-auto rounded-lg border border-ohm-border bg-ohm-surface shadow-lg">
-          {matches.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => {
-                onChange(cat);
-                setQuery('');
-                setOpen(false);
+    <div ref={wrapperRef} className="relative flex flex-wrap items-center gap-1">
+      {selected.map((cat) => (
+        <span
+          key={cat}
+          className="flex items-center gap-1 rounded-full bg-ohm-text/10 px-2 py-0.5 font-body text-[11px] text-ohm-text"
+        >
+          {cat}
+          <button
+            type="button"
+            onClick={() => onToggle(cat)}
+            className="text-ohm-muted hover:text-ohm-text"
+          >
+            <X size={10} />
+          </button>
+        </span>
+      ))}
+      {available.length > 0 && (
+        <div className="relative">
+          <div className="relative flex items-center">
+            <Tag size={10} className="absolute left-2 text-ohm-muted" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setOpen(true);
               }}
-              className="block w-full px-3 py-1.5 text-left font-body text-[11px] text-ohm-muted transition-colors hover:bg-ohm-text/5 hover:text-ohm-text"
-            >
-              {cat}
-            </button>
-          ))}
+              onFocus={() => setOpen(true)}
+              placeholder={selected.length ? '+' : 'Category...'}
+              className={`${selected.length ? 'w-12' : 'w-24'} rounded-full border border-ohm-border bg-transparent py-1 pl-6 pr-2 font-body text-[11px] text-ohm-text placeholder:text-ohm-muted/40 focus:outline-none focus:ring-1 focus:ring-ohm-text/10`}
+            />
+          </div>
+          {open && matches.length > 0 && (
+            <div className="absolute left-0 top-full z-50 mt-1 max-h-40 w-36 overflow-y-auto rounded-lg border border-ohm-border bg-ohm-surface shadow-lg">
+              {matches.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    onToggle(cat);
+                    setQuery('');
+                    setOpen(false);
+                  }}
+                  className="block w-full px-3 py-1.5 text-left font-body text-[11px] text-ohm-muted transition-colors hover:bg-ohm-text/5 hover:text-ohm-text"
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -125,7 +129,7 @@ export function Board() {
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [energyFilter, setEnergyFilter] = useState<EnergyTag | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [searchFilter, setSearchFilter] = useState('');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -135,7 +139,7 @@ export function Board() {
   const filteredCards = (status: ColumnStatus) => {
     let cards = getColumnCards(board, status);
     if (energyFilter) cards = cards.filter((c) => c.energy === energyFilter);
-    if (categoryFilter) cards = cards.filter((c) => c.category === categoryFilter);
+    if (categoryFilter.length > 0) cards = cards.filter((c) => categoryFilter.includes(c.category));
     if (searchFilter) {
       const q = searchFilter.toLowerCase();
       cards = cards.filter(
@@ -145,14 +149,19 @@ export function Board() {
     return cards;
   };
 
-  const hasActiveFilter = energyFilter !== null || categoryFilter !== null || searchFilter !== '';
-  const hasAdvancedFilter = categoryFilter !== null || searchFilter !== '';
-  const activeFilterCount =
-    (energyFilter ? 1 : 0) + (categoryFilter ? 1 : 0) + (searchFilter ? 1 : 0);
+  const hasActiveFilter = energyFilter !== null || categoryFilter.length > 0 || searchFilter !== '';
+  const hasAdvancedFilter = categoryFilter.length > 0 || searchFilter !== '';
+  const advancedFilterCount = categoryFilter.length + (searchFilter ? 1 : 0);
+
+  const toggleCategory = (cat: string) => {
+    setCategoryFilter((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
+    );
+  };
 
   const resetFilters = () => {
     setEnergyFilter(null);
-    setCategoryFilter(null);
+    setCategoryFilter([]);
     setSearchFilter('');
   };
 
@@ -244,8 +253,8 @@ export function Board() {
           <div className="hidden items-center gap-2 md:flex">
             <CategoryFilter
               categories={board.categories}
-              value={categoryFilter}
-              onChange={setCategoryFilter}
+              selected={categoryFilter}
+              onToggle={toggleCategory}
             />
             <div className="mx-1 h-3 w-px shrink-0 bg-ohm-border" />
             <div className="relative flex items-center">
@@ -276,8 +285,8 @@ export function Board() {
           {/* Mobile: active advanced filter indicator (when collapsed) */}
           {!filtersExpanded && hasAdvancedFilter && (
             <span className="flex items-center gap-1 rounded-full bg-ohm-text/10 px-2 py-0.5 font-body text-[10px] text-ohm-text md:hidden">
-              +{activeFilterCount - (energyFilter ? 1 : 0)} filter
-              {activeFilterCount - (energyFilter ? 1 : 0) > 1 ? 's' : ''}
+              +{advancedFilterCount - (energyFilter ? 1 : 0)} filter
+              {advancedFilterCount - (energyFilter ? 1 : 0) > 1 ? 's' : ''}
             </span>
           )}
 
@@ -308,8 +317,8 @@ export function Board() {
           <div className="mt-2 flex flex-col gap-2 md:hidden">
             <CategoryFilter
               categories={board.categories}
-              value={categoryFilter}
-              onChange={setCategoryFilter}
+              selected={categoryFilter}
+              onToggle={toggleCategory}
             />
             <div className="relative flex items-center">
               <Search size={12} className="absolute left-2 text-ohm-muted" />
