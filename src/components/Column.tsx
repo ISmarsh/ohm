@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { OhmCard, OhmColumn as OhmColumnType } from '../types/board';
 import { Card } from './Card';
 
@@ -9,6 +10,7 @@ interface ColumnProps {
   onCardTap: (card: OhmCard) => void;
   capacity?: { used: number; total: number };
   defaultExpanded?: boolean;
+  flash?: boolean;
 }
 
 /** Interpolate hue from green (120) through yellow (60) to red (0) */
@@ -24,13 +26,16 @@ export function Column({
   onCardTap,
   capacity,
   defaultExpanded = false,
+  flash,
 }: ColumnProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
     <div className="flex w-full min-w-0 flex-col rounded-xl md:w-auto md:flex-1">
       {/* Column header — mobile: button toggle, desktop: static */}
-      <div className="sticky top-0 z-10 flex w-full items-center bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm">
+      <div
+        className={`sticky top-0 z-10 mb-1 flex w-full items-center rounded-lg bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm ${flash ? 'animate-completion-flash' : ''}`}
+      >
         {/* Mobile toggle button */}
         <button
           type="button"
@@ -67,19 +72,21 @@ export function Column({
       </div>
 
       {/* Cards — hidden on mobile when collapsed, always visible on md+ */}
-      <div
-        id={`column-cards-${column.label}`}
-        className={`flex-col gap-2 px-2 pb-4 ${expanded ? 'flex min-h-[60px]' : 'hidden'} md:flex md:min-h-[100px]`}
-      >
-        {cards.map((card) => (
-          <Card key={card.id} card={card} onTap={onCardTap} />
-        ))}
-        {cards.length === 0 && (
-          <div className="py-8 text-center font-body text-xs italic text-ohm-muted/40">
-            {column.description}
-          </div>
-        )}
-      </div>
+      <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+        <div
+          id={`column-cards-${column.label}`}
+          className={`flex-col gap-2 px-2 pb-4 ${expanded ? 'flex min-h-[60px]' : 'hidden'} md:flex md:min-h-[100px]`}
+        >
+          {cards.map((card) => (
+            <Card key={card.id} card={card} onTap={onCardTap} />
+          ))}
+          {cards.length === 0 && (
+            <div className="py-8 text-center font-body text-xs italic text-ohm-muted/40">
+              {column.description}
+            </div>
+          )}
+        </div>
+      </SortableContext>
     </div>
   );
 }

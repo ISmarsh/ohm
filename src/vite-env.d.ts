@@ -8,3 +8,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+interface Navigator {
+  setAppBadge?(count: number): Promise<void>;
+  clearAppBadge?(): Promise<void>;
+}

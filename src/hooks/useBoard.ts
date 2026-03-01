@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { OhmBoard, OhmCard, ColumnStatus } from '../types/board';
+import { STATUS } from '../types/board';
 import { loadFromLocal, saveToLocal } from '../utils/storage';
 import {
   createCard,
@@ -75,9 +76,38 @@ export function useBoard() {
     });
   }, []);
 
-  /** Update Live column capacity (energy segments) */
-  const setCapacity = useCallback((capacity: number) => {
-    setBoard((prev) => ({ ...prev, liveCapacity: capacity, lastSaved: new Date().toISOString() }));
+  /** Reorder multiple cards at once (assign sequential sort orders) */
+  const reorderBatch = useCallback((orderedIds: string[], draggedId: string) => {
+    setBoard((prev) => {
+      const now = new Date().toISOString();
+      return {
+        ...prev,
+        cards: prev.cards.map((c) => {
+          const newIndex = orderedIds.indexOf(c.id);
+          if (newIndex === -1) return c;
+          return {
+            ...c,
+            sortOrder: newIndex,
+            updatedAt: c.id === draggedId ? now : c.updatedAt,
+          };
+        }),
+        lastSaved: now,
+      };
+    });
+  }, []);
+
+  /** Update column capacity (energy segments) */
+  const setCapacity = useCallback((status: ColumnStatus, capacity: number) => {
+    const field =
+      status === STATUS.CHARGING
+        ? 'chargingCapacity'
+        : status === STATUS.LIVE
+          ? 'liveCapacity'
+          : status === STATUS.GROUNDED
+            ? 'groundedCapacity'
+            : null;
+    if (!field) return;
+    setBoard((prev) => ({ ...prev, [field]: capacity, lastSaved: new Date().toISOString() }));
   }, []);
 
   /** Add a category to the board */
@@ -122,6 +152,7 @@ export function useBoard() {
     updateCard,
     deleteCard,
     reorder,
+    reorderBatch,
     setCapacity,
     addCategory,
     removeCategory,

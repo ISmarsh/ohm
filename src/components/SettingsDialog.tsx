@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Settings, X, Minus, Plus } from 'lucide-react';
+import type { ColumnStatus } from '../types/board';
+import { STATUS } from '../types/board';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -10,13 +12,29 @@ interface SettingsDialogProps {
   categories: string[];
   onAddCategory: (category: string) => void;
   onRemoveCategory: (category: string) => void;
-  capacity: number;
-  onSetCapacity: (capacity: number) => void;
+  capacities: { charging: number; live: number; grounded: number };
+  onSetCapacity: (status: ColumnStatus, capacity: number) => void;
   driveAvailable?: boolean;
   driveConnected?: boolean;
   onConnectDrive?: () => void;
   onDisconnectDrive?: () => void;
 }
+
+const CAPACITY_ROWS = [
+  {
+    label: 'Charging',
+    status: STATUS.CHARGING,
+    key: 'charging' as const,
+    color: 'text-ohm-charging',
+  },
+  { label: 'Live', status: STATUS.LIVE, key: 'live' as const, color: 'text-ohm-live' },
+  {
+    label: 'Grounded',
+    status: STATUS.GROUNDED,
+    key: 'grounded' as const,
+    color: 'text-ohm-grounded',
+  },
+];
 
 export function SettingsDialog({
   isOpen,
@@ -24,7 +42,7 @@ export function SettingsDialog({
   categories,
   onAddCategory,
   onRemoveCategory,
-  capacity,
+  capacities,
   onSetCapacity,
   driveAvailable,
   driveConnected,
@@ -110,32 +128,42 @@ export function SettingsDialog({
         {/* Capacity */}
         <div>
           <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-            Live Energy Capacity
+            Energy Capacity
           </span>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onSetCapacity(Math.max(1, capacity - 1))}
-              disabled={capacity <= 1}
-              className="h-8 w-8 border-ohm-border text-ohm-muted hover:text-ohm-text"
-              aria-label="Decrease capacity"
-            >
-              <Minus size={14} />
-            </Button>
-            <span className="min-w-[2ch] text-center font-display text-lg font-bold text-ohm-text">
-              {capacity}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onSetCapacity(capacity + 1)}
-              className="h-8 w-8 border-ohm-border text-ohm-muted hover:text-ohm-text"
-              aria-label="Increase capacity"
-            >
-              <Plus size={14} />
-            </Button>
-          </div>
+          {CAPACITY_ROWS.map(({ label, status, key, color }) => {
+            const value = capacities[key];
+            return (
+              <div key={status} className="mt-2 flex items-center gap-3">
+                <span
+                  className={`w-20 font-display text-[10px] uppercase tracking-widest ${color}`}
+                >
+                  {label}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onSetCapacity(status, Math.max(1, value - 1))}
+                  disabled={value <= 1}
+                  className="h-8 w-8 border-ohm-border text-ohm-muted hover:text-ohm-text"
+                  aria-label={`Decrease ${label} capacity`}
+                >
+                  <Minus size={14} />
+                </Button>
+                <span className="min-w-[2ch] text-center font-display text-lg font-bold text-ohm-text">
+                  {value}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onSetCapacity(status, value + 1)}
+                  className="h-8 w-8 border-ohm-border text-ohm-muted hover:text-ohm-text"
+                  aria-label={`Increase ${label} capacity`}
+                >
+                  <Plus size={14} />
+                </Button>
+              </div>
+            );
+          })}
         </div>
 
         {/* Google Drive */}

@@ -9,6 +9,10 @@ export default {
     'bg-ohm-live',
     'bg-ohm-grounded',
     'bg-ohm-powered',
+    // Column text colors — used in Settings capacity labels
+    'text-ohm-charging',
+    'text-ohm-live',
+    'text-ohm-grounded',
     // Energy icon colors — ensure JIT generates these from ENERGY_CLASSES strings
     'text-ohm-energy-low',
     'text-ohm-energy-med',
