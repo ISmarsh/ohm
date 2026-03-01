@@ -1,7 +1,24 @@
 import type { OhmBoard } from '../types/board';
-import { createDefaultBoard } from '../types/board';
+import { createDefaultBoard, ENERGY_CONFIG, COLUMNS, STATUS, ENERGY } from '../types/board';
 
 const STORAGE_KEY = 'ohm-board';
+
+/** Coerce invalid field values to safe defaults -- index-range validation */
+export function sanitizeBoard(board: OhmBoard): OhmBoard {
+  if (typeof board.liveCapacity !== 'number' || board.liveCapacity < 1) {
+    board.liveCapacity = 6;
+  }
+
+  for (const card of board.cards) {
+    if (typeof card.energy !== 'number' || card.energy < 0 || card.energy >= ENERGY_CONFIG.length) {
+      card.energy = ENERGY.MED;
+    }
+    if (typeof card.status !== 'number' || card.status < 0 || card.status >= COLUMNS.length) {
+      card.status = STATUS.CHARGING;
+    }
+  }
+  return board;
+}
 
 /** Save board to localStorage (fallback / offline mode) */
 export function saveToLocal(board: OhmBoard): void {
@@ -19,7 +36,7 @@ export function loadFromLocal(): OhmBoard {
     if (raw) {
       const parsed = JSON.parse(raw) as OhmBoard;
       if (parsed.version === 1) {
-        return parsed;
+        return sanitizeBoard(parsed);
       }
     }
   } catch (e) {

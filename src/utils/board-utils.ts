@@ -1,4 +1,5 @@
-import type { OhmCard, OhmBoard, ColumnStatus, EnergyTag } from '../types/board';
+import type { OhmCard, OhmBoard, ColumnStatus } from '../types/board';
+import { STATUS, ENERGY, ENERGY_SEGMENTS } from '../types/board';
 
 /** Generate a short unique ID */
 export function generateId(): string {
@@ -15,10 +16,10 @@ export function createCard(
     id: generateId(),
     title,
     description: overrides?.description ?? '',
-    status: 'charging',
+    status: STATUS.CHARGING,
     nextStep: overrides?.nextStep ?? '',
     whereILeftOff: '',
-    energy: overrides?.energy ?? 'medium',
+    energy: overrides?.energy ?? ENERGY.MED,
     category: overrides?.category ?? '',
     createdAt: now,
     updatedAt: now,
@@ -34,13 +35,13 @@ export function moveCard(card: OhmCard, newStatus: ColumnStatus, whereILeftOff?:
     updatedAt: new Date().toISOString(),
     // Set whereILeftOff when grounding, clear when leaving grounded
     whereILeftOff:
-      newStatus === 'grounded'
+      newStatus === STATUS.GROUNDED
         ? whereILeftOff !== undefined
           ? whereILeftOff
           : card.whereILeftOff
         : '',
     // Clear nextStep when completing
-    nextStep: newStatus === 'powered' ? '' : card.nextStep,
+    nextStep: newStatus === STATUS.POWERED ? '' : card.nextStep,
   };
 }
 
@@ -49,15 +50,12 @@ export function getColumnCards(board: OhmBoard, status: ColumnStatus): OhmCard[]
   return board.cards.filter((c) => c.status === status).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-/** Check if Live column is at or over WIP limit */
-export function isOverWipLimit(board: OhmBoard): boolean {
-  const liveCount = board.cards.filter((c) => c.status === 'live').length;
-  return liveCount >= board.liveWipLimit;
-}
-
-/** Filter cards by energy level */
-export function filterByEnergy(cards: OhmCard[], energy: EnergyTag): OhmCard[] {
-  return cards.filter((c) => c.energy === energy);
+/** Get Live column capacity usage in energy segments */
+export function getLiveCapacity(board: OhmBoard): { used: number; total: number } {
+  const used = board.cards
+    .filter((c) => c.status === STATUS.LIVE)
+    .reduce((sum, c) => sum + ENERGY_SEGMENTS[c.energy]!, 0);
+  return { used, total: board.liveCapacity };
 }
 
 /** Update a card in the board immutably */

@@ -40,10 +40,40 @@ export function useDriveSync(
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const boardRef = useRef(currentBoard);
 
+  /** Compare remote vs local timestamps and merge the newer version */
+  const mergeWithRemote = useCallback(async () => {
+    const remote = await loadFromDrive();
+    if (remote && remote.lastSaved > boardRef.current.lastSaved) {
+      onBoardLoaded(remote);
+      setSyncStatus('synced');
+    } else {
+      const ok = await saveToDrive(boardRef.current);
+      setSyncStatus(ok ? 'synced' : 'error');
+    }
+  }, [onBoardLoaded]);
+
   // Keep boardRef current
   useEffect(() => {
     boardRef.current = currentBoard;
   }, [currentBoard]);
+
+  // Try silent reconnect -- reuse existing Google session grant
+  const trySilentReconnect = useCallback(async () => {
+    const token = await requestAccessToken(true);
+    if (!token) {
+      // Silent auth failed -- show reconnect banner
+      setNeedsReconnect(true);
+      return;
+    }
+    setDriveConnected(true);
+    setNeedsReconnect(false);
+    setSyncStatus('syncing');
+    try {
+      await mergeWithRemote();
+    } catch {
+      setSyncStatus('error');
+    }
+  }, [mergeWithRemote]);
 
   // Initialize GIS on mount
   useEffect(() => {
@@ -59,8 +89,14 @@ export function useDriveSync(
       return false;
     };
 
+    const onReady = () => {
+      if (wasPreviouslySynced()) {
+        trySilentReconnect();
+      }
+    };
+
     if (tryInit()) {
-      setNeedsReconnect(wasPreviouslySynced());
+      onReady();
       return;
     }
 
@@ -69,7 +105,7 @@ export function useDriveSync(
     const interval = setInterval(() => {
       attempts++;
       if (tryInit()) {
-        setNeedsReconnect(wasPreviouslySynced());
+        onReady();
         clearInterval(interval);
       } else if (attempts >= 10) {
         clearInterval(interval);
@@ -77,7 +113,7 @@ export function useDriveSync(
     }, 500);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [trySilentReconnect]);
 
   // Online/offline detection
   useEffect(() => {
@@ -118,20 +154,11 @@ export function useDriveSync(
     setSyncStatus('syncing');
 
     try {
-      const remote = await loadFromDrive();
-      if (remote && remote.lastSaved > boardRef.current.lastSaved) {
-        // Remote is newer -- use it
-        onBoardLoaded(remote);
-        setSyncStatus('synced');
-      } else {
-        // Local is newer or no remote -- push local
-        const ok = await saveToDrive(boardRef.current);
-        setSyncStatus(ok ? 'synced' : 'error');
-      }
+      await mergeWithRemote();
     } catch {
       setSyncStatus('error');
     }
-  }, [onBoardLoaded]);
+  }, [mergeWithRemote]);
 
   const disconnect = useCallback(() => {
     disconnectDrive();
@@ -154,18 +181,11 @@ export function useDriveSync(
     if (!driveConnected || !navigator.onLine) return;
     setSyncStatus('syncing');
     try {
-      const remote = await loadFromDrive();
-      if (remote && remote.lastSaved > boardRef.current.lastSaved) {
-        onBoardLoaded(remote);
-        setSyncStatus('synced');
-      } else {
-        const ok = await saveToDrive(boardRef.current);
-        setSyncStatus(ok ? 'synced' : 'error');
-      }
+      await mergeWithRemote();
     } catch {
       setSyncStatus('error');
     }
-  }, [driveConnected, onBoardLoaded]);
+  }, [driveConnected, mergeWithRemote]);
 
   // Cleanup pending sync on unmount
   useEffect(() => {

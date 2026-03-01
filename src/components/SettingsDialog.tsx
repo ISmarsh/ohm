@@ -10,8 +10,8 @@ interface SettingsDialogProps {
   categories: string[];
   onAddCategory: (category: string) => void;
   onRemoveCategory: (category: string) => void;
-  wipLimit: number;
-  onSetWipLimit: (limit: number) => void;
+  capacity: number;
+  onSetCapacity: (capacity: number) => void;
   driveAvailable?: boolean;
   driveConnected?: boolean;
   onConnectDrive?: () => void;
@@ -24,8 +24,8 @@ export function SettingsDialog({
   categories,
   onAddCategory,
   onRemoveCategory,
-  wipLimit,
-  onSetWipLimit,
+  capacity,
+  onSetCapacity,
   driveAvailable,
   driveConnected,
   onConnectDrive,
@@ -107,35 +107,34 @@ export function SettingsDialog({
           </form>
         </div>
 
-        {/* WIP Limit */}
+        {/* Capacity */}
         <div>
           <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-            Live WIP Limit
+            Live Energy Capacity
           </span>
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="icon"
-              onClick={() => onSetWipLimit(Math.max(1, wipLimit - 1))}
-              disabled={wipLimit <= 1}
+              onClick={() => onSetCapacity(Math.max(1, capacity - 1))}
+              disabled={capacity <= 1}
               className="h-8 w-8 border-ohm-border text-ohm-muted hover:text-ohm-text"
-              aria-label="Decrease WIP limit"
+              aria-label="Decrease capacity"
             >
               <Minus size={14} />
             </Button>
             <span className="min-w-[2ch] text-center font-display text-lg font-bold text-ohm-text">
-              {wipLimit}
+              {capacity}
             </span>
             <Button
               variant="outline"
               size="icon"
-              onClick={() => onSetWipLimit(wipLimit + 1)}
+              onClick={() => onSetCapacity(capacity + 1)}
               className="h-8 w-8 border-ohm-border text-ohm-muted hover:text-ohm-text"
-              aria-label="Increase WIP limit"
+              aria-label="Increase capacity"
             >
               <Plus size={14} />
             </Button>
-            <span className="font-body text-xs text-ohm-muted">max cards in Live</span>
           </div>
         </div>
 

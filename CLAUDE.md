@@ -15,22 +15,18 @@ A kanban app using an electrical metaphor to map energy cycles into a visual wor
 
 ### Four-Column Model
 
-| Column   | Metaphor        | Purpose                               |
-| -------- | --------------- | ------------------------------------- |
-| Charging | Building energy | Captured ideas with a clear next step |
-| Live     | Active          | Currently working on (WIP limited)    |
-| Grounded | Paused          | Captured "where I left off" context   |
-| Powered  | Done            | Completed                             |
+| Column   | Metaphor        | Purpose                                 |
+| -------- | --------------- | --------------------------------------- |
+| Charging | Building energy | Captured ideas with a clear next step   |
+| Live     | Active          | Currently working on (capacity limited) |
+| Grounded | Paused          | Captured "where I left off" context     |
+| Powered  | Done            | Completed                               |
 
 ### Key Conventions
 
-- `useBoard` hook manages all board state with functional updates
-- `board-utils.ts` contains pure functions for board mutations
-- Energy tags: Quick Win / Medium / Deep Focus
-- Card IDs: `Date.now().toString(36)` + random suffix
-- Debounced localStorage saves (500ms)
-- Dark theme with electrical color accents (amber, orange, red, indigo, green)
-- Mobile-first responsive layout
-- Contextual field visibility and status transitions per card state
-- Filter bar: energy chips (always visible), category autocomplete + search (expandable on mobile, inline on desktop)
-- Drive reconnect banner when `ohm-drive-synced` localStorage flag is set but not connected
+- **Index-based data model**: `ColumnStatus` and `EnergyTag` are numeric indices with named constants (`STATUS.CHARGING`, `ENERGY.MED`). Config arrays indexed by these values; `sanitizeBoard()` validates on load.
+- **State**: `useBoard` hook (functional updates) + `board-utils.ts` (pure mutation functions). Debounced localStorage saves (500ms).
+- **Capacity**: Live column uses energy segments (Small=1, Med=2, Large=3), not card count. Green-to-red gradient indicator.
+- **Theming**: Dark theme. Status colors = `ohm-charging/live/grounded/powered`. Energy colors = `ohm-energy-low/med/high` (stoplight). Labels/icons are re-themeable without data migration.
+- **CardDetail** handles both creation (`isNew` mode) and editing with contextual field visibility.
+- **Mobile-first** responsive layout. Filter bar: energy chips + expandable category/search.

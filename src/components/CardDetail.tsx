@@ -1,9 +1,16 @@
-import { useState, useCallback } from 'react';
-import type { OhmCard, ColumnStatus, EnergyTag } from '../types/board';
-import { COLUMNS, ENERGY_CONFIG } from '../types/board';
-import type { LucideIcon } from 'lucide-react';
-import { X, Settings, ArrowRight, MapPin } from 'lucide-react';
-import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } from './ui/dialog';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import type { OhmCard, ColumnStatus } from '../types/board';
+import {
+  STATUS,
+  COLUMNS,
+  ENERGY_CONFIG,
+  ENERGY_CLASSES,
+  STATUS_CLASSES,
+  SPARK_CLASSES,
+  VALID_TRANSITIONS,
+} from '../types/board';
+import { Settings, ArrowRight, MapPin } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
@@ -22,21 +29,31 @@ import {
 interface CardDetailProps {
   card: OhmCard;
   categories: string[];
-  onUpdate: (card: OhmCard) => void;
+  onSave: (card: OhmCard) => void;
   onDelete: (cardId: string) => void;
   onClose: () => void;
   onOpenSettings: () => void;
+  isNew?: boolean;
 }
 
 export function CardDetail({
   card,
   categories,
-  onUpdate,
+  onSave,
   onDelete,
   onClose,
   onOpenSettings,
+  isNew,
 }: CardDetailProps) {
   const [editing, setEditing] = useState(card);
+  const titleRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus title for new cards
+  useEffect(() => {
+    if (isNew) {
+      setTimeout(() => titleRef.current?.focus(), 50);
+    }
+  }, [isNew]);
 
   const autoSize = (el: HTMLTextAreaElement) => {
     el.style.height = 'auto';
@@ -48,7 +65,8 @@ export function CardDetail({
   }, []);
 
   const handleSave = () => {
-    onUpdate({ ...editing, updatedAt: new Date().toISOString() });
+    if (isNew && !editing.title.trim()) return;
+    onSave({ ...editing, updatedAt: new Date().toISOString() });
     onClose();
   };
 
@@ -56,32 +74,24 @@ export function CardDetail({
     setEditing((prev) => {
       const updated = { ...prev, status: newStatus };
       // Clear whereILeftOff when leaving grounded
-      if (prev.status === 'grounded' && newStatus !== 'grounded') {
+      if (prev.status === STATUS.GROUNDED && newStatus !== STATUS.GROUNDED) {
         updated.whereILeftOff = '';
       }
       // Clear nextStep when completing
-      if (newStatus === 'powered') {
+      if (newStatus === STATUS.POWERED) {
         updated.nextStep = '';
       }
       return updated;
     });
   };
 
-  const currentColumn = COLUMNS.find((c) => c.status === editing.status);
-
-  // Contextual transitions — only show valid moves from current status
-  const validTransitions: Record<ColumnStatus, ColumnStatus[]> = {
-    charging: ['live'],
-    live: ['grounded', 'powered'],
-    grounded: ['live'],
-    powered: ['charging'],
-  };
-  const availableTransitions = validTransitions[editing.status] ?? [];
+  const accent = isNew ? SPARK_CLASSES : STATUS_CLASSES[editing.status]!;
+  const availableTransitions = VALID_TRANSITIONS[editing.status] ?? [];
 
   // Conditional field visibility
-  const showNextStep = editing.status === 'charging' || editing.status === 'live';
-  const showWhereILeftOff = editing.status === 'grounded';
-  const showEnergy = editing.status === 'charging' || editing.status === 'live';
+  const showNextStep = editing.status === STATUS.CHARGING || editing.status === STATUS.LIVE;
+  const showWhereILeftOff = editing.status === STATUS.GROUNDED;
+  const showEnergy = editing.status === STATUS.CHARGING || editing.status === STATUS.LIVE;
 
   return (
     <Dialog
@@ -91,35 +101,22 @@ export function CardDetail({
       }}
     >
       <DialogContent>
-        {/* Header */}
+        {/* Header — title + close */}
         <DialogTitle className="sr-only">{editing.title || 'Card details'}</DialogTitle>
-        <DialogDescription className="sr-only">Edit card details</DialogDescription>
-        <div className="mb-4 flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="h-2 w-2 rounded-full"
-              style={{
-                backgroundColor: `var(--color-${currentColumn?.color ?? 'ohm-muted'})`,
-              }}
-            />
-            <span className="font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-              {currentColumn?.label}
-            </span>
-          </div>
-          <DialogClose className="rounded-sm text-ohm-muted opacity-70 transition-opacity hover:opacity-100">
-            <X size={16} />
-            <span className="sr-only">Close</span>
-          </DialogClose>
+        <DialogDescription className="sr-only">
+          {isNew ? 'Create a new card' : 'Edit card details'}
+        </DialogDescription>
+        <div className="mb-4">
+          <Input
+            ref={titleRef}
+            value={editing.title}
+            onChange={(e) => setEditing((prev) => ({ ...prev, title: e.target.value }))}
+            aria-label="Card title"
+            autoComplete="off"
+            placeholder={isNew ? "What's the idea?" : undefined}
+            className={`${accent.border} bg-ohm-bg font-body text-sm font-medium text-ohm-text placeholder:text-ohm-muted/50 ${accent.ring} focus-visible:ring-offset-0`}
+          />
         </div>
-
-        {/* Title */}
-        <Input
-          value={editing.title}
-          onChange={(e) => setEditing((prev) => ({ ...prev, title: e.target.value }))}
-          aria-label="Card title"
-          autoComplete="off"
-          className="mb-2 border-transparent bg-transparent pb-1 font-body text-base font-medium text-ohm-text shadow-none focus-visible:border-ohm-border focus-visible:ring-0"
-        />
 
         {/* Description */}
         <div className="mb-3">
@@ -140,11 +137,11 @@ export function CardDetail({
             placeholder="Notes, context, details..."
             autoComplete="off"
             rows={2}
-            className="resize-none border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
+            className={`resize-none ${accent.border} bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/50 ${accent.ring} focus-visible:ring-offset-0`}
           />
         </div>
 
-        {/* Next Step — visible for charging and live */}
+        {/* Next Step -- visible for charging and live */}
         {showNextStep && (
           <div className="mb-3">
             <label
@@ -160,12 +157,12 @@ export function CardDetail({
               onChange={(e) => setEditing((prev) => ({ ...prev, nextStep: e.target.value }))}
               placeholder="What's the one concrete action?"
               autoComplete="off"
-              className="border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
+              className={`${accent.border} bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/50 ${accent.ring} focus-visible:ring-offset-0`}
             />
           </div>
         )}
 
-        {/* Where I Left Off — visible only for grounded */}
+        {/* Where I Left Off -- visible only for grounded */}
         {showWhereILeftOff && (
           <div className="mb-3">
             <label
@@ -182,36 +179,38 @@ export function CardDetail({
               placeholder="Context for future you..."
               autoComplete="off"
               rows={2}
-              className="resize-none border-ohm-border bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-text/10 focus-visible:ring-offset-0"
+              className={`resize-none ${accent.border} bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/50 ${accent.ring} focus-visible:ring-offset-0`}
             />
           </div>
         )}
 
-        {/* Energy tag — visible for charging and live */}
+        {/* Energy tag -- visible for charging and live */}
         {showEnergy && (
           <div className="mb-3">
             <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
-              Energy Level
+              Energy
             </span>
             <div className="flex flex-wrap gap-2">
-              {(
-                Object.entries(ENERGY_CONFIG) as [EnergyTag, { label: string; icon: LucideIcon }][]
-              ).map(([key, config]) => {
+              {ENERGY_CONFIG.map((config, index) => {
                 const Icon = config.icon;
+                const selected = editing.energy === index;
+                const ec = ENERGY_CLASSES[index]!;
                 return (
                   <Button
-                    key={key}
+                    key={index}
                     variant="outline"
                     size="sm"
-                    onClick={() => setEditing((prev) => ({ ...prev, energy: key }))}
+                    onClick={() =>
+                      setEditing((prev) => ({ ...prev, energy: index as OhmCard['energy'] }))
+                    }
                     className={`gap-1.5 font-body text-xs ${
-                      editing.energy === key
-                        ? 'border-ohm-text/30 bg-ohm-text/10 text-ohm-text'
-                        : 'border-ohm-border bg-ohm-bg text-ohm-muted hover:text-ohm-text'
+                      selected ? `${ec.border} ${ec.bg}` : `${ec.dimBorder} bg-ohm-bg`
                     }`}
                   >
-                    <Icon size={14} />
-                    <span>{config.label}</span>
+                    <span className={ec.text}>
+                      <Icon size={14} />
+                    </span>
+                    <span className={selected ? ec.text : 'text-ohm-muted'}>{config.label}</span>
                   </Button>
                 );
               })}
@@ -255,7 +254,7 @@ export function CardDetail({
             <button
               type="button"
               onClick={onOpenSettings}
-              className="rounded-md p-1.5 text-ohm-muted transition-colors hover:text-ohm-text"
+              className="rounded-md border border-ohm-text/20 p-1.5 text-ohm-text/70 transition-colors hover:text-ohm-text"
               aria-label="Manage categories"
             >
               <Settings size={14} />
@@ -263,22 +262,23 @@ export function CardDetail({
           </div>
         </div>
 
-        {/* Status — contextual transitions only */}
-        {availableTransitions.length > 0 && (
+        {/* Status -- contextual transitions only (hidden for new cards) */}
+        {!isNew && availableTransitions.length > 0 && (
           <div className="mb-5">
             <span className="mb-2 block font-display text-[10px] uppercase tracking-widest text-ohm-muted">
               Move to
             </span>
             <div className="flex gap-2">
               {availableTransitions.map((status) => {
-                const col = COLUMNS.find((c) => c.status === status)!;
+                const col = COLUMNS[status]!;
+                const targetAccent = STATUS_CLASSES[status]!;
                 return (
                   <Button
                     key={status}
                     variant="outline"
                     size="sm"
                     onClick={() => handleStatusChange(status)}
-                    className="border-ohm-border bg-ohm-bg font-body text-xs uppercase text-ohm-muted hover:text-ohm-text"
+                    className={`${targetAccent.border} bg-ohm-bg font-body text-xs uppercase text-ohm-muted hover:text-ohm-text`}
                   >
                     {col.label}
                   </Button>
@@ -290,51 +290,67 @@ export function CardDetail({
 
         {/* Actions */}
         <div className="flex items-center justify-between border-t border-ohm-border pt-3">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-auto p-0 font-display text-xs uppercase tracking-wider text-ohm-muted hover:bg-transparent hover:text-ohm-live"
-              >
-                Delete
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertTitle className="text-ohm-text">Delete this card?</AlertTitle>
-                <AlertDialogDescription>
-                  This will permanently remove &ldquo;{editing.title || card.title}&rdquo;.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="border-ohm-border text-ohm-muted hover:bg-ohm-bg hover:text-ohm-text">
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    onDelete(card.id);
-                    onClose();
-                  }}
-                  className="bg-ohm-live/20 text-ohm-live hover:bg-ohm-live/30"
+          {!isNew ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="h-auto p-0 font-display text-xs uppercase tracking-wider text-ohm-live hover:bg-transparent hover:text-ohm-live/80"
                 >
                   Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <Button
-            onClick={handleSave}
-            className="bg-ohm-powered/20 font-display text-xs uppercase tracking-wider text-ohm-powered hover:bg-ohm-powered/30 active:bg-ohm-powered/40"
-          >
-            Save
-          </Button>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertTitle className="text-ohm-text">Delete this card?</AlertTitle>
+                  <AlertDialogDescription>
+                    This will permanently remove &ldquo;{editing.title || card.title}&rdquo;.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="border-ohm-border text-ohm-muted hover:bg-ohm-bg hover:text-ohm-text">
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      onDelete(card.id);
+                      onClose();
+                    }}
+                    className="bg-ohm-live/20 text-ohm-live hover:bg-ohm-live/30"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              className="font-display text-xs uppercase tracking-wider text-ohm-muted hover:text-ohm-text"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isNew && !editing.title.trim()}
+              className="bg-ohm-powered/20 font-display text-xs uppercase tracking-wider text-ohm-powered hover:bg-ohm-powered/30 active:bg-ohm-powered/40"
+            >
+              Save
+            </Button>
+          </div>
         </div>
 
-        {/* Timestamps */}
-        <div className="mt-3 font-body text-[9px] text-ohm-muted/40">
-          Created {new Date(card.createdAt).toLocaleDateString()} · Updated{' '}
-          {new Date(card.updatedAt).toLocaleDateString()}
-        </div>
+        {/* Timestamps -- only for existing cards */}
+        {!isNew && (
+          <div className="mt-3 font-body text-[9px] text-ohm-muted/40">
+            Created {new Date(card.createdAt).toLocaleDateString()} &middot; Updated{' '}
+            {new Date(card.updatedAt).toLocaleDateString()}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
