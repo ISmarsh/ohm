@@ -124,6 +124,7 @@ export function CardDetail({
             onChange={(e) => setEditing((prev) => ({ ...prev, title: e.target.value }))}
             aria-label="Card title"
             autoComplete="off"
+            data-form-type="other"
             placeholder={isNew ? "What's the idea?" : undefined}
             className={`${accent.border} bg-ohm-bg font-body text-sm font-medium text-ohm-text placeholder:text-ohm-muted/50 ${accent.ring} focus-visible:ring-offset-0`}
           />
@@ -171,6 +172,7 @@ export function CardDetail({
               }}
               placeholder="What's the one concrete action?"
               autoComplete="off"
+              data-form-type="other"
               className={`${nextStepNudge ? 'border-ohm-spark/60 ring-1 ring-ohm-spark/20' : accent.border} bg-ohm-bg font-body text-sm text-ohm-text placeholder:text-ohm-muted/50 ${accent.ring} focus-visible:ring-offset-0`}
             />
             {nextStepNudge && (
@@ -314,7 +316,7 @@ export function CardDetail({
               <AlertDialogTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="h-auto p-0 font-display text-xs uppercase tracking-wider text-ohm-live hover:bg-transparent hover:text-ohm-live/80"
+                  className="font-display text-xs uppercase tracking-wider text-ohm-live hover:bg-transparent hover:text-ohm-live/80"
                 >
                   Delete
                 </Button>
@@ -365,7 +367,7 @@ export function CardDetail({
 
         {/* Timestamps -- only for existing cards */}
         {!isNew && (
-          <div className="mt-3 font-body text-[9px] text-ohm-muted/40">
+          <div className="mt-3 font-body text-[11px] text-ohm-muted/60">
             Created {new Date(card.createdAt).toLocaleDateString()} &middot; Updated{' '}
             {new Date(card.updatedAt).toLocaleDateString()}
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowRight, MapPin } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { OhmCard } from '../types/board';
@@ -44,10 +44,13 @@ export function Card({ card, onTap }: CardProps) {
       {...listeners}
       role="button"
       tabIndex={0}
-      className="outline-none"
+      className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={() => onTap(card)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') onTap(card);
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onTap(card);
+        }
       }}
     >
       <CardContainer
@@ -93,8 +96,8 @@ export function Card({ card, onTap }: CardProps) {
 
         {/* Where I left off indicator for grounded cards */}
         {card.status === STATUS.GROUNDED && card.whereILeftOff && (
-          <div className="mt-2 flex items-start gap-1 border-t border-ohm-border pt-1.5 text-xs italic text-ohm-grounded/70">
-            <MapPin size={12} className="mt-0.5 shrink-0" />
+          <div className="mt-2 flex items-start gap-1 border-t border-ohm-border pt-1.5 text-xs text-ohm-muted">
+            <ArrowRight size={12} className="mt-0.5 shrink-0" />
             <span>
               {card.whereILeftOff.length > 60
                 ? card.whereILeftOff.slice(0, 60) + '...'

@@ -22,7 +22,7 @@
   --destructive-foreground: 240 14% 89%;
   --border: 240 17% 14%; /* ohm-border #1e1e2a */
   --input: 240 17% 14%;
-  --ring: 43 96% 56%; /* ohm-spark */
+  --ring: 240 14% 89% / 0.25; /* ohm-text at 25% — neutral focus ring */
   --radius: 0.5rem;
 }
 
