@@ -5,7 +5,7 @@
 :root {
   /* ohm electrical accent colors */
   --color-ohm-spark: #fbbf24;
-  --color-ohm-charge: #f97316;
+  --color-ohm-charging: #f97316;
   --color-ohm-live: #ef4444;
   --color-ohm-grounded: #6366f1;
   --color-ohm-powered: #22c55e;
@@ -87,8 +87,8 @@ body {
 .bg-ohm-spark {
   background-color: var(--color-ohm-spark);
 }
-.bg-ohm-charge {
-  background-color: var(--color-ohm-charge);
+.bg-ohm-charging {
+  background-color: var(--color-ohm-charging);
 }
 .bg-ohm-live {
   background-color: var(--color-ohm-live);
@@ -103,8 +103,8 @@ body {
 .text-ohm-spark {
   color: var(--color-ohm-spark);
 }
-.text-ohm-charge {
-  color: var(--color-ohm-charge);
+.text-ohm-charging {
+  color: var(--color-ohm-charging);
 }
 .text-ohm-live {
   color: var(--color-ohm-live);

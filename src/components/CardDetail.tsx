@@ -238,7 +238,7 @@ export function CardDetail({
             Status
           </span>
           <div className="flex justify-between gap-2">
-            {(['grounded', 'live', 'powered'] as const).map((status) => {
+            {(['charging', 'live', 'grounded', 'powered'] as const).map((status) => {
               const col = COLUMNS.find((c) => c.status === status)!;
               return (
                 <Button

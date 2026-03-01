@@ -10,18 +10,17 @@ A kanban app using an electrical metaphor to map energy cycles into a visual wor
 
 - **React 19** + TypeScript, Vite, Tailwind CSS
 - **dnd-kit** for drag-and-drop
-- **localStorage** persistence (Google Drive sync planned)
+- **localStorage** persistence + optional **Google Drive** sync
 - Single-page app, no router
 
-### Five-Column Model
+### Four-Column Model
 
-| Column   | Metaphor | Purpose                             |
-| -------- | -------- | ----------------------------------- |
-| Spark    | Raw idea | Zero-friction capture (title only)  |
-| Charge   | Shaped   | Has a clear next step               |
-| Live     | Active   | Currently working on (WIP limited)  |
-| Grounded | Paused   | Captured "where I left off" context |
-| Powered  | Done     | Completed                           |
+| Column   | Metaphor        | Purpose                               |
+| -------- | --------------- | ------------------------------------- |
+| Charging | Building energy | Captured ideas with a clear next step |
+| Live     | Active          | Currently working on (WIP limited)    |
+| Grounded | Paused          | Captured "where I left off" context   |
+| Powered  | Done            | Completed                             |
 
 ### Key Conventions
 

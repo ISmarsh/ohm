@@ -5,7 +5,7 @@ import { Zap, Battery, Flame } from 'lucide-react';
 export type EnergyTag = 'quick-win' | 'medium' | 'deep-focus';
 
 /** Column statuses map to the electrical metaphor */
-export type ColumnStatus = 'spark' | 'charge' | 'live' | 'grounded' | 'powered';
+export type ColumnStatus = 'charging' | 'live' | 'grounded' | 'powered';
 
 /** A single card on the board */
 export interface OhmCard {
@@ -54,16 +54,10 @@ export interface OhmBoard {
 /** Column config — static definition */
 export const COLUMNS: OhmColumn[] = [
   {
-    status: 'spark',
-    label: 'Spark',
-    description: 'Raw ideas — capture fast, think later',
-    color: 'ohm-spark',
-  },
-  {
-    status: 'charge',
-    label: 'Charge',
-    description: 'Shaped with a clear next step',
-    color: 'ohm-charge',
+    status: 'charging',
+    label: 'Charging',
+    description: 'Captured ideas — shape with a clear next step',
+    color: 'ohm-charging',
   },
   {
     status: 'live',
