@@ -29,17 +29,17 @@ export function Column({
 
   return (
     <div className="flex w-full min-w-0 flex-col rounded-xl md:w-auto md:flex-1">
-      {/* Column header — tappable on mobile to toggle */}
-      {/* Mobile: tappable button to toggle collapse. Desktop: static header. */}
+      {/* Column header — mobile: button toggle, desktop: static */}
       <div className="sticky top-0 z-10 flex w-full items-center bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm">
+        {/* Mobile toggle button */}
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
           aria-expanded={expanded}
           aria-controls={`column-cards-${column.label}`}
-          className="flex items-center gap-2 md:cursor-default"
+          className="flex items-center gap-2 md:hidden"
         >
-          <span className="text-ohm-muted md:hidden">
+          <span className="text-ohm-muted">
             {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
           <div className={`h-2 w-2 rounded-full bg-${column.color}`} />
@@ -48,6 +48,14 @@ export function Column({
           </span>
           <span className="ml-1 font-body text-[10px] text-ohm-muted">{cards.length}</span>
         </button>
+        {/* Desktop static header */}
+        <div className="hidden items-center gap-2 md:flex">
+          <div className={`h-2 w-2 rounded-full bg-${column.color}`} />
+          <span className="font-display text-xs font-bold uppercase tracking-widest text-ohm-text">
+            {column.label}
+          </span>
+          <span className="ml-1 font-body text-[10px] text-ohm-muted">{cards.length}</span>
+        </div>
         {capacity && (
           <span
             className={`ml-auto shrink-0 font-display text-[10px] font-bold ${capacity.used > capacity.total ? 'animate-pulse' : ''}`}
