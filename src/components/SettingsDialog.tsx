@@ -173,7 +173,7 @@ export function SettingsDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
         <div className="mb-3 flex items-center gap-2">
           <Settings size={16} className="text-ohm-muted" />
           <DialogTitle className="font-display text-ohm-muted text-xs tracking-widest uppercase">

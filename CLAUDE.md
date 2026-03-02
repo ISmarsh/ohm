@@ -18,8 +18,8 @@ A kanban app using an electrical metaphor to map energy cycles into a visual wor
 | Column   | Metaphor        | Purpose                                 |
 | -------- | --------------- | --------------------------------------- |
 | Charging | Building energy | Captured ideas with a clear next step   |
-| Live     | Active          | Currently working on (capacity limited) |
 | Grounded | Paused          | Captured "where I left off" context     |
+| Live     | Active          | Currently working on (capacity limited) |
 | Powered  | Done            | Completed                               |
 
 ### Key Conventions
