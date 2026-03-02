@@ -18,8 +18,8 @@ A kanban app using an electrical metaphor to map energy cycles into a visual wor
 | Column   | Metaphor        | Purpose                                 |
 | -------- | --------------- | --------------------------------------- |
 | Charging | Building energy | Captured ideas with a clear next step   |
-| Live     | Active          | Currently working on (capacity limited) |
 | Grounded | Paused          | Captured "where I left off" context     |
+| Live     | Active          | Currently working on (capacity limited) |
 | Powered  | Done            | Completed                               |
 
 ### Key Conventions
@@ -30,3 +30,11 @@ A kanban app using an electrical metaphor to map energy cycles into a visual wor
 - **Theming**: Dark theme. Status colors = `ohm-charging/live/grounded/powered`. Energy colors = `ohm-energy-low/med/high` (stoplight). Labels/icons are re-themeable without data migration.
 - **CardDetail** handles both creation (`isNew` mode) and editing with contextual field visibility.
 - **Mobile-first** responsive layout. Filter bar: energy chips + expandable category/search.
+
+### Google Drive Auth
+
+Dual-flow OAuth: authorization code flow (persistent) when `VITE_TOKEN_EXCHANGE_URL` is set, implicit flow (session-only) as fallback. See `src/utils/google-drive.ts`.
+
+### Cloud Function
+
+GCP Cloud Function (gen2, runs on Cloud Run, Node 22, us-central1) that proxies OAuth token exchange/refresh, keeping the client secret server-side. Deployed to project `ohm-adhd-kanban`. Function source is shared via the planet-smars submodule at `.planet-smars/google-cloud-auth/function/`. Deploy config is at `google-cloud-auth.config.json` (repo root). **No CI deploy** -- changes require manual redeploy: `powershell -ExecutionPolicy Bypass -File .planet-smars/google-cloud-auth/deploy.ps1` (needs `gcloud` CLI authenticated). See `planet-smars/templates/ai-context/google-cloud-auth.md` for full setup details.

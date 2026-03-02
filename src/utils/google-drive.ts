@@ -1,213 +1,67 @@
 /**
  * Google Drive persistence for Ohm
  *
- * Uses Google Identity Services (GIS) for OAuth and raw fetch
- * calls to the Drive REST API v3. Stores the board as a single
- * JSON file in appDataFolder (hidden, app-specific storage).
+ * Thin wrapper around the generic Drive sync factory,
+ * configured with Ohm-specific values.
  */
 
+import { createDriveSync } from '../../.planet-smars/lib/google-drive-sync';
 import type { OhmBoard } from '../types/board';
-import { DRIVE_CLIENT_ID, DRIVE_FILE_NAME, DRIVE_MIME_TYPE, DRIVE_SCOPE } from '../config/drive';
+import {
+  DRIVE_CLIENT_ID,
+  DRIVE_FILE_NAME,
+  DRIVE_MIME_TYPE,
+  DRIVE_SCOPE,
+  TOKEN_EXCHANGE_URL,
+} from '../config/drive';
 import { sanitizeBoard } from './storage';
 
-// --- Token state (module-level, not persisted) ---
+const driveSync = createDriveSync<OhmBoard>({
+  clientId: DRIVE_CLIENT_ID,
+  fileName: DRIVE_FILE_NAME,
+  mimeType: DRIVE_MIME_TYPE,
+  scope: DRIVE_SCOPE,
+  tokenExchangeUrl: TOKEN_EXCHANGE_URL,
+  appId: 'ohm',
+  storageKeyPrefix: 'ohm-drive',
+  logPrefix: '[Ohm]',
+  sanitize: sanitizeBoard,
+});
 
-let accessToken: string | null = null;
-let tokenExpiry = 0;
-let tokenClient: google.accounts.oauth2.TokenClient | null = null;
-
-export function isAuthenticated(): boolean {
-  return !!accessToken && Date.now() < tokenExpiry;
-}
+export const {
+  isAuthenticated,
+  getAuthLevel,
+  initDriveAuth,
+  silentRefresh,
+  requestAccessToken,
+  disconnectDrive,
+  loadFromDrive,
+  saveToDrive,
+} = driveSync;
 
 /** Expose debug helpers on window for console inspection. */
 if (import.meta.env.DEV) {
+  const { getAccessToken } = driveSync;
   Object.assign(window, {
     ohmDrive: {
-      getToken: () => accessToken,
+      getToken: getAccessToken,
       listFiles: async () => {
-        const headers = await getHeaders();
+        const token = getAccessToken();
+        if (!token) return { error: 'No access token' };
         const res = await fetch(
           'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name,modifiedTime,size)',
-          { headers },
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         return res.json();
       },
       readFile: async (fileId: string) => {
-        const headers = await getHeaders();
+        const token = getAccessToken();
+        if (!token) return { error: 'No access token' };
         const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-          headers,
+          headers: { Authorization: `Bearer ${token}` },
         });
         return res.json();
       },
     },
   });
-}
-
-/** Initialize the GIS token client. Returns false if GIS or client ID unavailable. */
-export function initDriveAuth(): boolean {
-  if (!DRIVE_CLIENT_ID) return false;
-  if (typeof google === 'undefined' || !google.accounts?.oauth2) return false;
-
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: DRIVE_CLIENT_ID,
-    scope: DRIVE_SCOPE,
-    callback: () => {}, // overridden per requestAccessToken call
-  });
-  return true;
-}
-
-/**
- * Request an access token (requires user gesture — browser blocks popups otherwise).
- * @param prompt — '' skips consent if grant exists, 'consent' always prompts.
- */
-export function requestAccessToken(prompt: '' | 'consent' = 'consent'): Promise<string | null> {
-  return new Promise((resolve) => {
-    if (!tokenClient) {
-      resolve(null);
-      return;
-    }
-
-    tokenClient.callback = (response) => {
-      if (response.error) {
-        if (prompt === 'consent') {
-          console.error('[Ohm] Drive auth error:', response.error_description);
-        }
-        accessToken = null;
-        resolve(null);
-        return;
-      }
-      accessToken = response.access_token;
-      tokenExpiry = Date.now() + response.expires_in * 1000;
-      resolve(accessToken);
-    };
-
-    tokenClient.requestAccessToken({ prompt });
-  });
-}
-
-/** Revoke token and clear state. */
-export function disconnectDrive(): void {
-  if (accessToken) {
-    google.accounts.oauth2.revoke(accessToken);
-  }
-  accessToken = null;
-  tokenExpiry = 0;
-  cachedFileId = null;
-}
-
-// --- Internal helpers ---
-
-/** Cached file ID to avoid repeated lookups and prevent duplicate creates. */
-let cachedFileId: string | null = null;
-
-async function getHeaders(): Promise<HeadersInit> {
-  if (!isAuthenticated()) {
-    const token = await requestAccessToken();
-    if (!token) throw new Error('Not authenticated with Google Drive');
-  }
-  return { Authorization: `Bearer ${accessToken}` };
-}
-
-/** Find the ohm-board.json file ID in appDataFolder. */
-async function findBoardFileId(): Promise<string | null> {
-  if (cachedFileId) return cachedFileId;
-
-  const headers = await getHeaders();
-  const params = new URLSearchParams({
-    spaces: 'appDataFolder',
-    q: `name='${DRIVE_FILE_NAME}' and trashed=false`,
-    fields: 'files(id,modifiedTime)',
-    orderBy: 'modifiedTime desc',
-    pageSize: '1',
-  });
-
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`, { headers });
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    console.error('[Ohm] Drive list failed:', res.status, err);
-    throw new Error(`Drive list failed: ${res.status}`);
-  }
-
-  const data = await res.json();
-  cachedFileId = data.files?.[0]?.id ?? null;
-  return cachedFileId;
-}
-
-// --- Public API ---
-
-/** Load board from Drive. Returns null if no file exists or not authenticated. */
-export async function loadFromDrive(): Promise<OhmBoard | null> {
-  const fileId = await findBoardFileId();
-  if (!fileId) return null;
-
-  const headers = await getHeaders();
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-    headers,
-  });
-  if (!res.ok) return null;
-
-  const board = (await res.json()) as OhmBoard;
-  return sanitizeBoard(board);
-}
-
-/** Save board to Drive. Creates the file if it doesn't exist, updates if it does. */
-export async function saveToDrive(board: OhmBoard): Promise<boolean> {
-  const headers = await getHeaders();
-  const fileId = await findBoardFileId();
-  const body = JSON.stringify(board);
-
-  if (fileId) {
-    // Update existing file
-    const res = await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
-      {
-        method: 'PATCH',
-        headers: { ...headers, 'Content-Type': DRIVE_MIME_TYPE },
-        body,
-      },
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => null);
-      console.error('[Ohm] Drive save failed:', res.status, err);
-      if (res.status === 404) {
-        // File was deleted externally -- clear cache and fall through to create
-        cachedFileId = null;
-      } else if (res.status === 401 || res.status === 403) {
-        accessToken = null;
-        tokenExpiry = 0;
-        return false;
-      } else {
-        return false;
-      }
-    } else {
-      return true;
-    }
-  }
-
-  // Create new file in appDataFolder (multipart upload)
-  const metadata = {
-    name: DRIVE_FILE_NAME,
-    parents: ['appDataFolder'],
-    mimeType: DRIVE_MIME_TYPE,
-  };
-
-  const form = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-  form.append('file', new Blob([body], { type: DRIVE_MIME_TYPE }));
-
-  // Note: do NOT set Content-Type header manually -- FormData sets the
-  // multipart boundary automatically.
-  const res = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
-    { method: 'POST', headers, body: form },
-  );
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    console.error('[Ohm] Drive create failed:', res.status, err);
-  } else {
-    const created = await res.json();
-    cachedFileId = created.id;
-  }
-  return res.ok;
 }

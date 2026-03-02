@@ -62,19 +62,19 @@ export function Card({ card, onTap, onReorder }: CardProps) {
       >
         {/* Title row with drag handle */}
         <div className="flex items-center gap-1.5">
+          <p className="font-body text-ohm-text min-w-0 flex-1 text-sm leading-snug font-medium">
+            {card.title}
+          </p>
           <button
             type="button"
             {...listeners}
-            className="text-ohm-muted/40 hover:text-ohm-muted mt-px -ml-1 shrink-0 cursor-grab touch-none rounded p-0.5 transition-colors active:cursor-grabbing md:opacity-0 md:group-hover:opacity-100"
+            className="text-ohm-muted/40 hover:text-ohm-muted -mr-1 shrink-0 cursor-grab touch-none rounded p-1.5 transition-colors active:cursor-grabbing md:opacity-0 md:group-hover:opacity-100"
             aria-label="Drag to reorder"
             tabIndex={-1}
             onClick={(e) => e.stopPropagation()}
           >
-            <GripVertical size={14} />
+            <GripVertical size={18} />
           </button>
-          <p className="font-body text-ohm-text min-w-0 flex-1 text-sm leading-snug font-medium">
-            {card.title}
-          </p>
         </div>
 
         {/* Meta row */}
