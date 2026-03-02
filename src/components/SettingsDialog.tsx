@@ -25,6 +25,7 @@ import {
   mergeBoards,
   type RestorePoint,
 } from '../utils/restore-points';
+import { toastImportComplete } from '../utils/toast';
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -116,6 +117,7 @@ export function SettingsDialog({
     if (!importPending) return;
     createRestorePoint(board, 'Before import');
     onReplaceBoard(importPending);
+    toastImportComplete(importPending.cards.length);
     setImportPending(null);
     refreshRestorePoints();
   };
@@ -123,7 +125,9 @@ export function SettingsDialog({
   const handleImportMerge = () => {
     if (!importPending) return;
     createRestorePoint(board, 'Before import');
-    onReplaceBoard(mergeBoards(board, importPending));
+    const merged = mergeBoards(board, importPending);
+    onReplaceBoard(merged);
+    toastImportComplete(merged.cards.length);
     setImportPending(null);
     refreshRestorePoints();
   };
@@ -366,7 +370,7 @@ export function SettingsDialog({
                 <div className="rounded-md border border-ohm-spark/30 bg-ohm-spark/5 p-3">
                   <p className="mb-2 font-body text-xs text-ohm-text">
                     Import {importPending.cards.length} card
-                    {importPending.cards.length !== 1 ? 's' : ''}. How?
+                    {importPending.cards.length !== 1 ? 's' : ''}.
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -380,7 +384,7 @@ export function SettingsDialog({
                       onClick={handleImportReplace}
                       className="flex-1 border-ohm-border text-xs text-ohm-muted hover:text-ohm-live"
                     >
-                      Replace
+                      Overwrite
                     </Button>
                     <Button
                       variant="outline"

@@ -23,6 +23,7 @@ import { Column } from './Column';
 import { CardDetail } from './CardDetail';
 import { SettingsDialog } from './SettingsDialog';
 import { SyncIndicator } from './SyncIndicator';
+import { toastCardMoved, toastCardDeleted, toastQuickAdd } from '../utils/toast';
 
 function CategoryFilter({
   categories,
@@ -117,6 +118,7 @@ export function Board() {
     quickAdd,
     updateCard,
     deleteCard,
+    restoreCard,
     reorderBatch,
     addCategory,
     removeCategory,
@@ -193,30 +195,8 @@ export function Board() {
 
   const { summary: welcomeBack, dismiss: dismissWelcome } = useWelcomeBack(board);
 
-  // Completion flash — trigger when Powered card count increases
+  // Completion flash — column header animation (toast handled in onSave)
   const [poweredFlash, setPoweredFlash] = useState(false);
-  const [completionToast, setCompletionToast] = useState(false);
-  const prevPoweredCountRef = useRef<number | null>(null);
-  const poweredCount = board.cards.filter((c) => c.status === STATUS.POWERED).length;
-
-  useEffect(() => {
-    const shouldFlash =
-      prevPoweredCountRef.current !== null && poweredCount > prevPoweredCountRef.current;
-    prevPoweredCountRef.current = poweredCount;
-
-    if (shouldFlash) {
-      const start = setTimeout(() => setPoweredFlash(true), 0);
-      const end = setTimeout(() => setPoweredFlash(false), 1000);
-      // Toast for mobile (visible regardless of scroll position)
-      setCompletionToast(true);
-      const toastEnd = setTimeout(() => setCompletionToast(false), 2000);
-      return () => {
-        clearTimeout(start);
-        clearTimeout(end);
-        clearTimeout(toastEnd);
-      };
-    }
-  }, [poweredCount]);
 
   const [selectedCard, setSelectedCard] = useState<OhmCard | null>(null);
   const [newCard, setNewCard] = useState<OhmCard | null>(null);
@@ -524,15 +504,28 @@ export function Board() {
                 energy: updated.energy,
                 category: updated.category || undefined,
               });
+              toastQuickAdd(updated.title);
             } else {
+              const original = board.cards.find((c) => c.id === updated.id);
               updateCard(updated);
+              if (original && updated.status !== original.status) {
+                toastCardMoved(updated, updated.status);
+                if (updated.status === STATUS.POWERED) {
+                  setPoweredFlash(true);
+                  setTimeout(() => setPoweredFlash(false), 1000);
+                }
+              }
             }
             setSelectedCard(null);
             setNewCard(null);
           }}
           onDelete={(id) => {
+            const deletedCard = board.cards.find((c) => c.id === id);
             deleteCard(id);
             setSelectedCard(null);
+            if (deletedCard) {
+              toastCardDeleted(deletedCard, () => restoreCard(deletedCard));
+            }
           }}
           onClose={() => {
             setSelectedCard(null);
@@ -587,18 +580,6 @@ export function Board() {
       >
         <Zap size={24} />
       </Button>
-
-      {/* Completion toast */}
-      {completionToast && (
-        <div className="animate-completion-toast pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center md:bottom-8">
-          <div className="flex items-center gap-2 rounded-full border border-green-500/30 bg-ohm-surface px-4 py-2 shadow-lg shadow-green-500/10">
-            <Zap size={16} className="animate-bolt-flash text-green-400" />
-            <span className="font-display text-xs uppercase tracking-widest text-green-400">
-              Circuit complete
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

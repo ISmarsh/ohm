@@ -60,6 +60,11 @@ export function useBoard() {
     setBoard((prev) => removeCardFromBoard(prev, cardId));
   }, []);
 
+  /** Restore a previously deleted card */
+  const restoreCard = useCallback((card: OhmCard) => {
+    setBoard((prev) => addCardToBoard(prev, card));
+  }, []);
+
   /** Reorder a card within a column */
   const reorder = useCallback((cardId: string, newSortOrder: number) => {
     setBoard((prev) => {
@@ -171,6 +176,7 @@ export function useBoard() {
     move,
     updateCard,
     deleteCard,
+    restoreCard,
     reorder,
     reorderBatch,
     setCapacity,

@@ -38,6 +38,8 @@ export interface OhmColumn {
   label: string;
   description: string;
   color: string;
+  /** Hex color for runtime use (toasts, canvas, etc.) */
+  hex: string;
 }
 
 /** Full board state — what gets persisted to Google Drive */
@@ -66,21 +68,25 @@ export const COLUMNS: readonly OhmColumn[] = [
     label: 'Charging',
     description: 'Captured ideas -- shape with a clear next step',
     color: 'ohm-charging',
+    hex: '#f97316',
   },
   {
     label: 'Grounded',
     description: 'Defined and ready -- waiting for bandwidth',
     color: 'ohm-grounded',
+    hex: '#6366f1',
   },
   {
     label: 'Live',
     description: 'Actively working on it',
     color: 'ohm-live',
+    hex: '#ef4444',
   },
   {
     label: 'Powered',
     description: 'Done -- circuit complete',
     color: 'ohm-powered',
+    hex: '#22c55e',
   },
 ];
 
@@ -142,6 +148,7 @@ export const STATUS_CLASSES: readonly {
 ];
 
 /** Spark accent -- used for new card creation (not tied to a column status) */
+export const SPARK_HEX = '#fbbf24';
 export const SPARK_CLASSES = {
   border: 'border-ohm-spark/30',
   ring: 'focus-visible:ring-ohm-spark/20',
