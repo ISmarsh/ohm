@@ -210,7 +210,13 @@ export function SettingsDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent
+        className="sm:max-w-md"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          (e.currentTarget as HTMLElement).focus();
+        }}
+      >
         <div className="mb-3 flex items-center gap-2">
           <Settings size={16} className="text-ohm-muted" />
           <DialogTitle className="font-display text-ohm-muted text-xs tracking-widest uppercase">

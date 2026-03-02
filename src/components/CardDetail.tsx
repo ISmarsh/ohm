@@ -113,7 +113,12 @@ export function CardDetail({
         if (!open) onClose();
       }}
     >
-      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          (e.currentTarget as HTMLElement).focus();
+        }}
+      >
         {/* Header -- title + close */}
         <DialogTitle className="sr-only">{editing.title || 'Card details'}</DialogTitle>
         <DialogDescription className="sr-only">

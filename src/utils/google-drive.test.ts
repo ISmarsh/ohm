@@ -57,7 +57,7 @@ describe('Drive sync - code flow', () => {
     vi.restoreAllMocks();
     localStorage.clear();
     setupGoogleGlobal();
-    global.fetch = vi.fn();
+    vi.stubGlobal('fetch', vi.fn());
   });
 
   it('initDriveAuth initializes code client when tokenExchangeUrl is set', () => {
@@ -241,7 +241,7 @@ describe('getAuthLevel', () => {
     vi.restoreAllMocks();
     localStorage.clear();
     setupGoogleGlobal();
-    global.fetch = vi.fn();
+    vi.stubGlobal('fetch', vi.fn());
   });
 
   it('returns 0 when localStorage is unavailable', () => {
@@ -286,7 +286,7 @@ describe('Drive sync - implicit flow fallback', () => {
     vi.restoreAllMocks();
     localStorage.clear();
     setupGoogleGlobal();
-    global.fetch = vi.fn();
+    vi.stubGlobal('fetch', vi.fn());
   });
 
   it('initDriveAuth initializes token client when tokenExchangeUrl is empty', () => {
