@@ -129,7 +129,7 @@ export function Board() {
     activationConstraint: { distance: 8 },
   });
   const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: { delay: 250, tolerance: 5 },
+    activationConstraint: { delay: 150, tolerance: 5 },
   });
   const sensors = useSensors(pointerSensor, touchSensor);
 
@@ -194,6 +194,7 @@ export function Board() {
 
   // Completion flash — trigger when Powered card count increases
   const [poweredFlash, setPoweredFlash] = useState(false);
+  const [completionToast, setCompletionToast] = useState(false);
   const prevPoweredCountRef = useRef<number | null>(null);
   const poweredCount = board.cards.filter((c) => c.status === STATUS.POWERED).length;
 
@@ -205,9 +206,13 @@ export function Board() {
     if (shouldFlash) {
       const start = setTimeout(() => setPoweredFlash(true), 0);
       const end = setTimeout(() => setPoweredFlash(false), 1000);
+      // Toast for mobile (visible regardless of scroll position)
+      setCompletionToast(true);
+      const toastEnd = setTimeout(() => setCompletionToast(false), 2000);
       return () => {
         clearTimeout(start);
         clearTimeout(end);
+        clearTimeout(toastEnd);
       };
     }
   }, [poweredCount]);
@@ -581,6 +586,18 @@ export function Board() {
       >
         <Zap size={24} />
       </Button>
+
+      {/* Completion toast */}
+      {completionToast && (
+        <div className="animate-completion-toast pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center md:bottom-8">
+          <div className="flex items-center gap-2 rounded-full border border-green-500/30 bg-ohm-surface px-4 py-2 shadow-lg shadow-green-500/10">
+            <Zap size={16} className="animate-bolt-flash text-green-400" />
+            <span className="font-display text-xs uppercase tracking-widest text-green-400">
+              Circuit complete
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
