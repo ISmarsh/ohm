@@ -30,3 +30,11 @@ A kanban app using an electrical metaphor to map energy cycles into a visual wor
 - **Theming**: Dark theme. Status colors = `ohm-charging/live/grounded/powered`. Energy colors = `ohm-energy-low/med/high` (stoplight). Labels/icons are re-themeable without data migration.
 - **CardDetail** handles both creation (`isNew` mode) and editing with contextual field visibility.
 - **Mobile-first** responsive layout. Filter bar: energy chips + expandable category/search.
+
+### Google Drive Auth
+
+Dual-flow OAuth: authorization code flow (persistent) when `VITE_TOKEN_EXCHANGE_URL` is set, implicit flow (session-only) as fallback. See `src/utils/google-drive.ts`.
+
+### Cloud Function (`cloud-functions/token-exchange/`)
+
+GCP Cloud Run function (gen2, Node 22, us-central1) that proxies OAuth token exchange/refresh, keeping the client secret server-side. Deployed to project `ohm-adhd-kanban`. **No CI deploy** -- changes to the function require manual redeploy via `npm run deploy` from that directory (needs `gcloud` CLI authenticated). See the companion doc at `planet-smars/templates/ai-context/gcp-oauth-token-exchange.md` for full setup details.
