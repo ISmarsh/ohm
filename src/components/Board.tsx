@@ -474,6 +474,7 @@ export function Board() {
                   column={col}
                   cards={filteredCards(status)}
                   onCardTap={setSelectedCard}
+                  onReorderCards={reorderBatch}
                   capacity={getColumnCapacity(board, status) ?? undefined}
                   defaultExpanded={index === STATUS.LIVE}
                   flash={index === STATUS.POWERED ? poweredFlash : undefined}

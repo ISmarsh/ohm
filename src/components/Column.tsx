@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { OhmCard, OhmColumn as OhmColumnType } from '../types/board';
@@ -8,6 +8,7 @@ interface ColumnProps {
   column: OhmColumnType;
   cards: OhmCard[];
   onCardTap: (card: OhmCard) => void;
+  onReorderCards?: (orderedIds: string[], movedId: string) => void;
   capacity?: { used: number; total: number };
   defaultExpanded?: boolean;
   flash?: boolean;
@@ -24,11 +25,25 @@ export function Column({
   column,
   cards,
   onCardTap,
+  onReorderCards,
   capacity,
   defaultExpanded = false,
   flash,
 }: ColumnProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+
+  const handleReorder = useCallback(
+    (idx: number, cardId: string, dir: -1 | 1) => {
+      if (!onReorderCards) return;
+      const newIdx = idx + dir;
+      if (newIdx < 0 || newIdx >= cards.length) return;
+      const ids = cards.map((c) => c.id);
+      const [removed] = ids.splice(idx, 1);
+      ids.splice(newIdx, 0, removed!);
+      onReorderCards(ids, cardId);
+    },
+    [cards, onReorderCards],
+  );
 
   return (
     <div className="flex w-full min-w-0 flex-col rounded-xl md:w-auto md:flex-1">
@@ -42,7 +57,7 @@ export function Column({
           onClick={() => setExpanded((prev) => !prev)}
           aria-expanded={expanded}
           aria-controls={`column-cards-${column.label}`}
-          className="flex w-full items-center gap-2 md:hidden"
+          className="focus-visible:ring-ring flex w-full items-center gap-2 rounded-sm focus-visible:ring-1 focus-visible:outline-hidden md:hidden"
         >
           <span className="text-ohm-muted">
             {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -85,8 +100,13 @@ export function Column({
           id={`column-cards-${column.label}`}
           className={`flex-col gap-2 px-2 pb-4 ${expanded ? 'flex min-h-[60px]' : 'hidden'} md:flex md:min-h-[100px]`}
         >
-          {cards.map((card) => (
-            <Card key={card.id} card={card} onTap={onCardTap} />
+          {cards.map((card, idx) => (
+            <Card
+              key={card.id}
+              card={card}
+              onTap={onCardTap}
+              onReorder={(dir) => handleReorder(idx, card.id, dir)}
+            />
           ))}
           {cards.length === 0 && (
             <div className="font-body text-ohm-muted/40 py-8 text-center text-xs italic">

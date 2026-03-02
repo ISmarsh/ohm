@@ -130,8 +130,6 @@ export function CardDetail({
               value={editing.title}
               onChange={(e) => setEditing((prev) => ({ ...prev, title: e.target.value }))}
               aria-label="Card title"
-              autoComplete="off"
-              data-form-type="other"
               placeholder={isNew ? "What's the idea?" : undefined}
               className={`${accent.border} bg-ohm-bg font-body text-ohm-text placeholder:text-ohm-muted/50 text-sm font-medium ${accent.ring} focus-visible:ring-offset-0`}
             />
@@ -160,7 +158,6 @@ export function CardDetail({
                 autoSize(e.target);
               }}
               placeholder="Notes, context, details..."
-              autoComplete="off"
               rows={2}
               className={`resize-none ${accent.border} bg-ohm-bg font-body text-ohm-text placeholder:text-ohm-muted/50 text-sm ${accent.ring} focus-visible:ring-offset-0`}
             />
@@ -185,8 +182,6 @@ export function CardDetail({
                     <Input
                       value={note}
                       onChange={(e) => handleUpdateNote(index, e.target.value)}
-                      autoComplete="off"
-                      data-form-type="other"
                       className={`flex-1 ${accent.border} bg-ohm-bg font-body text-ohm-text text-sm ${accent.ring} focus-visible:ring-offset-0`}
                     />
                   )}
@@ -218,8 +213,6 @@ export function CardDetail({
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Add a task..."
-                autoComplete="off"
-                data-form-type="other"
                 className={`flex-1 ${accent.border} bg-ohm-bg font-body text-ohm-text placeholder:text-ohm-muted/50 text-sm ${accent.ring} focus-visible:ring-offset-0`}
               />
               <Button

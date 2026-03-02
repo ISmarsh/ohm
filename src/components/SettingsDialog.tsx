@@ -60,8 +60,6 @@ const CAPACITY_ROWS = [
   { label: 'Live', status: STATUS.LIVE, key: 'live' as const, color: 'text-ohm-live' },
 ];
 
-const NO_AUTOCOMPLETE = { autoComplete: 'off', 'data-form-type': 'other' } as const;
-
 export function SettingsDialog({
   isOpen,
   onClose,
@@ -209,7 +207,6 @@ export function SettingsDialog({
                       (e.target as HTMLInputElement).blur();
                     }
                   }}
-                  {...NO_AUTOCOMPLETE}
                   aria-label={`Rename category ${cat}`}
                   className="border-ohm-border bg-ohm-bg font-body text-ohm-text focus-visible:ring-ohm-spark/20 flex-1 px-3 py-1.5 text-sm focus-visible:ring-offset-0"
                 />
@@ -237,7 +234,6 @@ export function SettingsDialog({
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               placeholder="New category..."
-              {...NO_AUTOCOMPLETE}
               aria-label="New category name"
               className="border-ohm-border bg-ohm-bg font-body text-ohm-text placeholder:text-ohm-muted/40 focus-visible:ring-ohm-spark/20 flex-1 px-3 py-1.5 text-sm focus-visible:ring-offset-0"
             />

@@ -10,11 +10,12 @@ import { Badge } from './ui/badge';
 interface CardProps {
   card: OhmCard;
   onTap: (card: OhmCard) => void;
+  onReorder?: (direction: -1 | 1) => void;
 }
 
 const STALE_THRESHOLD_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
-export function Card({ card, onTap }: CardProps) {
+export function Card({ card, onTap, onReorder }: CardProps) {
   const energyInfo = ENERGY_CONFIG[card.energy]!;
   const EnergyIcon = energyInfo.icon;
 
@@ -43,12 +44,16 @@ export function Card({ card, onTap }: CardProps) {
       {...attributes}
       role="button"
       tabIndex={0}
+      aria-roledescription="sortable"
       className="focus-visible:ring-ring rounded-xl focus-visible:ring-2 focus-visible:outline-hidden"
       onClick={() => onTap(card)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onTap(card);
+        } else if (onReorder && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+          e.preventDefault();
+          onReorder(e.key === 'ArrowUp' ? -1 : 1);
         }
       }}
     >
