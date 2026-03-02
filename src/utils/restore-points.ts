@@ -56,7 +56,7 @@ export function exportBoard(board: OhmBoard): void {
   a.href = url;
   a.download = `ohm-board-${date}.json`;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 /** Parse and validate a JSON file as an OhmBoard */

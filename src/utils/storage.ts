@@ -30,21 +30,8 @@ export function sanitizeBoard(board: OhmBoard): OhmBoard {
       card.status = STATUS.CHARGING;
     }
 
-    // One-time migration: nextStep/whereILeftOff -> tasks + status index swap
-    const raw = card as unknown as Record<string, unknown>;
-    if (!Array.isArray(raw.tasks)) {
-      const tasks: string[] = [];
-      if (raw.nextStep) tasks.push(raw.nextStep as string);
-      if (raw.whereILeftOff) tasks.push(raw.whereILeftOff as string);
-      // Also migrate from intermediate 'notes' field name
-      if (Array.isArray(raw.notes)) tasks.push(...(raw.notes as string[]));
-      raw.tasks = tasks;
-      delete raw.nextStep;
-      delete raw.whereILeftOff;
-      delete raw.notes;
-      // Swap old LIVE=1 <-> old GROUNDED=2 to match new indices
-      if (raw.status === 1) raw.status = 2;
-      else if (raw.status === 2) raw.status = 1;
+    if (!Array.isArray(card.tasks)) {
+      card.tasks = [];
     }
   }
   return board;

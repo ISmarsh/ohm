@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { createElement } from 'react';
 import { toast } from 'sonner';
 import { Zap, Trash2, PackageCheck } from 'lucide-react';
@@ -8,8 +9,8 @@ const zapIcon = createElement(Zap, { size: 14 });
 const trashIcon = createElement(Trash2, { size: 14 });
 const packageIcon = createElement(PackageCheck, { size: 14 });
 
-function accentStyle(hex: string = SPARK_HEX): React.CSSProperties {
-  return { borderLeft: `3px solid ${hex}`, '--ohm-accent': hex } as React.CSSProperties;
+function accentStyle(hex: string = SPARK_HEX): CSSProperties {
+  return { borderLeft: `3px solid ${hex}`, '--ohm-accent': hex } as CSSProperties;
 }
 
 export function toastCardMoved(card: OhmCard, destinationStatus: ColumnStatus) {
