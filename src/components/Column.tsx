@@ -34,7 +34,7 @@ export function Column({
     <div className="flex w-full min-w-0 flex-col rounded-xl md:w-auto md:flex-1">
       {/* Column header — mobile: button toggle, desktop: static */}
       <div
-        className={`sticky top-0 z-10 mb-1 flex w-full items-center rounded-lg bg-ohm-bg/80 px-3 py-2 backdrop-blur-sm ${flash ? 'animate-completion-flash' : ''}`}
+        className={`bg-ohm-bg/80 sticky top-0 z-10 mb-1 flex w-full items-center rounded-lg px-3 py-2 backdrop-blur-xs ${flash ? 'animate-completion-flash' : ''}`}
       >
         {/* Mobile toggle button — full width for easy tapping */}
         <button
@@ -48,13 +48,13 @@ export function Column({
             {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </span>
           <div className={`h-2 w-2 rounded-full bg-${column.color}`} />
-          <span className="font-display text-xs font-bold uppercase tracking-widest text-ohm-text">
+          <span className="font-display text-ohm-text text-xs font-bold tracking-widest uppercase">
             {column.label}
           </span>
-          <span className="ml-1 font-body text-[10px] text-ohm-muted">{cards.length}</span>
+          <span className="font-body text-ohm-muted ml-1 text-[10px]">{cards.length}</span>
           {capacity && (
             <span
-              className={`ml-auto shrink-0 font-display text-[10px] font-bold ${capacity.used > capacity.total ? 'animate-pulse' : ''}`}
+              className={`font-display ml-auto shrink-0 text-[10px] font-bold ${capacity.used > capacity.total ? 'animate-pulse' : ''}`}
               style={{ color: capacityColor(capacity.used, capacity.total) }}
             >
               {capacity.used}/{capacity.total}
@@ -64,13 +64,13 @@ export function Column({
         {/* Desktop static header */}
         <div className="hidden items-center gap-2 md:flex md:w-full">
           <div className={`h-2 w-2 rounded-full bg-${column.color}`} />
-          <span className="font-display text-xs font-bold uppercase tracking-widest text-ohm-text">
+          <span className="font-display text-ohm-text text-xs font-bold tracking-widest uppercase">
             {column.label}
           </span>
-          <span className="ml-1 font-body text-[10px] text-ohm-muted">{cards.length}</span>
+          <span className="font-body text-ohm-muted ml-1 text-[10px]">{cards.length}</span>
           {capacity && (
             <span
-              className={`ml-auto shrink-0 font-display text-[10px] font-bold ${capacity.used > capacity.total ? 'animate-pulse' : ''}`}
+              className={`font-display ml-auto shrink-0 text-[10px] font-bold ${capacity.used > capacity.total ? 'animate-pulse' : ''}`}
               style={{ color: capacityColor(capacity.used, capacity.total) }}
             >
               {capacity.used}/{capacity.total}
@@ -89,7 +89,7 @@ export function Column({
             <Card key={card.id} card={card} onTap={onCardTap} />
           ))}
           {cards.length === 0 && (
-            <div className="py-8 text-center font-body text-xs italic text-ohm-muted/40">
+            <div className="font-body text-ohm-muted/40 py-8 text-center text-xs italic">
               {column.description}
             </div>
           )}
