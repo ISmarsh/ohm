@@ -120,6 +120,7 @@ export function Board() {
     reorderBatch,
     addCategory,
     removeCategory,
+    renameCategory,
     setCapacity,
     replaceBoard,
   } = useBoard();
@@ -520,7 +521,6 @@ export function Board() {
             if (newCard) {
               quickAdd(updated.title, {
                 description: updated.description || undefined,
-                nextStep: updated.nextStep || undefined,
                 energy: updated.energy,
                 category: updated.category || undefined,
               });
@@ -553,6 +553,7 @@ export function Board() {
         categories={board.categories}
         onAddCategory={addCategory}
         onRemoveCategory={removeCategory}
+        onRenameCategory={renameCategory}
         capacities={{
           charging: board.chargingCapacity,
           live: board.liveCapacity,

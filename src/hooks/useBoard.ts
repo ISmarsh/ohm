@@ -32,10 +32,7 @@ export function useBoard() {
 
   /** Quick-add a card to Charging (minimal friction, optional details) */
   const quickAdd = useCallback(
-    (
-      title: string,
-      overrides?: Partial<Pick<OhmCard, 'description' | 'energy' | 'category' | 'nextStep'>>,
-    ) => {
+    (title: string, overrides?: Partial<Pick<OhmCard, 'description' | 'energy' | 'category'>>) => {
       const card = createCard(title, overrides);
       setBoard((prev) => addCardToBoard(prev, card));
       return card;
@@ -44,11 +41,11 @@ export function useBoard() {
   );
 
   /** Move a card to a new status */
-  const move = useCallback((cardId: string, newStatus: ColumnStatus, whereILeftOff?: string) => {
+  const move = useCallback((cardId: string, newStatus: ColumnStatus) => {
     setBoard((prev) => {
       const card = prev.cards.find((c) => c.id === cardId);
       if (!card) return prev;
-      const updated = moveCard(card, newStatus, whereILeftOff);
+      const updated = moveCard(card, newStatus);
       return updateCardInBoard(prev, updated);
     });
   }, []);
@@ -142,6 +139,26 @@ export function useBoard() {
     });
   }, []);
 
+  /** Rename a category and update all cards using it */
+  const renameCategory = useCallback((oldName: string, newName: string) => {
+    setBoard((prev) => {
+      const trimmed = newName.trim();
+      if (!trimmed || trimmed === oldName) return prev;
+      if (!prev.categories.includes(oldName)) return prev;
+      if (prev.categories.includes(trimmed)) return prev;
+      const now = new Date().toISOString();
+      return {
+        ...prev,
+        categories: prev.categories.map((c) => (c === oldName ? trimmed : c)),
+        cards: prev.cards.map((card) =>
+          card.category === oldName ? { ...card, category: trimmed, updatedAt: now } : card,
+        ),
+        categoriesUpdatedAt: now,
+        lastSaved: now,
+      };
+    });
+  }, []);
+
   /** Replace the entire board (used by Drive sync when remote is newer) */
   const replaceBoard = useCallback((newBoard: OhmBoard) => {
     setBoard(newBoard);
@@ -159,6 +176,7 @@ export function useBoard() {
     setCapacity,
     addCategory,
     removeCategory,
+    renameCategory,
     replaceBoard,
   };
 }

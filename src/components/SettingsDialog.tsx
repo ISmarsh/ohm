@@ -32,6 +32,7 @@ interface SettingsDialogProps {
   categories: string[];
   onAddCategory: (category: string) => void;
   onRemoveCategory: (category: string) => void;
+  onRenameCategory: (oldName: string, newName: string) => void;
   capacities: { charging: number; live: number; grounded: number };
   onSetCapacity: (status: ColumnStatus, capacity: number) => void;
   driveAvailable?: boolean;
@@ -49,13 +50,13 @@ const CAPACITY_ROWS = [
     key: 'charging' as const,
     color: 'text-ohm-charging',
   },
-  { label: 'Live', status: STATUS.LIVE, key: 'live' as const, color: 'text-ohm-live' },
   {
     label: 'Grounded',
     status: STATUS.GROUNDED,
     key: 'grounded' as const,
     color: 'text-ohm-grounded',
   },
+  { label: 'Live', status: STATUS.LIVE, key: 'live' as const, color: 'text-ohm-live' },
 ];
 
 export function SettingsDialog({
@@ -64,6 +65,7 @@ export function SettingsDialog({
   categories,
   onAddCategory,
   onRemoveCategory,
+  onRenameCategory,
   capacities,
   onSetCapacity,
   driveAvailable,
@@ -183,19 +185,37 @@ export function SettingsDialog({
           </span>
           <div className="flex flex-col gap-1.5">
             {categories.map((cat) => (
-              <div
-                key={cat}
-                className="flex items-center justify-between rounded-md border border-ohm-border bg-ohm-bg px-3 py-1.5"
-              >
-                <span className="font-body text-sm text-ohm-text">{cat}</span>
-                <button
+              <div key={cat} className="flex items-center gap-2">
+                <Input
+                  defaultValue={cat}
+                  onBlur={(e) => {
+                    const trimmed = e.target.value.trim();
+                    if (trimmed && trimmed !== cat) {
+                      onRenameCategory(cat, trimmed);
+                    } else {
+                      e.target.value = cat;
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    if (e.key === 'Escape') {
+                      (e.target as HTMLInputElement).value = cat;
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                  aria-label={`Rename category ${cat}`}
+                  className="flex-1 border-ohm-border bg-ohm-bg px-3 py-1.5 font-body text-sm text-ohm-text focus-visible:ring-ohm-spark/20 focus-visible:ring-offset-0"
+                />
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onRemoveCategory(cat)}
-                  className="rounded-sm p-0.5 text-ohm-muted transition-colors hover:text-ohm-live"
+                  className="h-9 w-9 shrink-0 text-ohm-live/60 hover:bg-transparent hover:text-ohm-live"
                   aria-label={`Remove ${cat} category`}
                 >
-                  <X size={14} />
-                </button>
+                  <Trash2 size={14} />
+                </Button>
               </div>
             ))}
           </div>

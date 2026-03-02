@@ -95,25 +95,15 @@ export function Card({ card, onTap }: CardProps) {
           )}
         </div>
 
-        {/* Next step for active cards (not powered) */}
-        {card.status !== STATUS.POWERED && card.nextStep && (
-          <div className="mt-2 flex items-start gap-1 border-t border-ohm-border pt-1.5 text-xs text-ohm-muted">
-            <ArrowRight size={12} className="mt-0.5 shrink-0" />
-            <span>
-              {card.nextStep.length > 60 ? card.nextStep.slice(0, 60) + '...' : card.nextStep}
-            </span>
-          </div>
-        )}
-
-        {/* Where I left off indicator for grounded cards */}
-        {card.status === STATUS.GROUNDED && card.whereILeftOff && (
-          <div className="mt-2 flex items-start gap-1 border-t border-ohm-border pt-1.5 text-xs text-ohm-muted">
-            <ArrowRight size={12} className="mt-0.5 shrink-0" />
-            <span>
-              {card.whereILeftOff.length > 60
-                ? card.whereILeftOff.slice(0, 60) + '...'
-                : card.whereILeftOff}
-            </span>
+        {/* Notes preview */}
+        {card.tasks.length > 0 && (
+          <div className="mt-2 flex flex-col gap-1 border-t border-ohm-border pt-1.5 text-xs text-ohm-muted">
+            {card.tasks.map((note, i) => (
+              <div key={i} className="flex items-start gap-1">
+                <ArrowRight size={12} className="mt-0.5 shrink-0" />
+                <span>{note.length > 60 ? note.slice(0, 60) + '...' : note}</span>
+              </div>
+            ))}
           </div>
         )}
       </CardContainer>

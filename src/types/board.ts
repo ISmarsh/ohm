@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import { EnergySmall, EnergyMedium, EnergyLarge } from '../components/ui/energy-icons';
 
 /** Named status indices — positions in the COLUMNS array */
-export const STATUS = { CHARGING: 0, LIVE: 1, GROUNDED: 2, POWERED: 3 } as const;
+export const STATUS = { CHARGING: 0, GROUNDED: 1, LIVE: 2, POWERED: 3 } as const;
 export type ColumnStatus = (typeof STATUS)[keyof typeof STATUS];
 
 /** Named energy indices — positions in the ENERGY_CONFIG array */
@@ -16,10 +16,8 @@ export interface OhmCard {
   /** Free-form notes or context about the card */
   description: string;
   status: ColumnStatus;
-  /** The single next concrete action — may be empty at capture, expected before going live */
-  nextStep: string;
-  /** Context note captured when moving to grounded */
-  whereILeftOff: string;
+  /** User-managed tasks — persists across column moves */
+  tasks: string[];
   /** Energy tag for filtering */
   energy: EnergyTag;
   /** Optional project/category tag */
@@ -70,14 +68,14 @@ export const COLUMNS: readonly OhmColumn[] = [
     color: 'ohm-charging',
   },
   {
+    label: 'Grounded',
+    description: 'Defined and ready -- waiting for bandwidth',
+    color: 'ohm-grounded',
+  },
+  {
     label: 'Live',
     description: 'Actively working on it',
     color: 'ohm-live',
-  },
-  {
-    label: 'Grounded',
-    description: 'Paused -- with context to pick back up',
-    color: 'ohm-grounded',
   },
   {
     label: 'Powered',
@@ -130,12 +128,12 @@ export const STATUS_CLASSES: readonly {
     ring: 'focus-visible:ring-ohm-charging/20',
   },
   {
-    border: 'border-ohm-live/30',
-    ring: 'focus-visible:ring-ohm-live/20',
-  },
-  {
     border: 'border-ohm-grounded/30',
     ring: 'focus-visible:ring-ohm-grounded/20',
+  },
+  {
+    border: 'border-ohm-live/30',
+    ring: 'focus-visible:ring-ohm-live/20',
   },
   {
     border: 'border-ohm-powered/30',
@@ -151,9 +149,9 @@ export const SPARK_CLASSES = {
 
 /** Valid transitions from each status */
 export const VALID_TRANSITIONS: readonly (readonly ColumnStatus[])[] = [
-  [STATUS.LIVE], // charging -> live
+  [STATUS.GROUNDED, STATUS.LIVE, STATUS.POWERED], // charging -> any
+  [STATUS.LIVE, STATUS.POWERED], // grounded -> live, powered
   [STATUS.GROUNDED, STATUS.POWERED], // live -> grounded, powered
-  [STATUS.LIVE], // grounded -> live
   [STATUS.CHARGING], // powered -> charging
 ];
 
