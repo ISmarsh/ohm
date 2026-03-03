@@ -258,15 +258,21 @@ export function Board() {
 
   const handleShare = async () => {
     const url = window.location.href;
+
     if (navigator.share) {
-      await navigator.share({ title: 'Ohm', url }).catch(() => {});
-    } else {
       try {
-        await navigator.clipboard.writeText(url);
-        toastLinkCopied();
-      } catch {
-        toastLinkFailed();
+        await navigator.share({ title: 'Ohm', url });
+        return;
+      } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
       }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      toastLinkCopied();
+    } catch {
+      toastLinkFailed();
     }
   };
 
