@@ -10,7 +10,7 @@ import {
   saveToDrive,
 } from '../utils/google-drive';
 import { DRIVE_CLIENT_ID } from '../config/drive';
-import { createRestorePoint } from '../utils/restore-points';
+import { createRestorePoint, mergeBoards } from '../utils/restore-points';
 import { toastSyncResult } from '../utils/toast';
 
 export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'offline';
@@ -43,16 +43,40 @@ export function useDriveSync(
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const boardRef = useRef(currentBoard);
 
-  /** Compare remote vs local timestamps and merge the newer version */
+  /** Reconcile local board with whatever is stored in Drive */
   const mergeWithRemote = useCallback(async (): Promise<boolean> => {
     const remote = await loadFromDrive();
-    if (remote && remote.lastSaved > boardRef.current.lastSaved) {
-      createRestorePoint(boardRef.current, 'Before Drive sync');
+    if (!remote) {
+      // Nothing in Drive yet — push local
+      const ok = await saveToDrive(boardRef.current);
+      setSyncStatus(ok ? 'synced' : 'error');
+      return ok;
+    }
+
+    const local = boardRef.current;
+    const localEmpty = local.cards.length === 0;
+    const remoteEmpty = remote.cards.length === 0;
+
+    if (localEmpty && !remoteEmpty) {
+      // Fresh install or empty local — adopt remote data
+      createRestorePoint(local, 'Before Drive sync');
       onBoardLoaded(remote);
       setSyncStatus('synced');
       return true;
     }
-    const ok = await saveToDrive(boardRef.current);
+
+    if (!localEmpty && !remoteEmpty) {
+      // Both have cards — smart per-card merge
+      createRestorePoint(local, 'Before Drive sync');
+      const merged = mergeBoards(local, remote);
+      onBoardLoaded(merged);
+      const ok = await saveToDrive(merged);
+      setSyncStatus(ok ? 'synced' : 'error');
+      return ok;
+    }
+
+    // Local has cards and remote is empty, or both empty — push local
+    const ok = await saveToDrive(local);
     setSyncStatus(ok ? 'synced' : 'error');
     return ok;
   }, [onBoardLoaded]);
