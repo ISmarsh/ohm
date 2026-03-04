@@ -34,7 +34,7 @@ export function useSheetDismiss(onDismiss: (() => void) | undefined) {
       if (!el) return;
       // Only begin if content is scrolled to top
       if (el.scrollTop > 0) return;
-      startY.current = e.touches[0].clientY;
+      startY.current = e.touches[0]!.clientY;
       currentY.current = startY.current;
       dragging.current = false;
       // Remove transition during active drag
@@ -49,7 +49,7 @@ export function useSheetDismiss(onDismiss: (() => void) | undefined) {
       const el = sheetRef.current;
       if (!el) return;
 
-      currentY.current = e.touches[0].clientY;
+      currentY.current = e.touches[0]!.clientY;
       const dy = currentY.current - startY.current;
 
       if (!dragging.current) {
