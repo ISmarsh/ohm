@@ -9,7 +9,7 @@ const RESISTANCE = 0.5; // dampen drag beyond threshold
  */
 export function useSheetDismiss(onDismiss: (() => void) | undefined) {
   const sheetRef = useRef<HTMLDivElement | null>(null);
-  const startY = useRef(0);
+  const startY = useRef<number | null>(null);
   const currentY = useRef(0);
   const dragging = useRef(false);
 
@@ -45,19 +45,19 @@ export function useSheetDismiss(onDismiss: (() => void) | undefined) {
 
   const onTouchMove: TouchEventHandler = useCallback(
     (e) => {
-      if (!onDismiss || startY.current === 0) return;
+      if (!onDismiss || startY.current === null) return;
       const el = sheetRef.current;
       if (!el) return;
 
       currentY.current = e.touches[0]!.clientY;
-      const dy = currentY.current - startY.current;
+      const dy = currentY.current - startY.current!;
 
       if (!dragging.current) {
         // Need a clear downward intent before activating
         if (dy < 6) return;
         // If user scrolled up or content now has scroll offset, abort
         if (el.scrollTop > 0) {
-          startY.current = 0;
+          startY.current = null;
           return;
         }
         dragging.current = true;
@@ -71,8 +71,8 @@ export function useSheetDismiss(onDismiss: (() => void) | undefined) {
   const onTouchEnd: TouchEventHandler = useCallback(() => {
     if (!onDismiss) return;
     const el = sheetRef.current;
-    const dy = currentY.current - startY.current;
-    startY.current = 0;
+    const dy = currentY.current - (startY.current ?? 0);
+    startY.current = null;
 
     if (!dragging.current || !el) {
       if (el) {
@@ -99,6 +99,17 @@ export function useSheetDismiss(onDismiss: (() => void) | undefined) {
     }
   }, [onDismiss]);
 
+  const onTouchCancel: TouchEventHandler = useCallback(() => {
+    const el = sheetRef.current;
+    startY.current = null;
+    dragging.current = false;
+    if (el) {
+      el.style.transition = '';
+      el.style.transform = '';
+      el.style.opacity = '';
+    }
+  }, []);
+
   const dragHandleStyle: CSSProperties = {
     width: 36,
     height: 4,
@@ -109,7 +120,7 @@ export function useSheetDismiss(onDismiss: (() => void) | undefined) {
 
   return {
     sheetRef,
-    touchHandlers: { onTouchStart, onTouchMove, onTouchEnd },
+    touchHandlers: { onTouchStart, onTouchMove, onTouchEnd, onTouchCancel },
     dragHandleStyle,
   };
 }
