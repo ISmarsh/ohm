@@ -69,24 +69,23 @@ export async function importBoard(file: File): Promise<OhmBoard> {
   return sanitizeBoard(parsed);
 }
 
-/** Smart merge: match cards by title, keep newer; union categories; newer capacities */
+/** Smart merge: match cards by id, keep newer; union categories; newer capacities */
 export function mergeBoards(local: OhmBoard, imported: OhmBoard): OhmBoard {
   const now = new Date().toISOString();
 
-  // -- Cards: match by title (case-insensitive), keep newer updatedAt --
-  const localByTitle = new Map<string, import('../types/board').OhmCard>();
+  // -- Cards: match by id, keep newer updatedAt --
+  const localById = new Map<string, import('../types/board').OhmCard>();
   for (const card of local.cards) {
-    localByTitle.set(card.title.toLowerCase(), card);
+    localById.set(card.id, card);
   }
 
   const mergedCards: import('../types/board').OhmCard[] = [];
-  const matchedTitles = new Set<string>();
+  const matchedIds = new Set<string>();
 
   for (const importedCard of imported.cards) {
-    const key = importedCard.title.toLowerCase();
-    const localCard = localByTitle.get(key);
+    const localCard = localById.get(importedCard.id);
     if (localCard) {
-      matchedTitles.add(key);
+      matchedIds.add(importedCard.id);
       // Keep whichever was updated more recently
       mergedCards.push(importedCard.updatedAt > localCard.updatedAt ? importedCard : localCard);
     } else {
@@ -97,7 +96,7 @@ export function mergeBoards(local: OhmBoard, imported: OhmBoard): OhmBoard {
 
   // Cards only in local (not matched) -- keep them
   for (const card of local.cards) {
-    if (!matchedTitles.has(card.title.toLowerCase())) {
+    if (!matchedIds.has(card.id)) {
       mergedCards.push(card);
     }
   }

@@ -215,6 +215,10 @@ export function SettingsDialog({
     >
       <DialogContent
         className="sm:max-w-md"
+        onSwipeDismiss={() => {
+          setNewCategoryName('');
+          onClose();
+        }}
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           (e.currentTarget as HTMLElement).focus();

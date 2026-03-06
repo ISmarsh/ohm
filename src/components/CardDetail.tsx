@@ -47,6 +47,7 @@ export function CardDetail({
 }: CardDetailProps) {
   const [editing, setEditing] = useState(card);
   const [newNote, setNewNote] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
 
   const isPowered = editing.status === STATUS.POWERED;
@@ -114,6 +115,7 @@ export function CardDetail({
       }}
     >
       <DialogContent
+        onSwipeDismiss={onClose}
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           (e.currentTarget as HTMLElement).focus();
@@ -365,7 +367,7 @@ export function CardDetail({
         {/* Actions */}
         <div className="border-ohm-border flex items-center justify-between border-t pt-3">
           {!isNew ? (
-            <AlertDialog>
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
               <AlertDialogTrigger asChild>
                 <Button
                   variant="ghost"
@@ -374,7 +376,7 @@ export function CardDetail({
                   Delete
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent onSwipeDismiss={() => setDeleteOpen(false)}>
                 <AlertDialogHeader>
                   <AlertTitle className="text-ohm-text">Delete this card?</AlertTitle>
                   <AlertDialogDescription>
