@@ -57,12 +57,42 @@ describe('mergeBoards', () => {
       expect(merged.cards[0].title).toBe('Local');
     });
 
-    it('includes cards unique to each board', () => {
-      const local = makeBoard({ cards: [makeCard({ id: 'local-only' })] });
-      const imported = makeBoard({ cards: [makeCard({ id: 'import-only' })] });
+    it('includes cards unique to each board when local card is newer than remote snapshot', () => {
+      const local = makeBoard({
+        cards: [makeCard({ id: 'local-only', createdAt: '2026-06-02T00:00:00.000Z' })],
+      });
+      const imported = makeBoard({
+        cards: [makeCard({ id: 'import-only' })],
+        lastSaved: '2026-06-01T00:00:00.000Z',
+      });
       const merged = mergeBoards(local, imported);
       const ids = merged.cards.map((c) => c.id).sort();
       expect(ids).toEqual(['import-only', 'local-only']);
+    });
+
+    it('drops local-only card that was deleted remotely (createdAt before remote lastSaved)', () => {
+      const local = makeBoard({
+        cards: [makeCard({ id: 'deleted-remote', createdAt: '2026-01-01T00:00:00.000Z' })],
+      });
+      const imported = makeBoard({
+        cards: [],
+        lastSaved: '2026-06-01T00:00:00.000Z',
+      });
+      const merged = mergeBoards(local, imported);
+      expect(merged.cards).toHaveLength(0);
+    });
+
+    it('keeps local-only card created after remote snapshot (new offline card)', () => {
+      const local = makeBoard({
+        cards: [makeCard({ id: 'offline-new', createdAt: '2026-06-15T00:00:00.000Z' })],
+      });
+      const imported = makeBoard({
+        cards: [],
+        lastSaved: '2026-06-01T00:00:00.000Z',
+      });
+      const merged = mergeBoards(local, imported);
+      expect(merged.cards).toHaveLength(1);
+      expect(merged.cards[0].id).toBe('offline-new');
     });
   });
 
