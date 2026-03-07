@@ -119,6 +119,8 @@ export function mergeBoards(local: OhmBoard, imported: OhmBoard): OhmBoard {
     liveCapacity: useImportedCapacities ? imported.liveCapacity : local.liveCapacity,
     groundedCapacity: useImportedCapacities ? imported.groundedCapacity : local.groundedCapacity,
     capacitiesUpdatedAt: useImportedCapacities ? importCapTs : localCapTs,
+    timeFeatures: local.timeFeatures ?? imported.timeFeatures,
+    windowSize: local.windowSize ?? imported.windowSize,
     lastSaved: now,
   };
 }

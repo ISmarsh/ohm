@@ -28,6 +28,10 @@ export interface OhmCard {
   updatedAt: string;
   /** Sort order within its column */
   sortOrder: number;
+  /** ISO date -- when this card is scheduled (time features) */
+  scheduledDate?: string;
+  /** Links this card to a generated activity instance */
+  activityInstanceId?: string;
 }
 
 /** Energy segments per level -- Small=1, Medium=2, Large=3 */
@@ -60,6 +64,10 @@ export interface OhmBoard {
   capacitiesUpdatedAt?: string;
   /** ISO timestamp of last save */
   lastSaved: string;
+  /** Enable rolling window + schedule features */
+  timeFeatures?: boolean;
+  /** Rolling window size in days (default 7) */
+  windowSize?: number;
 }
 
 /** Column config — static definition, indexed by ColumnStatus */
