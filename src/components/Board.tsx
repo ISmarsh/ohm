@@ -535,7 +535,7 @@ export function Board() {
             <button
               type="button"
               onClick={handleShare}
-              className="text-ohm-muted hover:bg-ohm-surface hover:text-ohm-text hidden rounded-md p-1.5 transition-colors md:block"
+              className="text-ohm-muted hover:bg-ohm-surface hover:text-ohm-text rounded-md p-1.5 transition-colors"
               aria-label="Share link"
             >
               <Share2 size={16} />

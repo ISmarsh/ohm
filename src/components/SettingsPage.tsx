@@ -40,7 +40,7 @@ type SettingsTab = 'board' | 'schedule' | 'data';
 const TABS: { id: SettingsTab; label: string; icon: typeof LayoutGrid }[] = [
   { id: 'board', label: 'Board', icon: LayoutGrid },
   { id: 'schedule', label: 'Schedule', icon: Clock },
-  { id: 'data', label: 'Sync & Data', icon: Database },
+  { id: 'data', label: 'Data', icon: Database },
 ];
 
 export interface SettingsPageProps {
@@ -236,11 +236,11 @@ export function SettingsPage({
   return (
     <div className="bg-ohm-bg fixed inset-0 z-50 flex flex-col">
       {/* Header */}
-      <header className="border-ohm-border flex items-center justify-between border-b px-4 py-3">
+      <header className="border-ohm-border relative flex items-center justify-center border-b px-4 py-3">
         <button
           type="button"
           onClick={onClose}
-          className="text-ohm-muted hover:text-ohm-text flex items-center gap-1.5 rounded-md p-1 transition-colors"
+          className="text-ohm-muted hover:text-ohm-text absolute left-4 flex items-center gap-1.5 rounded-md p-1 transition-colors"
           aria-label="Back to board"
         >
           <ChevronLeft size={18} />
@@ -252,7 +252,6 @@ export function SettingsPage({
             Settings
           </h1>
         </div>
-        <div className="w-16" /> {/* Spacer for centering */}
       </header>
 
       {/* Tabs */}
