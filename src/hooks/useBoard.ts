@@ -291,20 +291,20 @@ export function useBoard() {
   /** Replace the entire board (used by Drive sync when remote is newer, or import).
    *  When activities differ, clears Dexie instances and strips stale activityInstanceId
    *  references from cards so the materialization flow cleanly regenerates them. */
-  const replaceBoard = useCallback(
-    (newBoard: OhmBoard) => {
-      const prev = board.activities ?? [];
-      const next = newBoard.activities ?? [];
-      const prevIds = new Set(prev.map((a) => a.id));
-      const nextIds = new Set(next.map((a) => a.id));
+  const replaceBoard = useCallback((newBoard: OhmBoard) => {
+    setBoard((prev) => {
+      const prevActs = prev.activities ?? [];
+      const nextActs = newBoard.activities ?? [];
+      const prevIds = new Set(prevActs.map((a) => a.id));
+      const nextIds = new Set(nextActs.map((a) => a.id));
       const idsChanged =
         prevIds.size !== nextIds.size || [...prevIds].some((id) => !nextIds.has(id));
       // Also detect property changes (schedule, energy, etc.) within matching activities
       const propsChanged =
         !idsChanged &&
-        prev.length === next.length &&
-        prev.some((a) => {
-          const b = next.find((n) => n.id === a.id);
+        prevActs.length === nextActs.length &&
+        prevActs.some((a) => {
+          const b = nextActs.find((n) => n.id === a.id);
           return !b || JSON.stringify(a) !== JSON.stringify(b);
         });
       const activitiesChanged = idsChanged || propsChanged;
@@ -316,7 +316,6 @@ export function useBoard() {
             c.activityInstanceId ? { ...c, activityInstanceId: undefined } : c,
           ),
         };
-        setBoard(cleaned);
         saveToLocal(cleaned);
 
         // Clear stale Dexie instances — refreshWindow will regenerate them
@@ -324,13 +323,14 @@ export function useBoard() {
           const { db } = await import('../db');
           await db.instances.clear();
         })();
+
+        return cleaned;
       } else {
-        setBoard(newBoard);
         saveToLocal(newBoard);
+        return newBoard;
       }
-    },
-    [board.activities],
-  );
+    });
+  }, []);
 
   return {
     board,

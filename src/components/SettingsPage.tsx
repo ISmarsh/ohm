@@ -171,9 +171,9 @@ export function SettingsPage({
 
     const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-    // Focus first element when tab content changes
-    const focusable = overlay.querySelectorAll<HTMLElement>(FOCUSABLE);
-    if (focusable.length > 0) focusable[0]!.focus();
+    // Focus the active tab button on tab switch so screen readers announce the new tab
+    const activeTabEl = document.getElementById(`tab-${activeTab}`);
+    if (activeTabEl) activeTabEl.focus();
 
     const trap = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return;
@@ -276,11 +276,25 @@ export function SettingsPage({
     if (tab === 'data') refreshRestorePoints();
   };
 
+  const handleTabKeyDown = (e: React.KeyboardEvent) => {
+    const idx = TABS.findIndex((t) => t.id === activeTab);
+    let next: number | undefined;
+    if (e.key === 'ArrowRight') next = (idx + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + TABS.length) % TABS.length;
+    if (next !== undefined) {
+      e.preventDefault();
+      const tab = TABS[next]!;
+      handleTabChange(tab.id);
+      document.getElementById(`tab-${tab.id}`)?.focus();
+    }
+  };
+
   return (
     <div
       ref={overlayRef}
       className="bg-ohm-bg fixed inset-0 z-50 flex flex-col"
       role="dialog"
+      aria-modal="true"
       aria-label="Settings"
     >
       {/* Header */}
@@ -310,6 +324,7 @@ export function SettingsPage({
               key={id}
               type="button"
               onClick={() => handleTabChange(id)}
+              onKeyDown={handleTabKeyDown}
               className={`font-display flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[11px] tracking-wider uppercase transition-colors ${
                 activeTab === id
                   ? 'border-ohm-spark text-ohm-spark'
