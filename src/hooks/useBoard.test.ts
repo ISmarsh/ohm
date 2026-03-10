@@ -247,6 +247,73 @@ describe('useBoard', () => {
     });
   });
 
+  describe('replaceBoard', () => {
+    it('strips activityInstanceId when activities differ', () => {
+      const { result } = renderHook(() => useBoard());
+      // Set up activities
+      act(() => {
+        result.current.setActivities(() => [{ id: 'a1', sourceId: 'ohm', name: 'Activity A' }]);
+      });
+
+      // Replace with board that has different activities and linked cards
+      act(() => {
+        result.current.replaceBoard({
+          ...result.current.board,
+          activities: [{ id: 'a2', sourceId: 'ohm', name: 'Activity B' }],
+          cards: [
+            {
+              ...result.current.quickAdd('Linked card'),
+              activityInstanceId: 'inst-1',
+            },
+          ],
+        });
+      });
+
+      expect(result.current.board.activities![0].id).toBe('a2');
+      expect(result.current.board.cards[0].activityInstanceId).toBeUndefined();
+    });
+
+    it('preserves activityInstanceId when activities are unchanged', () => {
+      const { result } = renderHook(() => useBoard());
+      const activities = [{ id: 'a1', sourceId: 'ohm', name: 'Activity A' }];
+      act(() => {
+        result.current.setActivities(() => activities);
+      });
+
+      const card = { ...result.current.quickAdd('Linked'), activityInstanceId: 'inst-1' };
+      act(() => {
+        result.current.replaceBoard({
+          ...result.current.board,
+          activities,
+          cards: [card],
+        });
+      });
+
+      expect(result.current.board.cards[0].activityInstanceId).toBe('inst-1');
+    });
+
+    it('detects activity property changes (not just ID changes)', () => {
+      const { result } = renderHook(() => useBoard());
+      act(() => {
+        result.current.setActivities(() => [
+          { id: 'a1', sourceId: 'ohm', name: 'Original', energy: 3 },
+        ]);
+      });
+
+      const card = { ...result.current.quickAdd('Linked'), activityInstanceId: 'inst-1' };
+      act(() => {
+        result.current.replaceBoard({
+          ...result.current.board,
+          activities: [{ id: 'a1', sourceId: 'ohm', name: 'Original', energy: 5 }],
+          cards: [card],
+        });
+      });
+
+      // Energy changed → should strip activityInstanceId
+      expect(result.current.board.cards[0].activityInstanceId).toBeUndefined();
+    });
+  });
+
   describe('reorderBatch', () => {
     it('assigns sequential sort orders', () => {
       const { result } = renderHook(() => useBoard());

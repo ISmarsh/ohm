@@ -293,10 +293,21 @@ export function useBoard() {
    *  references from cards so the materialization flow cleanly regenerates them. */
   const replaceBoard = useCallback(
     (newBoard: OhmBoard) => {
-      const prevIds = new Set((board.activities ?? []).map((a) => a.id));
-      const nextIds = new Set((newBoard.activities ?? []).map((a) => a.id));
-      const activitiesChanged =
+      const prev = board.activities ?? [];
+      const next = newBoard.activities ?? [];
+      const prevIds = new Set(prev.map((a) => a.id));
+      const nextIds = new Set(next.map((a) => a.id));
+      const idsChanged =
         prevIds.size !== nextIds.size || [...prevIds].some((id) => !nextIds.has(id));
+      // Also detect property changes (schedule, energy, etc.) within matching activities
+      const propsChanged =
+        !idsChanged &&
+        prev.length === next.length &&
+        prev.some((a) => {
+          const b = next.find((n) => n.id === a.id);
+          return !b || JSON.stringify(a) !== JSON.stringify(b);
+        });
+      const activitiesChanged = idsChanged || propsChanged;
 
       if (activitiesChanged) {
         const cleaned: OhmBoard = {
