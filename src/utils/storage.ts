@@ -7,6 +7,8 @@ import {
   ENERGY_MIN,
   ENERGY_MAX,
   ENERGY_DEFAULT,
+  WINDOW_MIN,
+  WINDOW_MAX,
 } from '../types/board';
 
 /** Coerce invalid field values to safe defaults -- index-range validation */
@@ -16,6 +18,16 @@ export function sanitizeBoard(board: OhmBoard): OhmBoard {
   }
   if (typeof board.liveCapacity !== 'number' || !(board.liveCapacity >= 1)) {
     board.liveCapacity = 6;
+  }
+
+  if (board.windowSize != null) {
+    board.windowSize = Math.min(WINDOW_MAX, Math.max(WINDOW_MIN, board.windowSize));
+  }
+  if (board.timeFeatures != null && typeof board.timeFeatures !== 'boolean') {
+    board.timeFeatures = !!board.timeFeatures;
+  }
+  if (board.autoBudget != null && typeof board.autoBudget !== 'boolean') {
+    board.autoBudget = !!board.autoBudget;
   }
 
   if (!board.categoriesUpdatedAt) {

@@ -50,7 +50,7 @@ export function generateInstances(
     existingInstances.filter((i) => i.activityId === activity.id).map((i) => i.scheduledDate),
   );
 
-  const exceptDates = new Set(schedule.exceptDate);
+  const exceptDates = new Set(schedule.exceptDate ?? []);
   const newInstances: ActivityInstance[] = [];
   const current = new Date(windowStart);
 

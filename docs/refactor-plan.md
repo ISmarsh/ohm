@@ -19,7 +19,7 @@ This plan distills the ecosystem vision, schema.org alignment, and implementatio
 
 | Decision                  | Outcome                                                                                                                                                                                   |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Energy tiers              | Keep 3-tier (Low/Med/High). Revisit only if real friction emerges.                                                                                                                        |
+| Energy tiers              | Continuous 1–6 scale (value = weight). HSL gradient coloring from green (1) to red (6).                                                                                                   |
 | Recurrence model          | schema.org `Schedule` via `schema-dts`, not cron strings. Queryable, self-documenting, companion-portable.                                                                                |
 | schema.org adoption       | Import `DayOfWeek` and `ActionStatusType` directly. `StoredSchedule` mirrors `ScheduleBase` field names with narrowed types. `schema-dts` is a devDependency for compile-time validation. |
 | Persistence migration     | Dexie replaces localStorage JSON blob when activity stores are needed (Phase 2). Board stays in localStorage until then.                                                                  |
@@ -41,8 +41,8 @@ Prepare the type system and write tests against the new model.
 
 - `src/types/schedule.ts` -- `StoredSchedule` using `DayOfWeek` from `schema-dts`
 - `src/types/activity.ts` -- `Activity`, `ActivityInstance`, `ActivityStatus` (aligned with `ActionStatusType`), `ConsumptionRecord`
-- `src/types/board.ts` -- version bump 1 -> 2, add optional `scheduledDate` and `activityInstanceId` to `OhmCard`, add `timeFeatures` and `windowSize` to `OhmBoard`
-- `src/utils/storage.ts` -- `sanitizeBoard` handles v1 -> v2 migration (add defaults for new optional fields)
+- `src/types/board.ts` -- add optional `scheduledDate` and `activityInstanceId` to `OhmCard`, add `timeFeatures`, `windowSize`, `autoBudget` to `OhmBoard`
+- `src/utils/storage.ts` -- `sanitizeBoard` validates/clamps new fields (no version bump needed — no existing users)
 
 **Testing:**
 

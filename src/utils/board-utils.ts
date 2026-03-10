@@ -109,7 +109,7 @@ export function getDailyEnergy(
   const current = new Date(windowStart + 'T00:00:00');
   const end = new Date(windowEnd + 'T00:00:00');
   while (current <= end) {
-    const iso = current.toISOString().slice(0, 10);
+    const iso = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
     result.push({ date: iso, used: byDate.get(iso) ?? 0 });
     current.setDate(current.getDate() + 1);
   }
