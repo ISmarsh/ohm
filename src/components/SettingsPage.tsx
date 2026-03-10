@@ -151,6 +151,49 @@ export function SettingsPage({
   const [confirmRestoreId, setConfirmRestoreId] = useState<string | null>(null);
   const [importPending, setImportPending] = useState<OhmBoard | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Focus trap — re-queries live DOM on each Tab press so it stays fresh across tab switches
+  useEffect(() => {
+    if (!isOpen) return;
+    const overlay = overlayRef.current;
+    if (!overlay) return;
+
+    const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+    // Focus first element when tab content changes
+    const focusable = overlay.querySelectorAll<HTMLElement>(FOCUSABLE);
+    if (focusable.length > 0) focusable[0]!.focus();
+
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const els = overlay.querySelectorAll<HTMLElement>(FOCUSABLE);
+      if (els.length === 0) return;
+      const first = els[0]!;
+      const last = els[els.length - 1]!;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    overlay.addEventListener('keydown', trap);
+    return () => overlay.removeEventListener('keydown', trap);
+  }, [isOpen, activeTab]);
 
   if (!isOpen) return null;
 
@@ -232,48 +275,6 @@ export function SettingsPage({
     setActiveTab(tab);
     if (tab === 'data') refreshRestorePoints();
   };
-
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  // Close on Escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  // Focus trap — re-queries live DOM on each Tab press so it stays fresh across tab switches
-  useEffect(() => {
-    const overlay = overlayRef.current;
-    if (!overlay) return;
-
-    const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-
-    // Focus first element when tab content changes
-    const focusable = overlay.querySelectorAll<HTMLElement>(FOCUSABLE);
-    if (focusable.length > 0) focusable[0]!.focus();
-
-    const trap = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-      const els = overlay.querySelectorAll<HTMLElement>(FOCUSABLE);
-      if (els.length === 0) return;
-      const first = els[0]!;
-      const last = els[els.length - 1]!;
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    overlay.addEventListener('keydown', trap);
-    return () => overlay.removeEventListener('keydown', trap);
-  }, [activeTab]);
 
   return (
     <div
