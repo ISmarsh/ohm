@@ -30,6 +30,7 @@ import {
   ENERGY_MIN,
   ENERGY_MAX,
   ENERGY_DEFAULT,
+  WINDOW_DEFAULT,
   energyColor,
 } from '../types/board';
 import { ACTIVITY_STATUS } from '../types/activity';
@@ -48,6 +49,7 @@ import { useActivities } from '../hooks/useActivities';
 import { useDriveSync } from '../hooks/useDriveSync';
 import { useWelcomeBack } from '../hooks/useWelcomeBack';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Column } from './Column';
 import { CardDetail } from './CardDetail';
 import { SettingsDialog } from './SettingsDialog';
@@ -172,9 +174,22 @@ export function Board() {
     setTimeFeatures,
     setWindowSize,
     setAutoBudget,
+    setActivities,
     materializeInstances,
     replaceBoard,
   } = useBoard();
+
+  // One-time migration: copy activities from Dexie to board state
+  useEffect(() => {
+    if (board.activities && board.activities.length > 0) return;
+    void (async () => {
+      const { db } = await import('../db');
+      const dexieActivities = await db.activities.toArray();
+      if (dexieActivities.length > 0) {
+        setActivities(() => dexieActivities);
+      }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const {
     activities,
@@ -184,39 +199,51 @@ export function Board() {
     deleteActivity,
     refreshWindow,
     syncInstanceToColumn,
-  } = useActivities(board.windowSize);
+  } = useActivities({
+    activities: board.activities ?? [],
+    setActivities,
+    windowSize: board.windowSize,
+  });
 
-  // Refresh activity instances when time features are enabled;
-  // demote cards linked to expired instances to Grounded
+  // Cards pending user action (expired scheduled cards)
+  const [pendingExpired, setPendingExpired] = useState<OhmCard[]>([]);
+
+  // Refresh activity instances when time features are enabled
   useEffect(() => {
     if (!board.timeFeatures) return;
-    void refreshWindow().then((expiredIds) => {
-      if (!expiredIds || expiredIds.length === 0) return;
-      const expiredSet = new Set(expiredIds);
-      for (const card of board.cards) {
-        if (
-          card.activityInstanceId &&
-          expiredSet.has(card.activityInstanceId) &&
-          card.status !== STATUS.GROUNDED &&
-          card.status !== STATUS.POWERED
-        ) {
-          move(card.id, STATUS.GROUNDED);
-          // Instance already demoted to Failed by refreshWindow — no extra sync needed
-        }
-      }
-    });
-  }, [board.timeFeatures, refreshWindow]); // eslint-disable-line react-hooks/exhaustive-deps
+    void refreshWindow();
+  }, [board.timeFeatures, refreshWindow]);
 
-  // Auto-demote: move Charging cards whose scheduledDate is before today to Grounded
+  // Collect expired cards: Charging non-activity cards auto-ground silently;
+  // everything else (Live with past date, activity instance cards) prompts user.
   useEffect(() => {
     if (!board.timeFeatures) return;
     const today = toISODate(new Date());
+    const toPrompt: OhmCard[] = [];
+
     for (const card of board.cards) {
-      if (card.status === STATUS.CHARGING && card.scheduledDate && card.scheduledDate < today) {
+      if (!card.scheduledDate || card.scheduledDate >= today) continue;
+      if (card.status === STATUS.GROUNDED || card.status === STATUS.POWERED) continue;
+
+      if (card.status === STATUS.CHARGING && !card.activityInstanceId) {
+        // Non-activity Charging card with past date — auto-ground silently
         move(card.id, STATUS.GROUNDED);
+      } else {
+        // Live cards, or activity-linked Charging cards — prompt user
+        toPrompt.push(card);
       }
     }
-  }, [board.timeFeatures, board.cards, move]);
+
+    if (toPrompt.length > 0) {
+      setPendingExpired((prev) => {
+        // Only update if the set of card IDs actually changed
+        const prevIds = new Set(prev.map((c) => c.id));
+        const newIds = new Set(toPrompt.map((c) => c.id));
+        if (prevIds.size === newIds.size && [...prevIds].every((id) => newIds.has(id))) return prev;
+        return toPrompt;
+      });
+    }
+  }, [board.timeFeatures, board.cards, move]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Materialize Potential activity instances as Charging cards (atomic — strict-mode safe)
   useEffect(() => {
@@ -253,7 +280,7 @@ export function Board() {
   useEffect(() => {
     if (!board.timeFeatures) return;
     const trailingStart = new Date();
-    trailingStart.setDate(trailingStart.getDate() - ((board.windowSize ?? 7) - 1));
+    trailingStart.setDate(trailingStart.getDate() - ((board.windowSize ?? WINDOW_DEFAULT) - 1));
     const expired = getExpiredPowered(board, toISODate(trailingStart));
     if (expired.length > 0) {
       deleteCards(expired.map((c) => c.id));
@@ -366,7 +393,7 @@ export function Board() {
     if (!board.timeFeatures) return 0;
     const today = new Date();
     const trailingStart = new Date(today);
-    trailingStart.setDate(trailingStart.getDate() - ((board.windowSize ?? 7) - 1));
+    trailingStart.setDate(trailingStart.getDate() - ((board.windowSize ?? WINDOW_DEFAULT) - 1));
     const trailing = getTrailingPowered(board, toISODate(trailingStart), toISODate(today));
     return board.energyBudget > 0 ? trailing.used / board.energyBudget : 0;
   }, [board]);
@@ -770,23 +797,25 @@ export function Board() {
 
       {/* Energy meters — shared grid so bars align */}
       {(() => {
-        const total = getTotalCapacity(board);
-        const totalRatio = Math.min(total.used / total.total, 1);
-        const totalHue = 120 * (1 - totalRatio);
-        const totalColor = `hsl(${totalHue}, 80%, 50%)`;
-
         const today = new Date();
         const todayStr = toISODate(today);
 
-        // Daily meters
+        // Window bounds for budget calculation
+        let windowEndStr: string | undefined;
         let daily: Array<{ date: string; used: number }> = [];
         let dayLimit = board.liveCapacity;
         if (board.timeFeatures) {
           const windowEnd = new Date(today);
-          windowEnd.setDate(windowEnd.getDate() + (board.windowSize ?? 7) - 1);
-          daily = getDailyEnergy(board, todayStr, toISODate(windowEnd));
+          windowEnd.setDate(windowEnd.getDate() + (board.windowSize ?? WINDOW_DEFAULT) - 1);
+          windowEndStr = toISODate(windowEnd);
+          daily = getDailyEnergy(board, todayStr, windowEndStr);
           dayLimit = board.liveCapacity;
         }
+
+        const total = getTotalCapacity(board, todayStr, windowEndStr);
+        const totalRatio = Math.min(total.used / total.total, 1);
+        const totalHue = 120 * (1 - totalRatio);
+        const totalColor = `hsl(${totalHue}, 80%, 50%)`;
 
         return (
           <div
@@ -946,6 +975,79 @@ export function Board() {
             setSettingsOpen(true);
           }}
         />
+      )}
+
+      {/* Expired cards prompt */}
+      {pendingExpired.length > 0 && (
+        <Dialog open onOpenChange={() => setPendingExpired([])}>
+          <DialogContent className="bg-ohm-surface border-ohm-border max-w-sm">
+            <DialogTitle className="font-display text-ohm-text text-sm tracking-wider uppercase">
+              Expired tasks
+            </DialogTitle>
+            <DialogDescription className="font-body text-ohm-muted text-xs">
+              These tasks have dates in the past. What happened?
+            </DialogDescription>
+            <div className="flex flex-col gap-2 pt-2">
+              {pendingExpired.map((card) => {
+                const isActivity = !!card.activityInstanceId;
+                return (
+                  <div
+                    key={card.id}
+                    className="border-ohm-border flex items-center justify-between gap-2 rounded-md border px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-body text-ohm-text truncate text-xs">{card.title}</p>
+                      <p className="font-body text-ohm-muted/60 text-[10px]">
+                        {card.scheduledDate}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-ohm-powered/30 text-ohm-powered hover:bg-ohm-powered/10 h-6 px-2 text-[10px]"
+                        onClick={() => {
+                          move(card.id, STATUS.POWERED);
+                          if (card.activityInstanceId) {
+                            void syncInstanceToColumn(card.activityInstanceId, STATUS.POWERED);
+                          }
+                          setPendingExpired((prev) => prev.filter((c) => c.id !== card.id));
+                        }}
+                      >
+                        Done
+                      </Button>
+                      {isActivity ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-ohm-live/30 text-ohm-live hover:bg-ohm-live/10 h-6 px-2 text-[10px]"
+                          onClick={() => {
+                            deleteCard(card.id);
+                            setPendingExpired((prev) => prev.filter((c) => c.id !== card.id));
+                          }}
+                        >
+                          Skip
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-ohm-grounded/30 text-ohm-grounded hover:bg-ohm-grounded/10 h-6 px-2 text-[10px]"
+                          onClick={() => {
+                            move(card.id, STATUS.GROUNDED);
+                            setPendingExpired((prev) => prev.filter((c) => c.id !== card.id));
+                          }}
+                        >
+                          Pause
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Settings dialog */}
