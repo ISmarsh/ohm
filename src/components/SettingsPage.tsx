@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Settings,
   X,
@@ -233,8 +233,52 @@ export function SettingsPage({
     if (tab === 'data') refreshRestorePoints();
   };
 
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Close on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  // Focus trap
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (!overlay) return;
+    const focusable = overlay.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first.focus();
+
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    overlay.addEventListener('keydown', trap);
+    return () => overlay.removeEventListener('keydown', trap);
+  }, []);
+
   return (
-    <div className="bg-ohm-bg fixed inset-0 z-50 flex flex-col">
+    <div
+      ref={overlayRef}
+      className="bg-ohm-bg fixed inset-0 z-50 flex flex-col"
+      role="dialog"
+      aria-label="Settings"
+    >
       {/* Header */}
       <header className="border-ohm-border relative flex items-center justify-center border-b px-4 py-3">
         <button
@@ -256,7 +300,7 @@ export function SettingsPage({
 
       {/* Tabs */}
       <nav className="border-ohm-border border-b px-4" aria-label="Settings tabs">
-        <div className="flex gap-1">
+        <div className="flex gap-1" role="tablist">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -268,7 +312,10 @@ export function SettingsPage({
                   : 'text-ohm-muted hover:text-ohm-text border-transparent'
               }`}
               aria-selected={activeTab === id}
+              aria-controls={`tabpanel-${id}`}
+              id={`tab-${id}`}
               role="tab"
+              tabIndex={activeTab === id ? 0 : -1}
             >
               <Icon size={14} />
               {label}
@@ -278,7 +325,12 @@ export function SettingsPage({
       </nav>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto px-4 py-5">
+      <div
+        className="flex-1 overflow-y-auto px-4 py-5"
+        role="tabpanel"
+        id={`tabpanel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+      >
         <div className="mx-auto max-w-md">
           {activeTab === 'board' && (
             <BoardTab
@@ -638,7 +690,7 @@ function ScheduleTab({
         </section>
       )}
 
-      {!timeFeatures && (
+      {!timeFeatures && !!onSetTimeFeatures && (
         <p className="font-body text-ohm-muted/60 text-sm">
           Enable the schedule toggle above to configure activities and rolling windows.
         </p>
