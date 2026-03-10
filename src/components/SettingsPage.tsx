@@ -316,7 +316,7 @@ export function SettingsPage({
           <span className="font-display text-xs tracking-wider uppercase">Back</span>
         </button>
         <div className="flex items-center gap-2">
-          <Settings size={16} className="text-ohm-muted" />
+          <Settings size={16} className="text-ohm-muted" aria-hidden="true" />
           <h1 className="font-display text-ohm-text text-sm font-bold tracking-widest uppercase">
             Settings
           </h1>
@@ -343,7 +343,7 @@ export function SettingsPage({
               role="tab"
               tabIndex={activeTab === id ? 0 : -1}
             >
-              <Icon size={14} />
+              <Icon size={14} aria-hidden="true" />
               {label}
             </button>
           ))}
@@ -903,6 +903,7 @@ function DataTab({
                 variant="outline"
                 onClick={() => setImportPending(null)}
                 className="border-ohm-border text-ohm-muted hover:text-ohm-text px-2 text-xs"
+                aria-label="Cancel import"
               >
                 <X size={14} />
               </Button>
