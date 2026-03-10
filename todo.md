@@ -5,3 +5,4 @@
 - [x] Card archive (auto-archive expired Powered cards in rolling window)
 - [ ] Keyboard shortcuts
 - [ ] Analytics (completion rates, time-in-column trends)
+- [ ] Red-green colorblind mode (deuteranopia-safe palette for energy/status colors)

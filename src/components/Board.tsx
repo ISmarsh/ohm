@@ -13,6 +13,7 @@ import {
 import {
   DndContext,
   DragOverlay,
+  KeyboardSensor,
   closestCenter,
   PointerSensor,
   TouchSensor,
@@ -21,7 +22,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type { OhmCard, ColumnStatus } from '../types/board';
 import {
   STATUS,
@@ -266,7 +267,40 @@ export function Board() {
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: { delay: 150, tolerance: 5 },
   });
-  const sensors = useSensors(pointerSensor, touchSensor);
+  const keyboardSensor = useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates,
+  });
+  const sensors = useSensors(pointerSensor, touchSensor, keyboardSensor);
+
+  // Screen reader announcements for drag-and-drop
+  const dndAnnouncements = useMemo(
+    () => ({
+      onDragStart({ active }: DragStartEvent) {
+        const card = board.cards.find((c) => c.id === active.id);
+        return card ? `Picked up card: ${card.title}` : '';
+      },
+      onDragOver() {
+        return '';
+      },
+      onDragEnd({ active, over }: DragEndEvent) {
+        const card = board.cards.find((c) => c.id === active.id);
+        if (!card) return '';
+        if (!over || active.id === over.id) return `Dropped card: ${card.title}`;
+        const overCard = board.cards.find((c) => c.id === over.id);
+        const columnCards = getColumnCards(board, card.status);
+        const newIndex = columnCards.findIndex((c) => c.id === over.id);
+        if (overCard) {
+          return `Dropped ${card.title} at position ${newIndex + 1}`;
+        }
+        return `Dropped card: ${card.title}`;
+      },
+      onDragCancel({ active }: { active: { id: string | number } }) {
+        const card = board.cards.find((c) => c.id === active.id);
+        return card ? `Cancelled dragging: ${card.title}` : '';
+      },
+    }),
+    [board],
+  );
 
   const [draggingCard, setDraggingCard] = useState<OhmCard | null>(null);
 
@@ -414,6 +448,10 @@ export function Board() {
 
   return (
     <div className="bg-ohm-bg flex min-h-screen flex-col">
+      <a href="#board" className="skip-to-content">
+        Skip to board
+      </a>
+
       {/* Header */}
       <header className="border-ohm-border bg-ohm-bg/90 sticky top-0 z-30 border-b backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-3">
@@ -433,12 +471,12 @@ export function Board() {
           </div>
 
           {/* Center -- title */}
-          <div className="flex items-center gap-2">
-            <Zap size={18} className="text-ohm-spark" />
+          <h1 className="flex items-center gap-2">
+            <Zap size={18} className="text-ohm-spark" aria-hidden="true" />
             <span className="font-display text-ohm-text text-sm font-bold tracking-widest uppercase">
               Ohm
             </span>
-          </div>
+          </h1>
 
           {/* Right -- quick spark (desktop) + share */}
           <div className="flex w-20 items-center justify-end gap-1">
@@ -516,7 +554,7 @@ export function Board() {
       )}
 
       {/* Filter bar */}
-      <div className="border-ohm-border border-b px-4 py-2">
+      <nav aria-label="Filters" className="border-ohm-border border-b px-4 py-2">
         {/* Row 1: Energy min/max filter + expand toggle (mobile) */}
         <div className="flex items-center gap-2">
           <span className="font-display text-ohm-muted shrink-0 text-[10px] tracking-widest uppercase">
@@ -662,6 +700,7 @@ export function Board() {
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               placeholder="Search..."
+              aria-label="Search cards"
               className="border-ohm-border font-body text-ohm-text placeholder:text-ohm-muted/40 focus:ring-ohm-text/10 w-full rounded-full border bg-transparent py-1 pr-2 pl-7 text-[11px] focus:ring-1 focus:outline-hidden"
             />
             {searchFilter && (
@@ -669,6 +708,7 @@ export function Board() {
                 type="button"
                 onClick={() => setSearchFilter('')}
                 className="text-ohm-muted hover:text-ohm-text absolute right-1.5"
+                aria-label="Clear search"
               >
                 <X size={10} />
               </button>
@@ -701,6 +741,7 @@ export function Board() {
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
                   placeholder="Search cards..."
+                  aria-label="Search cards"
                   className="border-ohm-border font-body text-ohm-text placeholder:text-ohm-muted/40 focus:ring-ohm-text/10 w-full rounded-full border bg-transparent py-1.5 pr-2 pl-7 text-xs focus:ring-1 focus:outline-hidden"
                 />
                 {searchFilter && (
@@ -708,6 +749,7 @@ export function Board() {
                     type="button"
                     onClick={() => setSearchFilter('')}
                     className="text-ohm-muted hover:text-ohm-text absolute right-2"
+                    aria-label="Clear search"
                   >
                     <X size={12} />
                   </button>
@@ -724,7 +766,7 @@ export function Board() {
             </div>
           </div>
         )}
-      </div>
+      </nav>
 
       {/* Energy meters — shared grid so bars align */}
       {(() => {
@@ -820,8 +862,9 @@ export function Board() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
+        accessibility={{ announcements: dndAnnouncements }}
       >
-        <main className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
+        <main id="board" className="flex-1 overflow-y-auto md:overflow-x-auto md:overflow-y-hidden">
           <div className="flex flex-col gap-3 p-4 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
             {COLUMNS.map((col, index) => {
               const status = index as ColumnStatus;
