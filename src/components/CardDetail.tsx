@@ -3,14 +3,12 @@ import type { OhmCard, ColumnStatus } from '../types/board';
 import {
   STATUS,
   COLUMNS,
-  ENERGY_MIN,
-  ENERGY_MAX,
   energyColor,
   STATUS_CLASSES,
   SPARK_CLASSES,
   VALID_TRANSITIONS,
 } from '../types/board';
-import { EnergyIcon } from './ui/energy-icons';
+import { EnergySlider } from './ui/energy-slider';
 import { Settings, List, Trash2, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Input } from './ui/input';
@@ -247,34 +245,16 @@ export function CardDetail({
           </span>
           {isPowered && !isNew ? (
             <span
-              className="flex items-center gap-1.5"
+              className="font-display text-sm font-bold"
               style={{ color: energyColor(editing.energy) }}
             >
-              <EnergyIcon size={14} value={editing.energy} />
-              <span className="font-body text-sm">{editing.energy}</span>
+              {editing.energy}
             </span>
           ) : (
-            <div className="flex gap-1">
-              {Array.from({ length: ENERGY_MAX - ENERGY_MIN + 1 }, (_, i) => {
-                const value = ENERGY_MIN + i;
-                const selected = editing.energy === value;
-                const color = energyColor(value);
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setEditing((prev) => ({ ...prev, energy: value }))}
-                    className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] transition-colors ${
-                      selected ? 'bg-current/10' : 'text-ohm-muted hover:text-ohm-text'
-                    }`}
-                    style={selected ? { color } : undefined}
-                  >
-                    <EnergyIcon size={10} value={value} />
-                    {value}
-                  </button>
-                );
-              })}
-            </div>
+            <EnergySlider
+              value={editing.energy}
+              onChange={(v) => setEditing((prev) => ({ ...prev, energy: v }))}
+            />
           )}
         </div>
 

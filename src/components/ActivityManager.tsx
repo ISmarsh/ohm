@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Plus, Trash2, Calendar } from 'lucide-react';
 import type { Activity } from '../types/activity';
 import type { StoredSchedule } from '../types/schedule';
-import { ENERGY_MIN, ENERGY_MAX, energyColor } from '../types/board';
-import { EnergyIcon } from './ui/energy-icons';
+import { ENERGY_DEFAULT, energyColor } from '../types/board';
+import { EnergySlider } from './ui/energy-slider';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 
@@ -314,54 +314,50 @@ function ActivityForm({ initial, categories, onSubmit, onCancel }: ActivityFormP
       />
 
       {/* Energy */}
-      <div className="flex items-center gap-2">
-        <span className="font-display text-ohm-muted text-[10px] tracking-widest uppercase">
+      <div>
+        <span className="font-display text-ohm-muted mb-1 block text-[10px] tracking-widest uppercase">
           Energy
         </span>
-        <div className="flex gap-1">
-          {Array.from({ length: ENERGY_MAX - ENERGY_MIN + 1 }, (_, i) => {
-            const value = ENERGY_MIN + i;
-            const active = energy === value;
-            const color = energyColor(value);
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setEnergy(active ? undefined : value)}
-                className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] transition-colors ${
-                  active ? 'bg-current/10' : 'text-ohm-muted hover:text-ohm-text'
-                }`}
-                style={active ? { color } : undefined}
-              >
-                <EnergyIcon size={10} value={value} />
-                {value}
-              </button>
-            );
-          })}
-        </div>
+        <EnergySlider
+          value={energy ?? ENERGY_DEFAULT}
+          onChange={(v) => setEnergy(v)}
+          allowNone
+          onClear={() => setEnergy(undefined)}
+        />
       </div>
 
       {/* Category */}
       {categories && categories.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="font-display text-ohm-muted text-[10px] tracking-widest uppercase">
+        <div>
+          <span className="font-display text-ohm-muted mb-1 block text-[10px] tracking-widest uppercase">
             Category
           </span>
-          {categories.map((cat) => {
-            const active = category === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategory(active ? '' : cat)}
-                className={`font-body rounded-full px-2 py-0.5 text-[10px] transition-colors ${
-                  active ? 'bg-ohm-text/10 text-ohm-text' : 'text-ohm-muted hover:text-ohm-text'
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => setCategory('')}
+              className={`font-body rounded-full px-2 py-0.5 text-[10px] transition-colors ${
+                !category ? 'bg-ohm-text/10 text-ohm-text' : 'text-ohm-muted hover:text-ohm-text'
+              }`}
+            >
+              None
+            </button>
+            {categories.map((cat) => {
+              const active = category === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(active ? '' : cat)}
+                  className={`font-body rounded-full px-2 py-0.5 text-[10px] transition-colors ${
+                    active ? 'bg-ohm-text/10 text-ohm-text' : 'text-ohm-muted hover:text-ohm-text'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

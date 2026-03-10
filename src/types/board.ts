@@ -3,9 +3,9 @@
 export const STATUS = { GROUNDED: 0, CHARGING: 1, LIVE: 2, POWERED: 3 } as const;
 export type ColumnStatus = (typeof STATUS)[keyof typeof STATUS];
 
-/** Continuous energy scale 1-6 (value IS the weight) */
+/** Continuous energy scale 1-7 (value IS the weight) */
 export const ENERGY_MIN = 1;
-export const ENERGY_MAX = 6;
+export const ENERGY_MAX = 7;
 export const ENERGY_DEFAULT = 3;
 
 /** Rolling window size limits and default */
@@ -19,11 +19,12 @@ export const BUDGET_DEFAULT = WINDOW_DEFAULT * LIVE_DEFAULT;
 
 /** Interpolate hue from indigo (239) at energy 1 through green (~120) to red (0) at energy 6.
  *  Saturation and lightness ease so the cool end is softer and the warm end pops. */
-export function energyColor(value: number): string {
+export function energyColor(value: number, alpha?: number): string {
   const ratio = Math.min(Math.max((value - ENERGY_MIN) / (ENERGY_MAX - ENERGY_MIN), 0), 1);
   const hue = 239 * (1 - ratio);
   const saturation = 55 + 25 * ratio; // 55% at cool end → 80% at hot end
   const lightness = 60 - 10 * ratio; // 60% at cool end → 50% at hot end
+  if (alpha !== undefined) return `hsl(${hue} ${saturation}% ${lightness}% / ${alpha})`;
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
