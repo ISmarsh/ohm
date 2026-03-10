@@ -338,8 +338,12 @@ export function useBoard() {
 
         // Clear stale Dexie instances — refreshWindow will regenerate them
         void (async () => {
-          const { db } = await import('../db');
-          await db.instances.clear();
+          try {
+            const { db } = await import('../db');
+            await db.instances.clear();
+          } catch {
+            // IndexedDB may be unavailable (e.g. test environment)
+          }
         })();
 
         return cleaned;

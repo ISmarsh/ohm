@@ -256,16 +256,15 @@ describe('useBoard', () => {
       });
 
       // Replace with board that has different activities and linked cards
+      let linkedCard: ReturnType<typeof result.current.quickAdd>;
+      act(() => {
+        linkedCard = { ...result.current.quickAdd('Linked card'), activityInstanceId: 'inst-1' };
+      });
       act(() => {
         result.current.replaceBoard({
           ...result.current.board,
           activities: [{ id: 'a2', sourceId: 'ohm', name: 'Activity B' }],
-          cards: [
-            {
-              ...result.current.quickAdd('Linked card'),
-              activityInstanceId: 'inst-1',
-            },
-          ],
+          cards: [linkedCard],
         });
       });
 
@@ -276,11 +275,12 @@ describe('useBoard', () => {
     it('preserves activityInstanceId when activities are unchanged', () => {
       const { result } = renderHook(() => useBoard());
       const activities = [{ id: 'a1', sourceId: 'ohm', name: 'Activity A' }];
+      let card: ReturnType<typeof result.current.quickAdd>;
       act(() => {
         result.current.setActivities(() => activities);
+        card = { ...result.current.quickAdd('Linked'), activityInstanceId: 'inst-1' };
       });
 
-      const card = { ...result.current.quickAdd('Linked'), activityInstanceId: 'inst-1' };
       act(() => {
         result.current.replaceBoard({
           ...result.current.board,
@@ -294,13 +294,14 @@ describe('useBoard', () => {
 
     it('detects activity property changes (not just ID changes)', () => {
       const { result } = renderHook(() => useBoard());
+      let card: ReturnType<typeof result.current.quickAdd>;
       act(() => {
         result.current.setActivities(() => [
           { id: 'a1', sourceId: 'ohm', name: 'Original', energy: 3 },
         ]);
+        card = { ...result.current.quickAdd('Linked'), activityInstanceId: 'inst-1' };
       });
 
-      const card = { ...result.current.quickAdd('Linked'), activityInstanceId: 'inst-1' };
       act(() => {
         result.current.replaceBoard({
           ...result.current.board,

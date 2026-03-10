@@ -6,11 +6,19 @@ export function createLocalStorage<T>(opts: {
   sanitize?: (raw: unknown) => T;
   createDefault: () => T;
 }) {
-  let data: T = opts.createDefault();
   return {
-    loadFromLocal: () => data,
+    loadFromLocal: (): T => {
+      const raw = localStorage.getItem(opts.storageKey);
+      if (!raw) return opts.createDefault();
+      try {
+        const parsed = JSON.parse(raw) as T;
+        return opts.sanitize ? opts.sanitize(parsed) : parsed;
+      } catch {
+        return opts.createDefault();
+      }
+    },
     saveToLocal: (val: T) => {
-      data = val;
+      localStorage.setItem(opts.storageKey, JSON.stringify(val));
     },
   };
 }
