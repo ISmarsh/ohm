@@ -284,7 +284,6 @@ export function SettingsPage({
           {activeTab === 'board' && (
             <BoardTab
               categories={categories}
-              onAddCategory={onAddCategory}
               onRemoveCategory={onRemoveCategory}
               onRenameCategory={onRenameCategory}
               newCategoryName={newCategoryName}
@@ -349,7 +348,6 @@ export function SettingsPage({
 
 function BoardTab({
   categories,
-  onAddCategory,
   onRemoveCategory,
   onRenameCategory,
   newCategoryName,
@@ -363,7 +361,6 @@ function BoardTab({
   windowSize,
 }: {
   categories: string[];
-  onAddCategory: (c: string) => void;
   onRemoveCategory: (c: string) => void;
   onRenameCategory: (old: string, next: string) => void;
   newCategoryName: string;
