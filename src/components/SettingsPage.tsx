@@ -15,7 +15,13 @@ import {
   Database,
 } from 'lucide-react';
 import type { OhmBoard } from '../types/board';
-import { WINDOW_MIN, WINDOW_MAX, WINDOW_DEFAULT } from '../types/board';
+import {
+  ENERGY_MIN,
+  ENERGY_MAX_DEFAULT,
+  WINDOW_MIN,
+  WINDOW_MAX,
+  WINDOW_DEFAULT,
+} from '../types/board';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import {
@@ -52,6 +58,8 @@ export interface SettingsPageProps {
   liveCapacity: number;
   onSetEnergyBudget: (budget: number) => void;
   onSetLiveCapacity: (capacity: number) => void;
+  energyMax?: number;
+  onSetEnergyMax?: (max: number) => void;
   timeFeatures?: boolean;
   windowSize?: number;
   onSetTimeFeatures?: (enabled: boolean) => void;
@@ -125,6 +133,8 @@ export function SettingsPage({
   liveCapacity,
   onSetEnergyBudget,
   onSetLiveCapacity,
+  energyMax,
+  onSetEnergyMax,
   timeFeatures,
   windowSize,
   onSetTimeFeatures,
@@ -360,6 +370,8 @@ export function SettingsPage({
               liveCapacity={liveCapacity}
               onSetEnergyBudget={onSetEnergyBudget}
               onSetLiveCapacity={onSetLiveCapacity}
+              energyMax={energyMax}
+              onSetEnergyMax={onSetEnergyMax}
               autoBudget={autoBudget}
               windowSize={windowSize}
             />
@@ -379,6 +391,7 @@ export function SettingsPage({
               onAddActivity={onAddActivity}
               onUpdateActivity={onUpdateActivity}
               onDeleteActivity={onDeleteActivity}
+              energyMax={energyMax}
             />
           )}
 
@@ -422,6 +435,8 @@ function BoardTab({
   liveCapacity,
   onSetEnergyBudget,
   onSetLiveCapacity,
+  energyMax,
+  onSetEnergyMax,
   autoBudget,
   windowSize,
 }: {
@@ -435,6 +450,8 @@ function BoardTab({
   liveCapacity: number;
   onSetEnergyBudget: (v: number) => void;
   onSetLiveCapacity: (v: number) => void;
+  energyMax?: number;
+  onSetEnergyMax?: (v: number) => void;
   autoBudget?: boolean;
   windowSize?: number;
 }) {
@@ -505,6 +522,48 @@ function BoardTab({
         </form>
       </section>
 
+      {/* Energy Scale */}
+      {onSetEnergyMax && (
+        <section className="mb-8">
+          <span className="font-display text-ohm-muted mb-3 block text-[10px] tracking-widest uppercase">
+            Energy Scale
+          </span>
+          <div className="mt-2 flex items-center gap-3">
+            <span className="font-display text-ohm-muted w-20 text-[10px] tracking-widest uppercase">
+              Max
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() =>
+                onSetEnergyMax(Math.max(ENERGY_MIN + 1, (energyMax ?? ENERGY_MAX_DEFAULT) - 1))
+              }
+              disabled={(energyMax ?? ENERGY_MAX_DEFAULT) <= ENERGY_MIN + 1}
+              className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
+              aria-label="Decrease energy max"
+            >
+              <Minus size={14} />
+            </Button>
+            <span className="font-display text-ohm-text min-w-[2ch] text-center text-lg font-bold">
+              {energyMax ?? ENERGY_MAX_DEFAULT}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => onSetEnergyMax((energyMax ?? ENERGY_MAX_DEFAULT) + 1)}
+              disabled={(energyMax ?? ENERGY_MAX_DEFAULT) >= 20}
+              className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
+              aria-label="Increase energy max"
+            >
+              <Plus size={14} />
+            </Button>
+          </div>
+          <p className="font-body text-ohm-muted/60 mt-1.5 text-[10px]">
+            Maximum energy per task. Cards above this will be clamped.
+          </p>
+        </section>
+      )}
+
       {/* Energy Capacity */}
       <section>
         <span className="font-display text-ohm-muted mb-3 block text-[10px] tracking-widest uppercase">
@@ -573,6 +632,7 @@ function ScheduleTab({
   onAddActivity,
   onUpdateActivity,
   onDeleteActivity,
+  energyMax,
 }: {
   timeFeatures?: boolean;
   windowSize?: number;
@@ -589,6 +649,7 @@ function ScheduleTab({
   ) => Activity;
   onUpdateActivity?: (id: string, changes: Partial<Omit<Activity, 'id'>>) => void;
   onDeleteActivity?: (id: string) => void | Promise<void>;
+  energyMax?: number;
 }) {
   return (
     <>
@@ -700,6 +761,7 @@ function ScheduleTab({
             onAdd={onAddActivity}
             onUpdate={onUpdateActivity}
             onDelete={onDeleteActivity}
+            energyMax={energyMax}
           />
         </section>
       )}

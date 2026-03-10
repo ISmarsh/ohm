@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { OhmBoard, OhmCard, ColumnStatus } from '../types/board';
-import { WINDOW_MIN, WINDOW_MAX, WINDOW_DEFAULT } from '../types/board';
+import { ENERGY_MIN, WINDOW_MIN, WINDOW_MAX, WINDOW_DEFAULT } from '../types/board';
 import type { Activity } from '../types/activity';
 import { loadFromLocal, saveToLocal } from '../utils/storage';
 import {
@@ -229,6 +229,24 @@ export function useBoard() {
     });
   }, []);
 
+  /** Update maximum energy per task */
+  const setEnergyMax = useCallback((max: number) => {
+    const now = new Date().toISOString();
+    setBoard((prev) => {
+      const newMax = Math.min(20, Math.max(ENERGY_MIN + 1, Math.round(max)));
+      return {
+        ...prev,
+        energyMax: newMax,
+        // Clamp any cards that exceed the new max
+        cards: prev.cards.map((c) =>
+          c.energy > newMax ? { ...c, energy: newMax, updatedAt: now } : c,
+        ),
+        capacitiesUpdatedAt: now,
+        lastSaved: now,
+      };
+    });
+  }, []);
+
   /** Toggle auto-budget (Total = Window x Live) */
   const setAutoBudget = useCallback((enabled: boolean) => {
     const now = new Date().toISOString();
@@ -344,6 +362,7 @@ export function useBoard() {
     reorderBatch,
     setEnergyBudget,
     setLiveCapacity,
+    setEnergyMax,
     addCategory,
     removeCategory,
     renameCategory,

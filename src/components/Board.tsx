@@ -10,6 +10,7 @@ import {
   Tag,
   Share2,
   MonitorDown,
+  Filter,
 } from 'lucide-react';
 import {
   DndContext,
@@ -29,10 +30,11 @@ import {
   STATUS,
   COLUMNS,
   ENERGY_MIN,
-  ENERGY_MAX,
+  ENERGY_MAX_DEFAULT,
   ENERGY_DEFAULT,
   WINDOW_DEFAULT,
   energyColor,
+  budgetColor,
 } from '../types/board';
 import { ACTIVITY_STATUS } from '../types/activity';
 import {
@@ -172,6 +174,7 @@ export function Board() {
     renameCategory,
     setEnergyBudget,
     setLiveCapacity,
+    setEnergyMax: setBoardEnergyMax,
     setTimeFeatures,
     setWindowSize,
     setAutoBudget,
@@ -195,6 +198,7 @@ export function Board() {
   const {
     activities,
     instances,
+    instancesReady,
     addActivity,
     updateActivity,
     deleteActivity,
@@ -206,6 +210,17 @@ export function Board() {
     setActivities,
     windowSize: board.windowSize,
   });
+
+  // Clean up orphaned activity cards (instance or activity deleted but card survived).
+  // Wait for Dexie instances to load before checking — empty [] on first render is not orphanhood.
+  useEffect(() => {
+    if (!board.timeFeatures || !instancesReady) return;
+    const instanceIds = new Set(instances.map((i) => i.id));
+    const orphanIds = board.cards
+      .filter((c) => c.activityInstanceId && !instanceIds.has(c.activityInstanceId))
+      .map((c) => c.id);
+    if (orphanIds.length > 0) deleteCards(orphanIds);
+  }, [board.timeFeatures, board.cards, instances, instancesReady, deleteCards]);
 
   // Cards pending user action (expired scheduled cards)
   const [pendingExpired, setPendingExpired] = useState<OhmCard[]>([]);
@@ -434,6 +449,7 @@ export function Board() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [energyMin, setEnergyMin] = useState<number | null>(null);
   const [energyMax, setEnergyMax] = useState<number | null>(null);
+  const eMax = board.energyMax ?? ENERGY_MAX_DEFAULT;
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [searchFilter, setSearchFilter] = useState('');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -510,18 +526,20 @@ export function Board() {
       {/* Header */}
       <header className="border-ohm-border bg-ohm-bg/90 sticky top-0 z-30 border-b backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Left -- quick spark (desktop) + sync status */}
+          {/* Left -- sync status + install */}
           <div className="flex w-24 items-center gap-1">
-            <button
-              type="button"
-              onClick={handleQuickSpark}
-              className="text-ohm-spark hover:bg-ohm-spark/10 hidden rounded-md p-1.5 transition-colors md:block"
-              aria-label="Quick spark"
-            >
-              <Plus size={16} />
-            </button>
             {driveAvailable && (
               <SyncIndicator connected={driveConnected} status={syncStatus} onSync={manualSync} />
+            )}
+            {isInstallable && (
+              <button
+                type="button"
+                onClick={installApp}
+                className="text-ohm-muted hover:bg-ohm-surface hover:text-ohm-text rounded-md p-1.5 transition-colors"
+                aria-label="Install app"
+              >
+                <MonitorDown size={16} />
+              </button>
             )}
           </div>
 
@@ -533,18 +551,16 @@ export function Board() {
             </span>
           </h1>
 
-          {/* Right -- install + share + settings */}
+          {/* Right -- quick spark (desktop) + share + settings */}
           <div className="flex w-24 items-center justify-end gap-1">
-            {isInstallable && (
-              <button
-                type="button"
-                onClick={installApp}
-                className="text-ohm-muted hover:bg-ohm-surface hover:text-ohm-text rounded-md p-1.5 transition-colors"
-                aria-label="Install app"
-              >
-                <MonitorDown size={16} />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleQuickSpark}
+              className="text-ohm-spark hover:bg-ohm-spark/10 hidden rounded-md p-1.5 transition-colors md:block"
+              aria-label="Quick spark"
+            >
+              <Plus size={16} />
+            </button>
             <button
               type="button"
               onClick={handleShare}
@@ -622,6 +638,7 @@ export function Board() {
       <nav aria-label="Filters" className="border-ohm-border border-b px-4 py-2">
         {/* Row 1: Energy min/max filter + expand toggle (mobile) */}
         <div className="flex items-center gap-2">
+          <Filter size={12} className="text-ohm-muted shrink-0" aria-hidden="true" />
           <span className="font-display text-ohm-muted shrink-0 text-[10px] tracking-widest uppercase">
             Energy
           </span>
@@ -640,14 +657,14 @@ export function Board() {
           </button>
           <span
             className="font-display text-[10px] font-bold tabular-nums"
-            style={{ color: energyColor(energyMin ?? ENERGY_MIN) }}
+            style={{ color: energyColor(energyMin ?? ENERGY_MIN, undefined, eMax) }}
           >
             {energyMin ?? ENERGY_MIN}
           </span>
           <button
             type="button"
             className="text-ohm-muted hover:text-ohm-text hidden shrink-0 px-1 py-0.5 text-sm font-bold disabled:opacity-30 md:inline"
-            disabled={(energyMin ?? ENERGY_MIN) >= (energyMax ?? ENERGY_MAX)}
+            disabled={(energyMin ?? ENERGY_MIN) >= (energyMax ?? eMax)}
             onClick={() => {
               const v = (energyMin ?? ENERGY_MIN) + 1;
               setEnergyMin(v <= ENERGY_MIN ? null : v);
@@ -661,7 +678,7 @@ export function Board() {
             <div
               className="absolute inset-x-0 h-1 rounded-full"
               style={{
-                background: `linear-gradient(to right, ${Array.from({ length: ENERGY_MAX - ENERGY_MIN + 1 }, (_, i) => energyColor(ENERGY_MIN + i)).join(', ')})`,
+                background: `linear-gradient(to right, ${Array.from({ length: eMax - ENERGY_MIN + 1 }, (_, i) => energyColor(ENERGY_MIN + i, undefined, eMax)).join(', ')})`,
               }}
             />
             {/* Dim outside active range */}
@@ -670,16 +687,16 @@ export function Board() {
                 className="absolute h-1 rounded-l-full bg-black/60"
                 style={{
                   left: 0,
-                  width: `${(((energyMin ?? ENERGY_MIN) - ENERGY_MIN) / (ENERGY_MAX - ENERGY_MIN)) * 100}%`,
+                  width: `${(((energyMin ?? ENERGY_MIN) - ENERGY_MIN) / (eMax - ENERGY_MIN)) * 100}%`,
                 }}
               />
             )}
-            {(energyMax ?? ENERGY_MAX) < ENERGY_MAX && (
+            {(energyMax ?? eMax) < eMax && (
               <div
                 className="absolute h-1 rounded-r-full bg-black/60"
                 style={{
                   right: 0,
-                  width: `${((ENERGY_MAX - (energyMax ?? ENERGY_MAX)) / (ENERGY_MAX - ENERGY_MIN)) * 100}%`,
+                  width: `${((eMax - (energyMax ?? eMax)) / (eMax - ENERGY_MIN)) * 100}%`,
                 }}
               />
             )}
@@ -687,13 +704,13 @@ export function Board() {
             <input
               type="range"
               min={ENERGY_MIN}
-              max={ENERGY_MAX}
+              max={eMax}
               step={1}
               value={energyMin ?? ENERGY_MIN}
               onChange={(e) => {
                 const v = Number(e.target.value);
                 setEnergyMin(v === ENERGY_MIN ? null : v);
-                if ((energyMax ?? ENERGY_MAX) < v) setEnergyMax(v === ENERGY_MAX ? null : v);
+                if ((energyMax ?? eMax) < v) setEnergyMax(v === eMax ? null : v);
               }}
               aria-label="Minimum energy"
               className="ohm-range-thumb pointer-events-none absolute inset-x-0 m-0 h-0 w-full appearance-none bg-transparent"
@@ -702,12 +719,12 @@ export function Board() {
             <input
               type="range"
               min={ENERGY_MIN}
-              max={ENERGY_MAX}
+              max={eMax}
               step={1}
-              value={energyMax ?? ENERGY_MAX}
+              value={energyMax ?? eMax}
               onChange={(e) => {
                 const v = Number(e.target.value);
-                setEnergyMax(v === ENERGY_MAX ? null : v);
+                setEnergyMax(v === eMax ? null : v);
                 if ((energyMin ?? ENERGY_MIN) > v) setEnergyMin(v === ENERGY_MIN ? null : v);
               }}
               aria-label="Maximum energy"
@@ -718,10 +735,10 @@ export function Board() {
           <button
             type="button"
             className="text-ohm-muted hover:text-ohm-text hidden shrink-0 px-1 py-0.5 text-sm font-bold disabled:opacity-30 md:inline"
-            disabled={(energyMax ?? ENERGY_MAX) <= (energyMin ?? ENERGY_MIN)}
+            disabled={(energyMax ?? eMax) <= (energyMin ?? ENERGY_MIN)}
             onClick={() => {
-              const v = (energyMax ?? ENERGY_MAX) - 1;
-              setEnergyMax(v >= ENERGY_MAX ? null : v);
+              const v = (energyMax ?? eMax) - 1;
+              setEnergyMax(v >= eMax ? null : v);
             }}
             aria-label="Decrease maximum energy"
           >
@@ -729,17 +746,17 @@ export function Board() {
           </button>
           <span
             className="font-display text-[10px] font-bold tabular-nums"
-            style={{ color: energyColor(energyMax ?? ENERGY_MAX) }}
+            style={{ color: energyColor(energyMax ?? eMax, undefined, eMax) }}
           >
-            {energyMax ?? ENERGY_MAX}
+            {energyMax ?? eMax}
           </span>
           <button
             type="button"
             className="text-ohm-muted hover:text-ohm-text hidden shrink-0 px-1 py-0.5 text-sm font-bold disabled:opacity-30 md:inline"
-            disabled={(energyMax ?? ENERGY_MAX) >= ENERGY_MAX}
+            disabled={(energyMax ?? eMax) >= eMax}
             onClick={() => {
-              const v = (energyMax ?? ENERGY_MAX) + 1;
-              setEnergyMax(v >= ENERGY_MAX ? null : v);
+              const v = (energyMax ?? eMax) + 1;
+              setEnergyMax(v >= eMax ? null : v);
             }}
             aria-label="Increase maximum energy"
           >
@@ -866,8 +883,8 @@ export function Board() {
         }
 
         const total = getTotalCapacity(board, todayStr, windowEndStr);
-        const totalRatio = Math.min(total.used / total.total, 1);
-        const totalColor = energyColor(ENERGY_MIN + totalRatio * (ENERGY_MAX - ENERGY_MIN));
+        const totalRatio = total.used / total.total;
+        const totalColor = budgetColor(totalRatio);
 
         return (
           <div
@@ -878,11 +895,8 @@ export function Board() {
             {board.timeFeatures && daily.length > 0 && (
               <div className="flex gap-1" style={{ gridColumn: '1 / -1' }}>
                 {daily.map(({ date, used }) => {
-                  const ratio = Math.min(used / dayLimit, 1);
-                  const color =
-                    used > 0
-                      ? energyColor(ENERGY_MIN + ratio * (ENERGY_MAX - ENERGY_MIN))
-                      : undefined;
+                  const ratio = used / dayLimit;
+                  const color = used > 0 ? budgetColor(ratio) : undefined;
                   const isToday = date === todayStr;
                   const d = new Date(date + 'T00:00:00');
                   const dayLabel = d.toLocaleDateString(undefined, { weekday: 'short' });
@@ -902,7 +916,10 @@ export function Board() {
                         {used > 0 && (
                           <div
                             className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
-                            style={{ width: `${ratio * 100}%`, backgroundColor: color }}
+                            style={{
+                              width: `${Math.min(ratio, 1) * 100}%`,
+                              backgroundColor: color,
+                            }}
                           />
                         )}
                       </div>
@@ -925,7 +942,7 @@ export function Board() {
             <div className="bg-ohm-border relative h-1.5 overflow-hidden rounded-full">
               <div
                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
-                style={{ width: `${totalRatio * 100}%`, backgroundColor: totalColor }}
+                style={{ width: `${Math.min(totalRatio, 1) * 100}%`, backgroundColor: totalColor }}
               />
             </div>
             <span
@@ -965,6 +982,7 @@ export function Board() {
                   capacity={getColumnCapacity(board, status, toISODate(new Date())) ?? undefined}
                   defaultExpanded={index === STATUS.LIVE}
                   flash={index === STATUS.POWERED ? poweredFlash : undefined}
+                  energyMax={eMax}
                 />
               );
             })}
@@ -986,6 +1004,7 @@ export function Board() {
           isNew={!!newCard}
           categories={board.categories}
           timeFeatures={board.timeFeatures}
+          energyMax={eMax}
           onSave={(saved) => {
             let updated = saved;
             if (newCard) {
@@ -1142,6 +1161,8 @@ export function Board() {
         liveCapacity={board.liveCapacity}
         onSetEnergyBudget={setEnergyBudget}
         onSetLiveCapacity={setLiveCapacity}
+        energyMax={eMax}
+        onSetEnergyMax={setBoardEnergyMax}
         timeFeatures={board.timeFeatures}
         windowSize={board.windowSize}
         onSetTimeFeatures={setTimeFeatures}
