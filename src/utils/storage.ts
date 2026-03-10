@@ -48,9 +48,9 @@ export function sanitizeBoard(board: OhmBoard): OhmBoard {
     board.activities = [];
   }
   if (board.activities) {
-    board.activities = board.activities.filter(
-      (a) => a && typeof a.id === 'string' && typeof a.name === 'string',
-    );
+    board.activities = board.activities
+      .filter((a) => a && typeof a.id === 'string' && typeof a.name === 'string')
+      .map((a) => (typeof a.sourceId === 'string' ? a : { ...a, sourceId: 'ohm' }));
   }
 
   for (const card of board.cards) {

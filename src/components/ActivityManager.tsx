@@ -137,7 +137,7 @@ function ActivityForm({ initial, onSubmit, onCancel }: ActivityFormProps) {
   const [description, setDescription] = useState(initial?.description ?? '');
   const [energy, setEnergy] = useState<number | undefined>(initial?.energy);
   const [schedule, setSchedule] = useState<Partial<StoredSchedule>>(
-    initial?.schedule ?? { repeatFrequency: 'P1W' },
+    initial?.schedule ?? { repeatFrequency: 'P1D' },
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -148,7 +148,7 @@ function ActivityForm({ initial, onSubmit, onCancel }: ActivityFormProps) {
       description: description.trim() || undefined,
       schedule: {
         ...schedule,
-        repeatFrequency: schedule.repeatFrequency ?? 'P1W',
+        repeatFrequency: schedule.repeatFrequency ?? 'P1D',
       } as StoredSchedule,
       energy,
     });

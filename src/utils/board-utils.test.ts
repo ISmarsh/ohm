@@ -128,6 +128,67 @@ describe('getTotalCapacity', () => {
     const board = makeBoard({ energyBudget: 42 });
     expect(getTotalCapacity(board)).toEqual({ used: 0, total: 42 });
   });
+
+  describe('with window (time features)', () => {
+    const WIN_START = '2026-03-08';
+    const WIN_END = '2026-03-11';
+
+    it('includes Powered cards inside the window', () => {
+      const board = makeBoard({
+        energyBudget: 20,
+        cards: [makeCard({ status: STATUS.POWERED, energy: 4, scheduledDate: '2026-03-09' })],
+      });
+      expect(getTotalCapacity(board, WIN_START, WIN_END)).toEqual({ used: 4, total: 20 });
+    });
+
+    it('excludes Powered cards outside the window', () => {
+      const board = makeBoard({
+        energyBudget: 20,
+        cards: [makeCard({ status: STATUS.POWERED, energy: 4, scheduledDate: '2026-03-01' })],
+      });
+      expect(getTotalCapacity(board, WIN_START, WIN_END)).toEqual({ used: 0, total: 20 });
+    });
+
+    it('always includes Live cards regardless of date', () => {
+      const board = makeBoard({
+        energyBudget: 20,
+        cards: [makeCard({ status: STATUS.LIVE, energy: 3 })],
+      });
+      expect(getTotalCapacity(board, WIN_START, WIN_END)).toEqual({ used: 3, total: 20 });
+    });
+
+    it('always excludes Grounded cards', () => {
+      const board = makeBoard({
+        energyBudget: 20,
+        cards: [makeCard({ status: STATUS.GROUNDED, energy: 5, scheduledDate: '2026-03-09' })],
+      });
+      expect(getTotalCapacity(board, WIN_START, WIN_END)).toEqual({ used: 0, total: 20 });
+    });
+
+    it('includes Charging cards without a date', () => {
+      const board = makeBoard({
+        energyBudget: 20,
+        cards: [makeCard({ status: STATUS.CHARGING, energy: 2 })],
+      });
+      expect(getTotalCapacity(board, WIN_START, WIN_END)).toEqual({ used: 2, total: 20 });
+    });
+
+    it('excludes Charging cards with a date outside the window', () => {
+      const board = makeBoard({
+        energyBudget: 20,
+        cards: [makeCard({ status: STATUS.CHARGING, energy: 2, scheduledDate: '2026-03-20' })],
+      });
+      expect(getTotalCapacity(board, WIN_START, WIN_END)).toEqual({ used: 0, total: 20 });
+    });
+
+    it('includes Charging cards with a date inside the window', () => {
+      const board = makeBoard({
+        energyBudget: 20,
+        cards: [makeCard({ status: STATUS.CHARGING, energy: 2, scheduledDate: '2026-03-09' })],
+      });
+      expect(getTotalCapacity(board, WIN_START, WIN_END)).toEqual({ used: 2, total: 20 });
+    });
+  });
 });
 
 describe('cardEffectiveDate', () => {

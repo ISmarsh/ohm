@@ -234,15 +234,14 @@ export function Board() {
       }
     }
 
-    if (toPrompt.length > 0) {
-      setPendingExpired((prev) => {
-        // Only update if the set of card IDs actually changed
-        const prevIds = new Set(prev.map((c) => c.id));
-        const newIds = new Set(toPrompt.map((c) => c.id));
-        if (prevIds.size === newIds.size && [...prevIds].every((id) => newIds.has(id))) return prev;
-        return toPrompt;
-      });
-    }
+    setPendingExpired((prev) => {
+      if (toPrompt.length === 0) return prev.length === 0 ? prev : [];
+      // Only update if the set of card IDs actually changed
+      const prevIds = new Set(prev.map((c) => c.id));
+      const newIds = new Set(toPrompt.map((c) => c.id));
+      if (prevIds.size === newIds.size && [...prevIds].every((id) => newIds.has(id))) return prev;
+      return toPrompt;
+    });
   }, [board.timeFeatures, board.cards, move]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Materialize Potential activity instances as Charging cards (atomic — strict-mode safe)
@@ -314,10 +313,12 @@ export function Board() {
         if (!card) return '';
         if (!over || active.id === over.id) return `Dropped card: ${card.title}`;
         const overCard = board.cards.find((c) => c.id === over.id);
-        const columnCards = getColumnCards(board, card.status);
-        const newIndex = columnCards.findIndex((c) => c.id === over.id);
         if (overCard) {
-          return `Dropped ${card.title} at position ${newIndex + 1}`;
+          const columnCards = getColumnCards(board, overCard.status);
+          const newIndex = columnCards.findIndex((c) => c.id === over.id);
+          return newIndex >= 0
+            ? `Dropped ${card.title} at position ${newIndex + 1}`
+            : `Dropped card: ${card.title}`;
         }
         return `Dropped card: ${card.title}`;
       },
@@ -1022,6 +1023,9 @@ export function Board() {
                           variant="outline"
                           className="border-ohm-live/30 text-ohm-live hover:bg-ohm-live/10 h-6 px-2 text-[10px]"
                           onClick={() => {
+                            if (card.activityInstanceId) {
+                              void syncInstanceToColumn(card.activityInstanceId, STATUS.GROUNDED);
+                            }
                             deleteCard(card.id);
                             setPendingExpired((prev) => prev.filter((c) => c.id !== card.id));
                           }}
