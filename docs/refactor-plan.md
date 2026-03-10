@@ -2,7 +2,7 @@
 
 > Evolving ohm from a personal kanban into an ADHD-informed energy orchestrator with a rolling time horizon, external integrations, and a companion app ecosystem.
 
-This plan distills the ecosystem vision, schema.org alignment, and implementation decisions into actionable phases. The source brainstorming docs live at the dev workspace root (`ohm-refactor-and-ecosystem-plan.md` and the two schema addenda).
+This plan distills the ecosystem vision, schema.org alignment, and implementation decisions into actionable phases.
 
 ---
 
@@ -22,10 +22,14 @@ This plan distills the ecosystem vision, schema.org alignment, and implementatio
 | Energy tiers              | Continuous 1–6 scale (value = weight). HSL gradient coloring from green (1) to red (6).                                                                                                   |
 | Recurrence model          | schema.org `Schedule` via `schema-dts`, not cron strings. Queryable, self-documenting, companion-portable.                                                                                |
 | schema.org adoption       | Import `DayOfWeek` and `ActionStatusType` directly. `StoredSchedule` mirrors `ScheduleBase` field names with narrowed types. `schema-dts` is a devDependency for compile-time validation. |
-| Persistence migration     | Dexie replaces localStorage JSON blob when activity stores are needed (Phase 2). Board stays in localStorage until then.                                                                  |
+| Persistence migration     | Dexie for activity/instance stores. Board stays in localStorage.                                                                                                                          |
 | Activity sourceId         | `"ohm"` for native activities, companion `appId` for companion-sourced, `"connector:<name>"` for external API connectors.                                                                 |
 | Card <-> ActivityInstance | Cards are the UI representation. Instances are the data record. Card `activityInstanceId` links to the instance. Instance `status` mirrors card column position.                          |
-| Type organization         | New types in separate files: `schedule.ts`, `activity.ts`. Existing `board.ts` gets version bump + optional temporal fields.                                                              |
+| Type organization         | New types in separate files: `schedule.ts`, `activity.ts`. Existing `board.ts` gets optional temporal fields (no version bump — no existing users).                                       |
+| Capacity model            | Single `energyBudget` for the rolling window replaces per-column capacities. `liveCapacity` stays separate. `autoBudget` toggle auto-calculates Total = Window × Live.                    |
+| Auto-demotion             | Charging cards with `scheduledDate` before today auto-demote to Grounded when time features enabled.                                                                                      |
+| Auto-archive              | Powered cards outside the trailing window silently removed.                                                                                                                               |
+| Positive reinforcement    | Milestone toasts at 25/50/75/100% trailing powered ratio. Powered column ambient glow scales with completion progress.                                                                    |
 | Testing scope             | Core coverage: `useBoard` hook, `board-utils` pure functions, `sanitizeBoard` migration, `mergeBoards`. Circle back for broader coverage later.                                           |
 | Abstract kanban           | Always available. Time features toggle controls all temporal behavior. Some UI change is acceptable since the app has no active users yet.                                                |
 
@@ -33,57 +37,19 @@ This plan distills the ecosystem vision, schema.org alignment, and implementatio
 
 ## Phases
 
-### Phase 0: Data Model + Test Foundation
+### Phase 0 + 1 + 2: Data Model, Tests, Time Features, Activity System ✅
 
-Prepare the type system and write tests against the new model.
+Completed in PR #20. Combined into a single PR.
 
-**Data model changes:**
-
-- `src/types/schedule.ts` -- `StoredSchedule` using `DayOfWeek` from `schema-dts`
-- `src/types/activity.ts` -- `Activity`, `ActivityInstance`, `ActivityStatus` (aligned with `ActionStatusType`), `ConsumptionRecord`
-- `src/types/board.ts` -- add optional `scheduledDate` and `activityInstanceId` to `OhmCard`, add `timeFeatures`, `windowSize`, `autoBudget` to `OhmBoard`
-- `src/utils/storage.ts` -- `sanitizeBoard` validates/clamps new fields (no version bump needed — no existing users)
-
-**Testing:**
-
-- `board-utils` pure functions (createCard, moveCard, capacity calc, add/update/remove)
-- `useBoard` hook (quickAdd, move, reorder, categories, capacity)
-- `sanitizeBoard` including v1 -> v2 migration
-- `mergeBoards` logic
-
-### Phase 1+2: Time Features + Activity System (single PR likely)
-
-The core orchestrator features. May combine with Phase 0 into one PR depending on scope.
-
-**Rolling window:**
-
-- N-day sliding window (configurable, default 7)
-- Schedule-based auto-staging: activities with matching schedules appear in Charging
-- Instance generation from `matchesSchedule` logic
-- `exceptDate` support for skip/reschedule
-- Time features toggle controls visibility of all temporal UI
-- Auto-demotion: instances whose `scheduledDate` < today and still Potential move to Failed (Grounded)
-
-**Capacity model (breaking change -- no migration needed, no real users):**
-
-- Replace per-column capacities (`chargingCapacity`, `groundedCapacity`) with a single `energyBudget` for the rolling window
-- `liveCapacity` stays separate -- limits active/today work
-- Energy budget covers total energy segments allocated across the window period (Charging + Grounded combined)
-- Budget indicator shows total energy used vs budget across the window
-
-**Activity lifecycle:**
-
-- `Activity` definitions with `StoredSchedule` attached
-- `ActivityInstance` generation for the rolling window
-- Claim flow: instance moves through Charging -> Live -> Powered
-- Instance `status` mirrors column position via `ActivityStatus`
-
-**Persistence:**
-
-- Migrate to Dexie for activity/instance stores
-- Board settings can stay in a single Dexie record or localStorage
-- Compound index `[activityId+scheduledDate]` for dedup during instance generation
-- Multi-entry index on `schedule.byDay` for day-of-week queries
+- Data model: `StoredSchedule`, `Activity`, `ActivityInstance`, `ActivityStatus`, board temporal fields
+- Dexie IndexedDB for activity/instance stores; board stays in localStorage
+- Test foundation: board-utils, useBoard, useActivities, schedule-utils, storage, restore-points
+- Rolling window (1–7 days), auto-staging, `exceptDate` support, time features toggle
+- Auto-demotion (stale Charging → Grounded), auto-archive (expired Powered removed)
+- `energyBudget` replaces per-column capacities, `autoBudget` toggle
+- `useActivities` hook, `ActivityManager` UI, instance materialization
+- Daily + total energy meters, milestone toasts, Powered column glow
+- Dual-range energy filter slider, desktop steppers, 2-row filter layout
 
 ### Phase 3: Integrations Page + Shared Infra
 
@@ -207,7 +173,8 @@ interface OhmBoard {
   liveCapacity: number; // energy segments limit for Live column (today)
   // chargingCapacity and groundedCapacity removed -- replaced by energyBudget
   timeFeatures?: boolean; // enable rolling window + schedules
-  windowSize?: number; // rolling window days (default 7)
+  windowSize?: number; // rolling window days (default 7, max 7)
+  autoBudget?: boolean; // auto-calculate energyBudget = windowSize × liveCapacity
 }
 ```
 
@@ -261,10 +228,8 @@ Same origin = shared IndexedDB. Each app is its own repo and build.
 
 ## Open Questions
 
-- **Card archive:** Auto-archive Powered cards older than 30 days. Implement before or alongside activity system?
 - **Keyboard shortcuts:** Independent of the refactor, can be added anytime.
 - **Analytics:** Completion rates, time-in-column trends. Depends on activity instance history.
-- **Energy rename:** Deferred. Current Low/Med/High works. Revisit if 4th tier or vocabulary change feels warranted.
 - **Custom activities in ohm:** For domains without a companion. Shape TBD in Phase 3.
 
 ---
@@ -273,4 +238,4 @@ Same origin = shared IndexedDB. Each app is its own repo and build.
 
 > This plan is a destination, not a starting point. Build incrementally. Let real friction guide what gets built next.
 
-Phase 0 is the immediate work. Phases 1+2 may combine into a single PR. Phase 3+ is future work triggered by ecosystem needs.
+Phase 0–2 shipped in PR #20. Phase 3+ is future work triggered by ecosystem needs.

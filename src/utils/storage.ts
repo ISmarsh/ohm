@@ -21,7 +21,11 @@ export function sanitizeBoard(board: OhmBoard): OhmBoard {
   }
 
   if (board.windowSize != null) {
-    board.windowSize = Math.min(WINDOW_MAX, Math.max(WINDOW_MIN, board.windowSize));
+    if (typeof board.windowSize !== 'number' || !Number.isFinite(board.windowSize)) {
+      delete board.windowSize;
+    } else {
+      board.windowSize = Math.min(WINDOW_MAX, Math.max(WINDOW_MIN, board.windowSize));
+    }
   }
   if (board.timeFeatures != null && typeof board.timeFeatures !== 'boolean') {
     board.timeFeatures = !!board.timeFeatures;

@@ -96,7 +96,8 @@ export function useActivities(windowSize = DEFAULT_WINDOW_SIZE) {
       }
 
       // Generate new instances for the window (exclude dupes from existing set)
-      const dedupedInstances = existingInstances.filter((i) => !dupeIds.includes(i.id));
+      const dupeIdSet = new Set(dupeIds);
+      const dedupedInstances = existingInstances.filter((i) => !dupeIdSet.has(i.id));
       const newInstances: ActivityInstance[] = [];
       for (const activity of allActivities) {
         newInstances.push(...generateInstances(activity, today, windowEnd, dedupedInstances));

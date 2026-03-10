@@ -5,7 +5,7 @@ import { ACTIVITY_STATUS } from '../types/activity';
 import { matchesSchedule, generateInstances, toISODate } from './schedule-utils';
 
 function makeSchedule(overrides: Partial<StoredSchedule> = {}): StoredSchedule {
-  return { repeatFrequency: 'P1W', ...overrides };
+  return { repeatFrequency: 'P1D', ...overrides };
 }
 
 function makeActivity(overrides: Partial<Activity> = {}): Activity {
@@ -28,6 +28,12 @@ describe('matchesSchedule', () => {
   it('matches when no constraints are set', () => {
     const schedule = makeSchedule();
     expect(matchesSchedule(new Date(2026, 2, 7), schedule)).toBe(true);
+  });
+
+  it('rejects all days for P1W with no byDay', () => {
+    const schedule = makeSchedule({ repeatFrequency: 'P1W' });
+    expect(matchesSchedule(new Date(2026, 2, 9), schedule)).toBe(false);
+    expect(matchesSchedule(new Date(2026, 2, 10), schedule)).toBe(false);
   });
 
   it('filters by byDay', () => {

@@ -27,7 +27,12 @@ export function toISODate(date: Date): string {
 export function matchesSchedule(date: Date, schedule: StoredSchedule): boolean {
   if (schedule.startDate && toISODate(date) < schedule.startDate) return false;
   if (schedule.endDate && toISODate(date) > schedule.endDate) return false;
-  if (schedule.byDay && !schedule.byDay.includes(DAY_NAMES[date.getDay()]!)) return false;
+  if (schedule.byDay) {
+    if (!schedule.byDay.includes(DAY_NAMES[date.getDay()]!)) return false;
+  } else if (schedule.repeatFrequency === 'P1W') {
+    // Weekly with no days specified — nothing can match
+    return false;
+  }
   if (schedule.byMonth && !schedule.byMonth.includes(date.getMonth() + 1)) return false;
   if (schedule.byMonthDay && !schedule.byMonthDay.includes(date.getDate())) return false;
   return true;
