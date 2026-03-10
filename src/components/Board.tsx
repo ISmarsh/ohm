@@ -944,7 +944,7 @@ export function Board() {
                   cards={filteredCards(status)}
                   onCardTap={setSelectedCard}
                   onReorderCards={reorderBatch}
-                  capacity={getColumnCapacity(board, status) ?? undefined}
+                  capacity={getColumnCapacity(board, status, toISODate(new Date())) ?? undefined}
                   defaultExpanded={index === STATUS.LIVE}
                   flash={index === STATUS.POWERED ? poweredFlash : undefined}
                   glowIntensity={
