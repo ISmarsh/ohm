@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '../db';
-import type { Activity, ActivityInstance } from '../types/activity';
+import type { Activity, ActivityInstance, ActivityStatus } from '../types/activity';
 import type { StoredSchedule } from '../types/schedule';
 import type { EnergyTag } from '../types/board';
 import { ACTIVITY_STATUS } from '../types/activity';
@@ -167,6 +167,30 @@ export function useActivities(windowSize = DEFAULT_WINDOW_SIZE) {
     [loadAll],
   );
 
+  /** Column-status → instance-status mapping (Charging=0, Grounded=1, Live=2, Powered=3) */
+  const COLUMN_TO_INSTANCE: Record<number, ActivityStatus> = {
+    0: ACTIVITY_STATUS.POTENTIAL,
+    1: ACTIVITY_STATUS.FAILED,
+    2: ACTIVITY_STATUS.ACTIVE,
+    3: ACTIVITY_STATUS.COMPLETED,
+  };
+
+  /** Sync an instance's status to match its linked card's column */
+  const syncInstanceToColumn = useCallback(
+    async (instanceId: string, columnStatus: number) => {
+      const newStatus = COLUMN_TO_INSTANCE[columnStatus];
+      if (!newStatus) return;
+
+      const updates: Partial<ActivityInstance> = { status: newStatus };
+      if (columnStatus === 2) updates.claimedAt = new Date().toISOString();
+      if (columnStatus === 3) updates.completedAt = new Date().toISOString();
+
+      await db.instances.update(instanceId, updates);
+      await loadAll();
+    },
+    [loadAll],
+  );
+
   return {
     activities,
     instances,
@@ -177,5 +201,6 @@ export function useActivities(windowSize = DEFAULT_WINDOW_SIZE) {
     claimInstance,
     completeInstance,
     skipInstance,
+    syncInstanceToColumn,
   };
 }

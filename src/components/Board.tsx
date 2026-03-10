@@ -150,8 +150,15 @@ export function Board() {
     replaceBoard,
   } = useBoard();
 
-  const { activities, instances, addActivity, updateActivity, deleteActivity, refreshWindow } =
-    useActivities(board.windowSize);
+  const {
+    activities,
+    instances,
+    addActivity,
+    updateActivity,
+    deleteActivity,
+    refreshWindow,
+    syncInstanceToColumn,
+  } = useActivities(board.windowSize);
 
   // Refresh activity instances when time features are enabled;
   // demote cards linked to expired instances to Grounded
@@ -168,6 +175,7 @@ export function Board() {
           card.status !== STATUS.POWERED
         ) {
           move(card.id, STATUS.GROUNDED);
+          // Instance already demoted to Failed by refreshWindow — no extra sync needed
         }
       }
     });
@@ -615,6 +623,9 @@ export function Board() {
               const original = board.cards.find((c) => c.id === updated.id);
               updateCard(updated);
               if (original && updated.status !== original.status) {
+                if (updated.activityInstanceId) {
+                  void syncInstanceToColumn(updated.activityInstanceId, updated.status);
+                }
                 toastCardMoved(updated, updated.status);
                 if (updated.status === STATUS.POWERED) {
                   setPoweredFlash(true);

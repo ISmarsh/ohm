@@ -233,5 +233,42 @@ describe('useActivities', () => {
       const updated = result.current.instances.find((i) => i.id === instanceId)!;
       expect(updated.status).toBe(ACTIVITY_STATUS.FAILED);
     });
+
+    it('syncInstanceToColumn maps column status to instance status', async () => {
+      const { result } = await setupWithInstance();
+      const instanceId = result.current.instances[0]!.id;
+
+      // Charging (0) → Potential
+      await act(async () => {
+        await result.current.syncInstanceToColumn(instanceId, 0);
+      });
+      expect(result.current.instances.find((i) => i.id === instanceId)!.status).toBe(
+        ACTIVITY_STATUS.POTENTIAL,
+      );
+
+      // Live (2) → Active + claimedAt
+      await act(async () => {
+        await result.current.syncInstanceToColumn(instanceId, 2);
+      });
+      let updated = result.current.instances.find((i) => i.id === instanceId)!;
+      expect(updated.status).toBe(ACTIVITY_STATUS.ACTIVE);
+      expect(updated.claimedAt).toBeTruthy();
+
+      // Powered (3) → Completed + completedAt
+      await act(async () => {
+        await result.current.syncInstanceToColumn(instanceId, 3);
+      });
+      updated = result.current.instances.find((i) => i.id === instanceId)!;
+      expect(updated.status).toBe(ACTIVITY_STATUS.COMPLETED);
+      expect(updated.completedAt).toBeTruthy();
+
+      // Grounded (1) → Failed
+      await act(async () => {
+        await result.current.syncInstanceToColumn(instanceId, 1);
+      });
+      expect(result.current.instances.find((i) => i.id === instanceId)!.status).toBe(
+        ACTIVITY_STATUS.FAILED,
+      );
+    });
   });
 });
