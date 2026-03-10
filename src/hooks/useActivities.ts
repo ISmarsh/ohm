@@ -1,11 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { db } from '../db';
-import type {
-  Activity,
-  ActivityInstance,
-  ActivityStatus,
-  DismissedInstance,
-} from '../types/activity';
+import type { Activity, ActivityInstance, ActivityStatus } from '../types/activity';
 import type { StoredSchedule } from '../types/schedule';
 import { ACTIVITY_STATUS } from '../types/activity';
 import { generateInstances, toISODate } from '../utils/schedule-utils';

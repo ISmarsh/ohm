@@ -243,7 +243,7 @@ export function Board() {
       if (prevIds.size === newIds.size && [...prevIds].every((id) => newIds.has(id))) return prev;
       return toPrompt;
     });
-  }, [board.timeFeatures, board.cards, move]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [board.timeFeatures, board.cards, move]);
 
   // Materialize Potential activity instances as Charging cards (atomic — strict-mode safe)
   useEffect(() => {
