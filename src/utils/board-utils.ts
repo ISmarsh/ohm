@@ -9,7 +9,9 @@ export function generateId(): string {
 /** Create a new card with minimal input (quick capture) */
 export function createCard(
   title: string,
-  overrides?: Partial<Pick<OhmCard, 'description' | 'energy' | 'category'>>,
+  overrides?: Partial<
+    Pick<OhmCard, 'description' | 'energy' | 'category' | 'activityInstanceId' | 'scheduledDate'>
+  >,
 ): OhmCard {
   const now = new Date().toISOString();
   return {
@@ -23,6 +25,8 @@ export function createCard(
     createdAt: now,
     updatedAt: now,
     sortOrder: Date.now(),
+    activityInstanceId: overrides?.activityInstanceId,
+    scheduledDate: overrides?.scheduledDate,
   };
 }
 
@@ -40,25 +44,25 @@ export function getColumnCards(board: OhmBoard, status: ColumnStatus): OhmCard[]
   return board.cards.filter((c) => c.status === status).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-/** Capacity field names indexed by ColumnStatus (Powered has no capacity) */
-const CAPACITY_FIELDS = [
-  'chargingCapacity', // STATUS.CHARGING = 0
-  'groundedCapacity', // STATUS.GROUNDED = 1
-  'liveCapacity', // STATUS.LIVE = 2
-  null, // STATUS.POWERED = 3 (no capacity)
-] as const satisfies readonly (keyof OhmBoard | null)[];
-
-/** Get column capacity usage in energy segments. Returns null for columns without capacity. */
+/** Get column capacity usage in energy segments. Returns null for Powered (no limit). */
 export function getColumnCapacity(
   board: OhmBoard,
   status: ColumnStatus,
 ): { used: number; total: number } | null {
-  const field = CAPACITY_FIELDS[status];
-  if (!field) return null;
+  if (status === STATUS.POWERED) return null;
+
+  if (status === STATUS.LIVE) {
+    const used = board.cards
+      .filter((c) => c.status === STATUS.LIVE)
+      .reduce((sum, c) => sum + ENERGY_SEGMENTS[c.energy]!, 0);
+    return { used, total: board.liveCapacity };
+  }
+
+  // Charging and Grounded share the energy budget
   const used = board.cards
-    .filter((c) => c.status === status)
+    .filter((c) => c.status === STATUS.CHARGING || c.status === STATUS.GROUNDED)
     .reduce((sum, c) => sum + ENERGY_SEGMENTS[c.energy]!, 0);
-  return { used, total: board[field] };
+  return { used, total: board.energyBudget };
 }
 
 /** Update a card in the board immutably */

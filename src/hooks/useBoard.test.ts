@@ -185,22 +185,39 @@ describe('useBoard', () => {
     });
   });
 
-  describe('setCapacity', () => {
-    it('updates column capacity', () => {
+  describe('setEnergyBudget', () => {
+    it('updates the energy budget', () => {
       const { result } = renderHook(() => useBoard());
       act(() => {
-        result.current.setCapacity(STATUS.LIVE, 10);
+        result.current.setEnergyBudget(24);
+      });
+      expect(result.current.board.energyBudget).toBe(24);
+    });
+
+    it('clamps to minimum of 1', () => {
+      const { result } = renderHook(() => useBoard());
+      act(() => {
+        result.current.setEnergyBudget(0);
+      });
+      expect(result.current.board.energyBudget).toBe(1);
+    });
+  });
+
+  describe('setLiveCapacity', () => {
+    it('updates the live capacity', () => {
+      const { result } = renderHook(() => useBoard());
+      act(() => {
+        result.current.setLiveCapacity(10);
       });
       expect(result.current.board.liveCapacity).toBe(10);
     });
 
-    it('no-ops for Powered column', () => {
+    it('clamps to minimum of 1', () => {
       const { result } = renderHook(() => useBoard());
-      const before = result.current.board;
       act(() => {
-        result.current.setCapacity(STATUS.POWERED, 10);
+        result.current.setLiveCapacity(-5);
       });
-      expect(result.current.board).toBe(before);
+      expect(result.current.board.liveCapacity).toBe(1);
     });
   });
 

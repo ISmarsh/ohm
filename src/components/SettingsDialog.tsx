@@ -13,8 +13,7 @@ import {
   MonitorDown,
   Clock,
 } from 'lucide-react';
-import type { OhmBoard, ColumnStatus } from '../types/board';
-import { STATUS } from '../types/board';
+import type { OhmBoard } from '../types/board';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -42,8 +41,10 @@ interface SettingsDialogProps {
   onAddCategory: (category: string) => void;
   onRemoveCategory: (category: string) => void;
   onRenameCategory: (oldName: string, newName: string) => void;
-  capacities: { charging: number; live: number; grounded: number };
-  onSetCapacity: (status: ColumnStatus, capacity: number) => void;
+  energyBudget: number;
+  liveCapacity: number;
+  onSetEnergyBudget: (budget: number) => void;
+  onSetLiveCapacity: (capacity: number) => void;
   timeFeatures?: boolean;
   windowSize?: number;
   onSetTimeFeatures?: (enabled: boolean) => void;
@@ -65,18 +66,15 @@ interface SettingsDialogProps {
 
 const CAPACITY_ROWS = [
   {
-    label: 'Charging',
-    status: STATUS.CHARGING,
-    key: 'charging' as const,
-    color: 'text-ohm-charging',
+    label: 'Energy Budget',
+    field: 'energyBudget' as const,
+    color: 'text-ohm-spark',
   },
   {
-    label: 'Grounded',
-    status: STATUS.GROUNDED,
-    key: 'grounded' as const,
-    color: 'text-ohm-grounded',
+    label: 'Live',
+    field: 'liveCapacity' as const,
+    color: 'text-ohm-live',
   },
-  { label: 'Live', status: STATUS.LIVE, key: 'live' as const, color: 'text-ohm-live' },
 ];
 
 const AUTH_LEVEL_SEGMENTS = ['Local', 'Sync', 'Persist'] as const;
@@ -122,8 +120,10 @@ export function SettingsDialog({
   onAddCategory,
   onRemoveCategory,
   onRenameCategory,
-  capacities,
-  onSetCapacity,
+  energyBudget,
+  liveCapacity,
+  onSetEnergyBudget,
+  onSetLiveCapacity,
   timeFeatures,
   windowSize,
   onSetTimeFeatures,
@@ -326,10 +326,11 @@ export function SettingsDialog({
           <span className="font-display text-ohm-muted mb-2 block text-[10px] tracking-widest uppercase">
             Energy Capacity
           </span>
-          {CAPACITY_ROWS.map(({ label, status, key, color }) => {
-            const value = capacities[key];
+          {CAPACITY_ROWS.map(({ label, field, color }) => {
+            const value = field === 'energyBudget' ? energyBudget : liveCapacity;
+            const setter = field === 'energyBudget' ? onSetEnergyBudget : onSetLiveCapacity;
             return (
-              <div key={status} className="mt-2 flex items-center gap-3">
+              <div key={field} className="mt-2 flex items-center gap-3">
                 <span
                   className={`font-display w-20 text-[10px] tracking-widest uppercase ${color}`}
                 >
@@ -338,10 +339,10 @@ export function SettingsDialog({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => onSetCapacity(status, Math.max(1, value - 1))}
+                  onClick={() => setter(Math.max(1, value - 1))}
                   disabled={value <= 1}
                   className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
-                  aria-label={`Decrease ${label} capacity`}
+                  aria-label={`Decrease ${label}`}
                 >
                   <Minus size={14} />
                 </Button>
@@ -351,9 +352,9 @@ export function SettingsDialog({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => onSetCapacity(status, value + 1)}
+                  onClick={() => setter(value + 1)}
                   className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
-                  aria-label={`Increase ${label} capacity`}
+                  aria-label={`Increase ${label}`}
                 >
                   <Plus size={14} />
                 </Button>

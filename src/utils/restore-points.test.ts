@@ -24,9 +24,8 @@ function makeBoard(overrides: Partial<OhmBoard> = {}): OhmBoard {
     version: 1,
     cards: [],
     categories: [],
-    chargingCapacity: 12,
+    energyBudget: 18,
     liveCapacity: 6,
-    groundedCapacity: 6,
     lastSaved: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
@@ -115,27 +114,33 @@ describe('mergeBoards', () => {
   describe('capacity merging', () => {
     it('takes imported capacities when they are newer', () => {
       const local = makeBoard({
-        chargingCapacity: 10,
+        energyBudget: 10,
+        liveCapacity: 4,
         capacitiesUpdatedAt: '2026-01-01T00:00:00.000Z',
       });
       const imported = makeBoard({
-        chargingCapacity: 20,
+        energyBudget: 20,
+        liveCapacity: 8,
         capacitiesUpdatedAt: '2026-06-01T00:00:00.000Z',
       });
       const merged = mergeBoards(local, imported);
-      expect(merged.chargingCapacity).toBe(20);
+      expect(merged.energyBudget).toBe(20);
+      expect(merged.liveCapacity).toBe(8);
     });
 
     it('keeps local capacities when they are newer', () => {
       const local = makeBoard({
+        energyBudget: 24,
         liveCapacity: 8,
         capacitiesUpdatedAt: '2026-06-01T00:00:00.000Z',
       });
       const imported = makeBoard({
+        energyBudget: 18,
         liveCapacity: 4,
         capacitiesUpdatedAt: '2026-01-01T00:00:00.000Z',
       });
       const merged = mergeBoards(local, imported);
+      expect(merged.energyBudget).toBe(24);
       expect(merged.liveCapacity).toBe(8);
     });
   });

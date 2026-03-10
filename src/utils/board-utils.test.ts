@@ -102,16 +102,28 @@ describe('getColumnCapacity', () => {
   });
 
   it('returns zero used when column is empty', () => {
-    const board = makeBoard({ chargingCapacity: 12 });
-    expect(getColumnCapacity(board, STATUS.CHARGING)).toEqual({ used: 0, total: 12 });
+    const board = makeBoard({ energyBudget: 18 });
+    expect(getColumnCapacity(board, STATUS.CHARGING)).toEqual({ used: 0, total: 18 });
   });
 
   it('counts Medium as 2 segments', () => {
     const board = makeBoard({
-      groundedCapacity: 6,
+      energyBudget: 18,
       cards: [makeCard({ id: 'a', status: STATUS.GROUNDED, energy: ENERGY.MED })],
     });
-    expect(getColumnCapacity(board, STATUS.GROUNDED)).toEqual({ used: 2, total: 6 });
+    expect(getColumnCapacity(board, STATUS.GROUNDED)).toEqual({ used: 2, total: 18 });
+  });
+
+  it('shares energy budget between Charging and Grounded', () => {
+    const board = makeBoard({
+      energyBudget: 10,
+      cards: [
+        makeCard({ id: 'a', status: STATUS.CHARGING, energy: ENERGY.LOW }), // 1
+        makeCard({ id: 'b', status: STATUS.GROUNDED, energy: ENERGY.HIGH }), // 3
+      ],
+    });
+    expect(getColumnCapacity(board, STATUS.CHARGING)).toEqual({ used: 4, total: 10 });
+    expect(getColumnCapacity(board, STATUS.GROUNDED)).toEqual({ used: 4, total: 10 });
   });
 });
 

@@ -8,9 +8,8 @@ function makeBoard(overrides: Partial<OhmBoard> = {}): OhmBoard {
     version: 1,
     cards: [],
     categories: [],
-    chargingCapacity: 12,
+    energyBudget: 18,
     liveCapacity: 6,
-    groundedCapacity: 6,
     lastSaved: '2026-01-01T00:00:00.000Z',
     ...overrides,
   };
@@ -23,17 +22,32 @@ describe('sanitizeBoard', () => {
       capacitiesUpdatedAt: '2026-01-01T00:00:00.000Z',
     });
     const result = sanitizeBoard(board);
-    expect(result.chargingCapacity).toBe(12);
+    expect(result.energyBudget).toBe(18);
     expect(result.liveCapacity).toBe(6);
-    expect(result.groundedCapacity).toBe(6);
   });
 
   it('resets invalid capacities to defaults', () => {
-    const board = makeBoard({ chargingCapacity: -1, liveCapacity: 0, groundedCapacity: NaN });
+    const board = makeBoard({ energyBudget: -1, liveCapacity: 0 });
     const result = sanitizeBoard(board);
-    expect(result.chargingCapacity).toBe(12);
+    expect(result.energyBudget).toBe(18);
     expect(result.liveCapacity).toBe(6);
-    expect(result.groundedCapacity).toBe(6);
+  });
+
+  it('migrates legacy per-column capacities to energyBudget', () => {
+    const legacy = {
+      version: 1 as const,
+      cards: [],
+      categories: [],
+      chargingCapacity: 12,
+      groundedCapacity: 6,
+      liveCapacity: 6,
+      lastSaved: '2026-01-01T00:00:00.000Z',
+    };
+    const result = sanitizeBoard(legacy as unknown as OhmBoard);
+    expect(result.energyBudget).toBe(18);
+    expect(result.liveCapacity).toBe(6);
+    expect((result as Record<string, unknown>).chargingCapacity).toBeUndefined();
+    expect((result as Record<string, unknown>).groundedCapacity).toBeUndefined();
   });
 
   it('backfills missing timestamp fields from lastSaved', () => {

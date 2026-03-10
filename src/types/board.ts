@@ -52,12 +52,10 @@ export interface OhmBoard {
   cards: OhmCard[];
   /** User-defined categories */
   categories: string[];
-  /** Capacity for the Charging column (energy segments) */
-  chargingCapacity: number;
-  /** Capacity for the Live column (energy segments) */
+  /** Total energy segments for the rolling window (Charging + Grounded combined) */
+  energyBudget: number;
+  /** Energy segments limit for Live column (active/today work) */
   liveCapacity: number;
-  /** Capacity for the Grounded column (energy segments) */
-  groundedCapacity: number;
   /** ISO timestamp — last time categories were added/removed */
   categoriesUpdatedAt?: string;
   /** ISO timestamp — last time any capacity was changed */
@@ -176,9 +174,8 @@ export function createDefaultBoard(): OhmBoard {
     version: 1,
     cards: [],
     categories: ['Personal', 'Creative', 'Home'],
-    chargingCapacity: 12,
+    energyBudget: 18,
     liveCapacity: 6,
-    groundedCapacity: 6,
     lastSaved: new Date().toISOString(),
   };
 }

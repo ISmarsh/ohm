@@ -4,14 +4,20 @@ import { createDefaultBoard, ENERGY_CONFIG, COLUMNS, STATUS, ENERGY } from '../t
 
 /** Coerce invalid field values to safe defaults -- index-range validation */
 export function sanitizeBoard(board: OhmBoard): OhmBoard {
-  if (typeof board.chargingCapacity !== 'number' || !(board.chargingCapacity >= 1)) {
-    board.chargingCapacity = 12;
+  // Migrate from per-column capacities to unified energy budget
+  const legacy = board as Record<string, unknown>;
+  if ('chargingCapacity' in legacy && !('energyBudget' in legacy)) {
+    const charging = typeof legacy.chargingCapacity === 'number' ? legacy.chargingCapacity : 12;
+    const grounded = typeof legacy.groundedCapacity === 'number' ? legacy.groundedCapacity : 6;
+    board.energyBudget = charging + grounded;
+    delete legacy.chargingCapacity;
+    delete legacy.groundedCapacity;
+  }
+  if (typeof board.energyBudget !== 'number' || !(board.energyBudget >= 1)) {
+    board.energyBudget = 18;
   }
   if (typeof board.liveCapacity !== 'number' || !(board.liveCapacity >= 1)) {
     board.liveCapacity = 6;
-  }
-  if (typeof board.groundedCapacity !== 'number' || !(board.groundedCapacity >= 1)) {
-    board.groundedCapacity = 6;
   }
 
   if (!board.categoriesUpdatedAt) {
