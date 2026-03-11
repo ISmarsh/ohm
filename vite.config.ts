@@ -37,8 +37,8 @@ export default defineConfig({
         theme_color: '#0a0a0f',
         background_color: '#0a0a0f',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/ohm/',
+        start_url: '/ohm/',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -52,7 +52,7 @@ export default defineConfig({
       },
     }),
   ],
-  base: '/',
+  base: '/ohm/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
