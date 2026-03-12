@@ -220,7 +220,6 @@ function SortableCardRow({
       className="text-ohm-muted/40 hover:text-ohm-muted mt-0.5 shrink-0 cursor-grab touch-none active:cursor-grabbing"
       {...listeners}
       aria-label="Drag to reorder"
-      tabIndex={-1}
       onClick={(e) => e.stopPropagation()}
     >
       <GripVertical size={14} />

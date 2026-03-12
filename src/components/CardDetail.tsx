@@ -10,6 +10,7 @@ import {
 } from '../types/board';
 import { EnergySlider } from './ui/energy-slider';
 import { Settings, List, Trash2, Calendar } from 'lucide-react';
+import { toISODate } from '../utils/schedule-utils';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
@@ -91,8 +92,7 @@ export function CardDetail({
           (prev.status === STATUS.POWERED &&
             (newStatus === STATUS.LIVE || newStatus === STATUS.CHARGING));
         if (reactivating) {
-          const now = new Date();
-          updated.scheduledDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          updated.scheduledDate = toISODate(new Date());
         }
       }
       return updated;
