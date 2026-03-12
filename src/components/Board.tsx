@@ -454,7 +454,7 @@ export function Board() {
 
   const filteredCards = (status: ColumnStatus) => {
     let cards = getColumnCards(board, status);
-    if (todayFilter) {
+    if (todayFilter && board.timeFeatures) {
       const todayStr = toISODate(new Date());
       cards = cards.filter((c) => c.scheduledDate === todayStr);
     }
@@ -498,8 +498,8 @@ export function Board() {
     setTodayFilter(false);
   };
 
-  // Budget bar data — computed once per render
-  const budgetData = useMemo(() => {
+  // Budget bar data — computed each render to keep today/window bounds fresh across midnight
+  const budgetData = (() => {
     const today = new Date();
     const todayStr = toISODate(today);
     let windowEndStr: string | undefined;
@@ -513,7 +513,7 @@ export function Board() {
     }
     const total = getTotalCapacity(board, todayStr, windowEndStr);
     return { daily, dayLimit, total, todayStr };
-  }, [board]);
+  })();
 
   const handleQuickSpark = () => {
     setNewCard(createCard(''));
@@ -968,13 +968,12 @@ export function Board() {
           energyMax={eMax}
           onReschedule={(cardId, newDate) => {
             const card = board.cards.find((c) => c.id === cardId);
-            if (card) {
-              updateCard({
-                ...card,
-                scheduledDate: newDate,
-                updatedAt: new Date().toISOString(),
-              });
-            }
+            if (!card || card.activityInstanceId) return;
+            updateCard({
+              ...card,
+              scheduledDate: newDate,
+              updatedAt: new Date().toISOString(),
+            });
           }}
           onReorder={(activeId, overId) => {
             const draggedCard = board.cards.find((c) => c.id === activeId);

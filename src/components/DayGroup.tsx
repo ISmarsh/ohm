@@ -33,6 +33,8 @@ export function DayGroup({
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
+        aria-expanded={expanded}
+        aria-controls={`day-group-${group.key}`}
         className={`flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left transition-colors hover:bg-white/5 ${
           group.isToday ? 'border-ohm-spark/40 border-l-2 pl-1' : ''
         }`}
@@ -58,24 +60,26 @@ export function DayGroup({
 
       {/* Cards */}
       {expanded && (
-        <SortableContext
-          items={group.cards.map((c) => c.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="mt-1 flex flex-col gap-2">
-            {group.cards.map((card, idx) => (
-              <Card
-                key={card.id}
-                card={card}
-                onTap={onCardTap}
-                onReorder={
-                  onReorder ? (dir) => onReorder(indexOffset + idx, card.id, dir) : undefined
-                }
-                energyMax={energyMax}
-              />
-            ))}
-          </div>
-        </SortableContext>
+        <div id={`day-group-${group.key}`}>
+          <SortableContext
+            items={group.cards.map((c) => c.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="mt-1 flex flex-col gap-2">
+              {group.cards.map((card, idx) => (
+                <Card
+                  key={card.id}
+                  card={card}
+                  onTap={onCardTap}
+                  onReorder={
+                    onReorder ? (dir) => onReorder(indexOffset + idx, card.id, dir) : undefined
+                  }
+                  energyMax={energyMax}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </div>
       )}
     </div>
   );

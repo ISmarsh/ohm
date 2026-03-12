@@ -279,8 +279,8 @@ function CardRow({
         {handle}
       </div>
 
-      {/* Quick actions */}
-      {card.status !== STATUS.POWERED && (
+      {/* Quick actions — hidden for Powered cards and activity-linked cards (dates managed by ActivityInstance) */}
+      {card.status !== STATUS.POWERED && !card.activityInstanceId && (
         <div className="mt-2 flex items-center gap-1.5">
           <button
             type="button"
