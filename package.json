@@ -15,6 +15,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "audit:a11y": "node scripts/audit-a11y.mjs",
+    "gen:og": "node scripts/gen-og.mjs",
     "deploy": "gh-pages -d dist"
   },
   "lint-staged": {
@@ -64,6 +65,7 @@
     "vite": "^6.0.0",
     "vite-plugin-mkcert": "^1.17.10",
     "vite-plugin-pwa": "^1.2.0",
+    "playwright": "^1.52.0",
     "vitest": "^4.0.18"
   }
 }
