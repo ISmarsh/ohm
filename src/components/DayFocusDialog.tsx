@@ -16,7 +16,12 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface DayFocusDialogProps {
@@ -152,7 +157,10 @@ export function DayFocusDialog({
                         {group.cards.length}
                       </span>
                     </div>
-                    <SortableContext items={group.cards.map((c) => c.id)}>
+                    <SortableContext
+                      items={group.cards.map((c) => c.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
                       <div className="space-y-2">
                         {group.cards.map((card) => (
                           <SortableCardRow
@@ -207,13 +215,16 @@ function SortableCardRow({
   };
 
   const handle = (
-    <span
+    <button
+      type="button"
       className="text-ohm-muted/40 hover:text-ohm-muted mt-0.5 shrink-0 cursor-grab touch-none active:cursor-grabbing"
       {...listeners}
-      aria-label="Drag to reorder or change status"
+      aria-label="Drag to reorder"
+      tabIndex={-1}
+      onClick={(e) => e.stopPropagation()}
     >
       <GripVertical size={14} />
-    </span>
+    </button>
   );
 
   return (

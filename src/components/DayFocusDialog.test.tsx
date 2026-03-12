@@ -29,7 +29,6 @@ const defaultProps = {
   todayStr: '2026-03-11',
   energyMax: 7,
   onReschedule: vi.fn(),
-  onStatusChange: vi.fn(),
   onClose: vi.fn(),
 };
 

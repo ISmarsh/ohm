@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { DayGroup as DayGroupType } from '../utils/board-utils';
 import type { OhmCard } from '../types/board';
 import { budgetColor } from '../types/board';
-import { SortableContext } from '@dnd-kit/sortable';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Card } from './Card';
 
 interface DayGroupProps {
@@ -58,7 +58,10 @@ export function DayGroup({
 
       {/* Cards */}
       {expanded && (
-        <SortableContext items={group.cards.map((c) => c.id)}>
+        <SortableContext
+          items={group.cards.map((c) => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
           <div className="mt-1 flex flex-col gap-2">
             {group.cards.map((card, idx) => (
               <Card

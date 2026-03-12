@@ -1,6 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { OhmCard, ColumnStatus } from '../types/board';
-import { STATUS, COLUMNS, energyColor, STATUS_CLASSES, SPARK_CLASSES } from '../types/board';
+import {
+  STATUS,
+  COLUMNS,
+  VALID_TRANSITIONS,
+  energyColor,
+  STATUS_CLASSES,
+  SPARK_CLASSES,
+} from '../types/board';
 import { EnergySlider } from './ui/energy-slider';
 import { Settings, List, Trash2, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
@@ -74,7 +81,22 @@ export function CardDetail({
   };
 
   const handleStatusChange = (newStatus: ColumnStatus) => {
-    setEditing((prev) => ({ ...prev, status: newStatus }));
+    setEditing((prev) => {
+      const updated = { ...prev, status: newStatus };
+      // Reset scheduledDate to today when moving from Grounded→Charging,
+      // Powered→Live, or Powered→Charging (re-activating a card)
+      if (timeFeatures) {
+        const reactivating =
+          (prev.status === STATUS.GROUNDED && newStatus === STATUS.CHARGING) ||
+          (prev.status === STATUS.POWERED &&
+            (newStatus === STATUS.LIVE || newStatus === STATUS.CHARGING));
+        if (reactivating) {
+          const now = new Date();
+          updated.scheduledDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+      }
+      return updated;
+    });
   };
 
   const handleAddNote = () => {
@@ -102,7 +124,7 @@ export function CardDetail({
   const hasChangedStatus = editing.status !== card.status;
   const availableTransitions = hasChangedStatus
     ? [card.status]
-    : COLUMNS.map((_, i) => i as ColumnStatus).filter((s) => s !== editing.status);
+    : (VALID_TRANSITIONS[editing.status] ?? []);
 
   return (
     <Dialog
