@@ -52,7 +52,13 @@ function ResponsiveDialog({
         }
       : {};
     return (
-      <Drawer.Root open={open} onOpenChange={onOpenChange} {...snapProps} noBodyStyles>
+      <Drawer.Root
+        open={open}
+        onOpenChange={onOpenChange}
+        {...snapProps}
+        repositionInputs={false}
+        noBodyStyles
+      >
         {children}
       </Drawer.Root>
     );
