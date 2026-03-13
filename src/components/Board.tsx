@@ -849,31 +849,30 @@ export function Board() {
         {/* Desktop: category + search + reset (own row, won't squish energy slider) */}
         <div className="mt-1.5 hidden items-center gap-2 md:flex">
           <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                aria-label="Filter by date"
-                className={`border-ohm-border font-body focus:ring-ohm-text/10 flex items-center gap-1.5 rounded-full border bg-transparent py-1 pr-2 pl-2.5 text-xs focus:ring-1 focus:outline-hidden ${
-                  dateFilter ? 'text-ohm-text' : 'text-ohm-muted'
-                }`}
-              >
-                <CalendarDays size={12} />
-                {dateFilter ? formatDateLabel(dateFilter, budgetData.todayStr) : 'Date'}
-                {dateFilter && (
-                  <button
-                    type="button"
-                    aria-label="Clear date filter"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDateFilter(null);
-                    }}
-                    className="text-ohm-muted hover:text-ohm-text -mr-0.5 ml-0.5"
-                  >
-                    <X size={10} />
-                  </button>
-                )}
-              </button>
-            </PopoverTrigger>
+            <div className="flex items-center">
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Filter by date"
+                  className={`border-ohm-border font-body focus:ring-ohm-text/10 flex items-center gap-1.5 rounded-full border bg-transparent py-1 text-xs focus:ring-1 focus:outline-hidden ${
+                    dateFilter ? 'text-ohm-text pr-1 pl-2.5' : 'text-ohm-muted pr-2 pl-2.5'
+                  }`}
+                >
+                  <CalendarDays size={12} />
+                  {dateFilter ? formatDateLabel(dateFilter, budgetData.todayStr) : 'Date'}
+                </button>
+              </PopoverTrigger>
+              {dateFilter && (
+                <button
+                  type="button"
+                  aria-label="Clear date filter"
+                  onClick={() => setDateFilter(null)}
+                  className="border-ohm-border text-ohm-muted hover:text-ohm-text -ml-px rounded-r-full border border-l-0 py-1 pr-2 pl-1"
+                >
+                  <X size={10} />
+                </button>
+              )}
+            </div>
             <PopoverContent align="start" className="border-ohm-border bg-ohm-bg p-0">
               <Calendar
                 mode="single"

@@ -22,9 +22,11 @@ export function useHistoryDismiss(open: boolean, onClose: () => void) {
     }
 
     closedByPop.current = false;
-    if (pushed.current) return; // StrictMode double-mount guard
-    pushed.current = true;
-    history.pushState({ ohm_dialog: id }, '');
+    // StrictMode: only push once per open cycle, but always attach the listener
+    if (!pushed.current) {
+      pushed.current = true;
+      history.pushState({ ohm_dialog: id }, '');
+    }
 
     const handlePop = () => {
       closedByPop.current = true;
