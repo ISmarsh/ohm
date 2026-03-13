@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
   Settings,
   X,
@@ -154,12 +154,12 @@ export function SettingsPage({
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab ?? 'board');
   const [snapPoint, setSnapPoint] = useState<number | string | null>(0.95);
 
-  useEffect(() => {
-    if (isOpen) {
-      setSnapPoint(0.95);
-      if (initialTab) setActiveTab(initialTab);
-    }
-  }, [isOpen, initialTab]);
+  const prevOpen = useRef(false);
+  if (isOpen && !prevOpen.current) {
+    setSnapPoint(0.95);
+    if (initialTab) setActiveTab(initialTab);
+  }
+  prevOpen.current = isOpen;
   const [newCategoryName, setNewCategoryName] = useState('');
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
   const [pendingActivityDeletes, setPendingActivityDeletes] = useState<Set<string>>(new Set());

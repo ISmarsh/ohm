@@ -522,13 +522,11 @@ export function Board() {
   const budgetData = (() => {
     const today = new Date();
     const todayStr = toISODate(today);
-    let windowEndStr: string | undefined;
-    let daily: Array<{ date: string; used: number }> = [];
     const dayLimit = board.liveCapacity;
     const windowEnd = new Date(today);
     windowEnd.setDate(windowEnd.getDate() + (board.windowSize ?? WINDOW_DEFAULT) - 1);
-    windowEndStr = toISODate(windowEnd);
-    daily = getDailyEnergy(board, todayStr, windowEndStr);
+    const windowEndStr = toISODate(windowEnd);
+    const daily = getDailyEnergy(board, todayStr, windowEndStr);
     const total = getTotalCapacity(board, todayStr, windowEndStr);
     return { daily, dayLimit, total, todayStr };
   })();
@@ -862,8 +860,8 @@ export function Board() {
                 <CalendarDays size={12} />
                 {dateFilter ? formatDateLabel(dateFilter, budgetData.todayStr) : 'Date'}
                 {dateFilter && (
-                  <span
-                    role="button"
+                  <button
+                    type="button"
                     aria-label="Clear date filter"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -872,7 +870,7 @@ export function Board() {
                     className="text-ohm-muted hover:text-ohm-text -mr-0.5 ml-0.5"
                   >
                     <X size={10} />
-                  </span>
+                  </button>
                 )}
               </button>
             </PopoverTrigger>
