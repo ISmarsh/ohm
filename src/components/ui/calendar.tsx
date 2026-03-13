@@ -67,7 +67,7 @@ function Calendar({
           ) : (
             <ChevronRightIcon className={cn('size-4', chevCn)} {...chevProps} />
           ),
-        DayButton: ({ className: dayCn, day, modifiers, ...dayProps }) => {
+        DayButton: ({ className: dayCn, day: _day, modifiers, ...dayProps }) => {
           const ref = React.useRef<HTMLButtonElement>(null);
           React.useEffect(() => {
             if (modifiers.focused) ref.current?.focus();

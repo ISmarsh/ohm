@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 /**
  * Pushes a history entry when a dialog opens so the browser back button
@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
  * navigating away. Cleans up the entry when the dialog closes via UI.
  */
 export function useHistoryDismiss(open: boolean, onClose: () => void) {
-  const id = useRef(`ohm_dlg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`).current;
+  const id = useId();
   const closedByPop = useRef(false);
   const pushed = useRef(false);
 
