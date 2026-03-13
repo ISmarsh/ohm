@@ -65,9 +65,7 @@ export interface SettingsPageProps {
   onSetLiveCapacity: (capacity: number) => void;
   energyMax?: number;
   onSetEnergyMax?: (max: number) => void;
-  timeFeatures?: boolean;
   windowSize?: number;
-  onSetTimeFeatures?: (enabled: boolean) => void;
   onSetWindowSize?: (size: number) => void;
   autoBudget?: boolean;
   onSetAutoBudget?: (enabled: boolean) => void;
@@ -140,9 +138,7 @@ export function SettingsPage({
   onSetLiveCapacity,
   energyMax,
   onSetEnergyMax,
-  timeFeatures,
   windowSize,
-  onSetTimeFeatures,
   onSetWindowSize,
   autoBudget,
   onSetAutoBudget,
@@ -406,9 +402,7 @@ export function SettingsPage({
 
           {activeTab === 'schedule' && (
             <ScheduleTab
-              timeFeatures={timeFeatures}
               windowSize={windowSize}
-              onSetTimeFeatures={onSetTimeFeatures}
               onSetWindowSize={onSetWindowSize}
               autoBudget={autoBudget}
               onSetAutoBudget={onSetAutoBudget}
@@ -647,9 +641,7 @@ function BoardTab({
 /* ─── Schedule Tab ─── */
 
 function ScheduleTab({
-  timeFeatures,
   windowSize,
-  onSetTimeFeatures,
   onSetWindowSize,
   autoBudget,
   onSetAutoBudget,
@@ -661,9 +653,7 @@ function ScheduleTab({
   onDeleteActivity,
   energyMax,
 }: {
-  timeFeatures?: boolean;
   windowSize?: number;
-  onSetTimeFeatures?: (enabled: boolean) => void;
   onSetWindowSize?: (size: number) => void;
   autoBudget?: boolean;
   onSetAutoBudget?: (enabled: boolean) => void;
@@ -680,107 +670,87 @@ function ScheduleTab({
 }) {
   return (
     <>
-      {/* Time features toggle */}
-      {onSetTimeFeatures && (
-        <section className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarDays size={14} className="text-ohm-muted" />
-              <span className="font-display text-ohm-muted text-[10px] tracking-widest uppercase">
-                Schedule
-              </span>
-            </div>
+      {/* Schedule window */}
+      <section className="mb-8">
+        <div className="flex items-center gap-2">
+          <CalendarDays size={14} className="text-ohm-muted" />
+          <span className="font-display text-ohm-muted text-[10px] tracking-widest uppercase">
+            Schedule
+          </span>
+        </div>
+        <p className="font-body text-ohm-muted/60 mt-1.5 text-[11px]">
+          Recurring activities with a rolling schedule window.
+        </p>
+
+        {onSetWindowSize && (
+          <div className="mt-3 flex items-center gap-3">
+            <span className="font-display text-ohm-muted w-20 text-[10px] tracking-widest uppercase">
+              Window
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() =>
+                onSetWindowSize(Math.max(WINDOW_MIN, (windowSize ?? WINDOW_DEFAULT) - 1))
+              }
+              disabled={(windowSize ?? WINDOW_DEFAULT) <= WINDOW_MIN}
+              className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
+              aria-label="Decrease window size"
+            >
+              <Minus size={14} />
+            </Button>
+            <span className="font-display text-ohm-text min-w-[2ch] text-center text-lg font-bold">
+              {windowSize ?? WINDOW_DEFAULT}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() =>
+                onSetWindowSize(Math.min(WINDOW_MAX, (windowSize ?? WINDOW_DEFAULT) + 1))
+              }
+              disabled={(windowSize ?? WINDOW_DEFAULT) >= WINDOW_MAX}
+              className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
+              aria-label="Increase window size"
+            >
+              <Plus size={14} />
+            </Button>
+            <span className="font-body text-ohm-muted/60 text-[10px]">days</span>
+          </div>
+        )}
+
+        {onSetAutoBudget && (
+          <div className="mt-3 flex items-center gap-3">
+            <span className="font-display text-ohm-muted w-20 text-[10px] tracking-widest uppercase">
+              Auto total
+            </span>
             <button
               type="button"
               role="switch"
-              aria-checked={!!timeFeatures}
-              aria-label="Schedule"
-              onClick={() => onSetTimeFeatures(!timeFeatures)}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                timeFeatures ? 'bg-ohm-spark' : 'bg-ohm-border'
+              aria-checked={!!autoBudget}
+              aria-label="Auto total budget"
+              onClick={() => onSetAutoBudget(!autoBudget)}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
+                autoBudget ? 'bg-ohm-spark' : 'bg-ohm-border'
               }`}
             >
               <span
                 className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                  timeFeatures ? 'translate-x-4' : 'translate-x-0'
+                  autoBudget ? 'translate-x-4' : 'translate-x-0'
                 }`}
               />
             </button>
+            {autoBudget && (
+              <span className="font-body text-ohm-muted/60 text-[10px]">
+                {windowSize ?? WINDOW_DEFAULT} x {liveCapacity} ={' '}
+                {(windowSize ?? WINDOW_DEFAULT) * liveCapacity}
+              </span>
+            )}
           </div>
-          <p className="font-body text-ohm-muted/60 mt-1.5 text-[11px]">
-            Enable recurring activities with a rolling schedule window.
-          </p>
-
-          {timeFeatures && onSetWindowSize && (
-            <div className="mt-3 flex items-center gap-3">
-              <span className="font-display text-ohm-muted w-20 text-[10px] tracking-widest uppercase">
-                Window
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() =>
-                  onSetWindowSize(Math.max(WINDOW_MIN, (windowSize ?? WINDOW_DEFAULT) - 1))
-                }
-                disabled={(windowSize ?? WINDOW_DEFAULT) <= WINDOW_MIN}
-                className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
-                aria-label="Decrease window size"
-              >
-                <Minus size={14} />
-              </Button>
-              <span className="font-display text-ohm-text min-w-[2ch] text-center text-lg font-bold">
-                {windowSize ?? WINDOW_DEFAULT}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() =>
-                  onSetWindowSize(Math.min(WINDOW_MAX, (windowSize ?? WINDOW_DEFAULT) + 1))
-                }
-                disabled={(windowSize ?? WINDOW_DEFAULT) >= WINDOW_MAX}
-                className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
-                aria-label="Increase window size"
-              >
-                <Plus size={14} />
-              </Button>
-              <span className="font-body text-ohm-muted/60 text-[10px]">days</span>
-            </div>
-          )}
-
-          {timeFeatures && onSetAutoBudget && (
-            <div className="mt-3 flex items-center gap-3">
-              <span className="font-display text-ohm-muted w-20 text-[10px] tracking-widest uppercase">
-                Auto total
-              </span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={!!autoBudget}
-                aria-label="Auto total budget"
-                onClick={() => onSetAutoBudget(!autoBudget)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors ${
-                  autoBudget ? 'bg-ohm-spark' : 'bg-ohm-border'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
-                    autoBudget ? 'translate-x-4' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-              {autoBudget && (
-                <span className="font-body text-ohm-muted/60 text-[10px]">
-                  {windowSize ?? WINDOW_DEFAULT} x {liveCapacity} ={' '}
-                  {(windowSize ?? WINDOW_DEFAULT) * liveCapacity}
-                </span>
-              )}
-            </div>
-          )}
-        </section>
-      )}
+        )}
+      </section>
 
       {/* Activities */}
-      {timeFeatures && activities && onAddActivity && onUpdateActivity && onDeleteActivity && (
+      {activities && onAddActivity && onUpdateActivity && onDeleteActivity && (
         <section>
           <ActivityManager
             activities={activities}
@@ -791,12 +761,6 @@ function ScheduleTab({
             energyMax={energyMax}
           />
         </section>
-      )}
-
-      {!timeFeatures && !!onSetTimeFeatures && (
-        <p className="font-body text-ohm-muted/60 text-sm">
-          Enable the schedule toggle above to configure activities and rolling windows.
-        </p>
       )}
     </>
   );

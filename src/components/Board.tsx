@@ -46,7 +46,7 @@ import {
   getExpiredPowered,
   groupCardsByDate,
 } from '../utils/board-utils';
-import { toISODate } from '../utils/schedule-utils';
+import { formatDateLabel, toISODate } from '../utils/schedule-utils';
 import { useBoard } from '../hooks/useBoard';
 import { useActivities } from '../hooks/useActivities';
 import { useDriveSync } from '../hooks/useDriveSync';
@@ -183,7 +183,6 @@ export function Board() {
     setEnergyBudget,
     setLiveCapacity,
     setEnergyMax: setBoardEnergyMax,
-    setTimeFeatures,
     setWindowSize,
     setAutoBudget,
     setActivities,
@@ -222,31 +221,41 @@ export function Board() {
   // Clean up orphaned activity cards (instance or activity deleted but card survived).
   // Wait for Dexie instances to load before checking — empty [] on first render is not orphanhood.
   useEffect(() => {
-    if (!board.timeFeatures || !instancesReady) return;
+    if (!instancesReady) return;
     const instanceIds = new Set(instances.map((i) => i.id));
     const orphanIds = board.cards
       .filter((c) => c.activityInstanceId && !instanceIds.has(c.activityInstanceId))
       .map((c) => c.id);
     if (orphanIds.length > 0) deleteCards(orphanIds);
-  }, [board.timeFeatures, board.cards, instances, instancesReady, deleteCards]);
+  }, [board.cards, instances, instancesReady, deleteCards]);
 
   // Cards pending user action (expired scheduled cards)
   const [pendingExpired, setPendingExpired] = useState<OhmCard[]>([]);
 
-  // Refresh activity instances when time features are enabled
+  // Refresh activity instances on mount
   useEffect(() => {
-    if (!board.timeFeatures) return;
     void refreshWindow();
-  }, [board.timeFeatures, refreshWindow]);
+  }, [refreshWindow]);
 
   // Collect expired cards: Charging non-activity cards auto-ground silently;
   // everything else (Live with past date, activity instance cards) prompts user.
   useEffect(() => {
-    if (!board.timeFeatures) return;
     const today = toISODate(new Date());
     const toPrompt: OhmCard[] = [];
 
     for (const card of board.cards) {
+      // Charging card with no date and no activity link — auto-ground
+      if (card.status === STATUS.CHARGING && !card.scheduledDate && !card.activityInstanceId) {
+        move(card.id, STATUS.GROUNDED);
+        continue;
+      }
+
+      // Today's Charging cards — auto-move to Live
+      if (card.status === STATUS.CHARGING && card.scheduledDate === today) {
+        move(card.id, STATUS.LIVE);
+        continue;
+      }
+
       if (!card.scheduledDate || card.scheduledDate >= today) continue;
       if (card.status === STATUS.GROUNDED || card.status === STATUS.POWERED) continue;
 
@@ -267,12 +276,10 @@ export function Board() {
       if (prevIds.size === newIds.size && [...prevIds].every((id) => newIds.has(id))) return prev;
       return toPrompt;
     });
-  }, [board.timeFeatures, board.cards, move]);
+  }, [board.cards, move]);
 
   // Materialize Potential activity instances as Charging cards (atomic — strict-mode safe)
   useEffect(() => {
-    if (!board.timeFeatures) return;
-
     const activityMap = new Map(activities.map((a) => [a.id, a]));
     const specs = instances
       .filter((inst) => inst.status === ACTIVITY_STATUS.POTENTIAL)
@@ -300,16 +307,15 @@ export function Board() {
       );
 
     if (specs.length > 0) materializeInstances(specs);
-  }, [board.timeFeatures, instances, activities, materializeInstances]);
+  }, [instances, activities, materializeInstances]);
 
   // Sync activity edits (name, energy, category) to already-materialized cards
   useEffect(() => {
-    if (!board.timeFeatures) return;
     const activityMap = new Map(activities.map((a) => [a.id, a]));
     const updates: OhmCard[] = [];
 
     for (const card of board.cards) {
-      if (!card.activityInstanceId) continue;
+      if (!card.activityInstanceId || card.edited) continue;
       const inst = instances.find((i) => i.id === card.activityInstanceId);
       if (!inst) continue;
       const activity = activityMap.get(inst.activityId);
@@ -332,18 +338,17 @@ export function Board() {
     }
 
     for (const u of updates) updateCard(u);
-  }, [board.timeFeatures, board.cards, activities, instances, updateCard]);
+  }, [board.cards, activities, instances, updateCard]);
 
   // Auto-archive Powered cards that have fallen outside the trailing window
   useEffect(() => {
-    if (!board.timeFeatures) return;
     const trailingStart = new Date();
     trailingStart.setDate(trailingStart.getDate() - ((board.windowSize ?? WINDOW_DEFAULT) - 1));
     const expired = getExpiredPowered(board, toISODate(trailingStart));
     if (expired.length > 0) {
       deleteCards(expired.map((c) => c.id));
     }
-  }, [board.timeFeatures, board.windowSize, board.cards, deleteCards]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [board.windowSize, board.cards, deleteCards]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Drag-and-drop sensors
   const pointerSensor = useSensor(PointerSensor, {
@@ -401,7 +406,7 @@ export function Board() {
 
       // Only allow reorder within the same group (same status + same day)
       if (draggedCard.status !== overCard.status) return;
-      if (board.timeFeatures && draggedCard.scheduledDate !== overCard.scheduledDate) return;
+      if (draggedCard.scheduledDate !== overCard.scheduledDate) return;
 
       // Same-group reorder
       const columnCards = getColumnCards(board, draggedCard.status);
@@ -454,18 +459,20 @@ export function Board() {
   const [searchFilter, setSearchFilter] = useState('');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [todayFilter, setTodayFilter] = useState(false);
+  const [dateFilter, setDateFilter] = useState<string | null>(null);
   const [focusDate, setFocusDate] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const filteredCards = (status: ColumnStatus) => {
     let cards = getColumnCards(board, status);
-    if (todayFilter && board.timeFeatures) {
+    if (todayFilter) {
       const todayStr = toISODate(new Date());
       cards = cards.filter((c) => c.scheduledDate === todayStr);
     }
     if (energyMin !== null) cards = cards.filter((c) => c.energy >= energyMin);
     if (energyMax !== null) cards = cards.filter((c) => c.energy <= energyMax);
     if (categoryFilter.length > 0) cards = cards.filter((c) => categoryFilter.includes(c.category));
+    if (dateFilter) cards = cards.filter((c) => c.scheduledDate === dateFilter);
     if (searchFilter) {
       const q = searchFilter.toLowerCase();
       cards = cards.filter(
@@ -480,14 +487,16 @@ export function Board() {
     energyMax !== null ||
     categoryFilter.length > 0 ||
     searchFilter !== '' ||
-    todayFilter;
+    todayFilter ||
+    dateFilter !== null;
   const hasAdvancedFilter = categoryFilter.length > 0 || searchFilter !== '';
   const advancedFilterCount =
     categoryFilter.length +
     (searchFilter ? 1 : 0) +
     (energyMin !== null ? 1 : 0) +
     (energyMax !== null ? 1 : 0) +
-    (todayFilter ? 1 : 0);
+    (todayFilter ? 1 : 0) +
+    (dateFilter ? 1 : 0);
 
   const toggleCategory = (cat: string) => {
     setCategoryFilter((prev) =>
@@ -501,6 +510,7 @@ export function Board() {
     setCategoryFilter([]);
     setSearchFilter('');
     setTodayFilter(false);
+    setDateFilter(null);
   };
 
   // Budget bar data — computed each render to keep today/window bounds fresh across midnight
@@ -510,12 +520,10 @@ export function Board() {
     let windowEndStr: string | undefined;
     let daily: Array<{ date: string; used: number }> = [];
     const dayLimit = board.liveCapacity;
-    if (board.timeFeatures) {
-      const windowEnd = new Date(today);
-      windowEnd.setDate(windowEnd.getDate() + (board.windowSize ?? WINDOW_DEFAULT) - 1);
-      windowEndStr = toISODate(windowEnd);
-      daily = getDailyEnergy(board, todayStr, windowEndStr);
-    }
+    const windowEnd = new Date(today);
+    windowEnd.setDate(windowEnd.getDate() + (board.windowSize ?? WINDOW_DEFAULT) - 1);
+    windowEndStr = toISODate(windowEnd);
+    daily = getDailyEnergy(board, todayStr, windowEndStr);
     const total = getTotalCapacity(board, todayStr, windowEndStr);
     return { daily, dayLimit, total, todayStr };
   })();
@@ -680,21 +688,19 @@ export function Board() {
         {/* Row 1: Energy min/max filter + expand toggle (mobile) */}
         <div className="flex items-center gap-2">
           <Filter size={12} className="text-ohm-muted shrink-0" aria-hidden="true" />
-          {board.timeFeatures && (
-            <button
-              type="button"
-              onClick={() => setTodayFilter((prev) => !prev)}
-              className={`font-display flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold tracking-wide transition-colors ${
-                todayFilter
-                  ? 'border-ohm-spark/40 bg-ohm-spark/10 text-ohm-spark'
-                  : 'border-ohm-border text-ohm-muted hover:text-ohm-text'
-              }`}
-              aria-pressed={todayFilter}
-            >
-              <CalendarDays size={10} />
-              Today
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setTodayFilter((prev) => !prev)}
+            className={`font-display flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold tracking-wide transition-colors ${
+              todayFilter
+                ? 'border-ohm-spark/40 bg-ohm-spark/10 text-ohm-spark'
+                : 'border-ohm-border text-ohm-muted hover:text-ohm-text'
+            }`}
+            aria-pressed={todayFilter}
+          >
+            <CalendarDays size={10} />
+            Today
+          </button>
           <span className="font-display text-ohm-muted shrink-0 text-xs tracking-widest uppercase">
             Energy
           </span>
@@ -867,6 +873,26 @@ export function Board() {
               </button>
             )}
           </div>
+          <div className="relative flex items-center">
+            <CalendarDays size={12} className="text-ohm-muted absolute left-2" />
+            <input
+              type="date"
+              value={dateFilter ?? ''}
+              onChange={(e) => setDateFilter(e.target.value || null)}
+              aria-label="Filter by date"
+              className="border-ohm-border font-body text-ohm-text focus:ring-ohm-text/10 w-36 rounded-full border bg-transparent py-1 pr-2 pl-7 text-xs focus:ring-1 focus:outline-hidden"
+            />
+            {dateFilter && (
+              <button
+                type="button"
+                onClick={() => setDateFilter(null)}
+                className="text-ohm-muted hover:text-ohm-text absolute right-1.5"
+                aria-label="Clear date filter"
+              >
+                <X size={10} />
+              </button>
+            )}
+          </div>
           <button
             type="button"
             onClick={resetFilters}
@@ -880,6 +906,26 @@ export function Board() {
         {/* Mobile expanded: category + search rows */}
         {filtersExpanded && (
           <div className="mt-2 flex flex-col gap-2 md:hidden">
+            <div className="relative flex items-center">
+              <CalendarDays size={12} className="text-ohm-muted absolute left-2" />
+              <input
+                type="date"
+                value={dateFilter ?? ''}
+                onChange={(e) => setDateFilter(e.target.value || null)}
+                aria-label="Filter by date"
+                className="border-ohm-border font-body text-ohm-text focus:ring-ohm-text/10 w-full rounded-full border bg-transparent py-1.5 pr-2 pl-7 text-xs focus:ring-1 focus:outline-hidden"
+              />
+              {dateFilter && (
+                <button
+                  type="button"
+                  onClick={() => setDateFilter(null)}
+                  className="text-ohm-muted hover:text-ohm-text absolute right-2"
+                  aria-label="Clear date filter"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
             <CategoryFilter
               categories={board.categories}
               selected={categoryFilter}
@@ -951,8 +997,12 @@ export function Board() {
                   defaultExpanded={index === STATUS.LIVE}
                   flash={index === STATUS.POWERED ? poweredFlash : undefined}
                   energyMax={eMax}
-                  dayGroups={board.timeFeatures ? groupCardsByDate(cards, todayStr) : undefined}
-                  dayLimit={board.timeFeatures ? board.liveCapacity : undefined}
+                  dayGroups={
+                    status === STATUS.CHARGING || status === STATUS.POWERED
+                      ? groupCardsByDate(cards, todayStr)
+                      : undefined
+                  }
+                  dayLimit={board.liveCapacity}
                 />
               );
             })}
@@ -969,7 +1019,7 @@ export function Board() {
 
       {/* Budget bar — fixed bottom */}
       <BudgetBar
-        daily={board.timeFeatures ? budgetData.daily : []}
+        daily={budgetData.daily}
         dayLimit={budgetData.dayLimit}
         total={budgetData.total}
         todayStr={budgetData.todayStr}
@@ -1017,7 +1067,6 @@ export function Board() {
           card={activeCard}
           isNew={!!newCard}
           categories={board.categories}
-          timeFeatures={board.timeFeatures}
           energyMax={eMax}
           onSave={(saved) => {
             let updated = saved;
@@ -1048,6 +1097,9 @@ export function Board() {
                 } else if (updated.status === STATUS.GROUNDED) {
                   updated = { ...updated, scheduledDate: undefined };
                 }
+              }
+              if (updated.activityInstanceId) {
+                updated = { ...updated, edited: true };
               }
               updateCard(updated);
               if (original && updated.status !== original.status) {
@@ -1107,7 +1159,11 @@ export function Board() {
                   >
                     <div className="min-w-0 flex-1">
                       <p className="font-body text-ohm-text truncate text-sm">{card.title}</p>
-                      <p className="font-body text-ohm-muted/60 text-xs">{card.scheduledDate}</p>
+                      <p className="font-body text-ohm-muted/60 text-xs">
+                        {card.scheduledDate
+                          ? formatDateLabel(card.scheduledDate, toISODate(new Date()))
+                          : 'No date'}
+                      </p>
                     </div>
                     <div className="flex shrink-0 gap-1">
                       <Button
@@ -1115,10 +1171,11 @@ export function Board() {
                         variant="outline"
                         className="border-ohm-powered/30 text-ohm-powered hover:bg-ohm-powered/10 h-6 px-2 text-xs"
                         onClick={() => {
-                          move(card.id, STATUS.POWERED);
                           if (card.activityInstanceId) {
+                            updateCard({ ...card, edited: true });
                             void syncInstanceToColumn(card.activityInstanceId, STATUS.POWERED);
                           }
+                          move(card.id, STATUS.POWERED);
                           setPendingExpired((prev) => prev.filter((c) => c.id !== card.id));
                         }}
                       >
@@ -1175,9 +1232,7 @@ export function Board() {
         onSetLiveCapacity={setLiveCapacity}
         energyMax={eMax}
         onSetEnergyMax={setBoardEnergyMax}
-        timeFeatures={board.timeFeatures}
         windowSize={board.windowSize}
-        onSetTimeFeatures={setTimeFeatures}
         onSetWindowSize={setWindowSize}
         autoBudget={board.autoBudget}
         onSetAutoBudget={setAutoBudget}

@@ -29,9 +29,8 @@ export function sanitizeBoard(board: OhmBoard): OhmBoard {
       board.windowSize = Math.min(WINDOW_MAX, Math.max(WINDOW_MIN, board.windowSize));
     }
   }
-  if (board.timeFeatures != null && typeof board.timeFeatures !== 'boolean') {
-    board.timeFeatures = !!board.timeFeatures;
-  }
+  // Strip legacy timeFeatures field from old boards
+  delete (board as unknown as Record<string, unknown>).timeFeatures;
   if (board.autoBudget != null && typeof board.autoBudget !== 'boolean') {
     board.autoBudget = !!board.autoBudget;
   }
@@ -86,4 +85,12 @@ const localSync = createLocalStorage<OhmBoard>({
   createDefault: createDefaultBoard,
 });
 
-export const { saveToLocal, loadFromLocal, clearLocal } = localSync;
+const { saveToLocal: rawSave, loadFromLocal, clearLocal } = localSync;
+
+/** Save board, filtering out non-edited activity cards (they get re-materialized from Dexie) */
+const saveToLocal = (board: OhmBoard) => {
+  const persistCards = board.cards.filter((c) => !c.activityInstanceId || c.edited);
+  rawSave({ ...board, cards: persistCards });
+};
+
+export { saveToLocal, loadFromLocal, clearLocal };

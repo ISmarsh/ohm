@@ -10,7 +10,7 @@ import {
 } from '../types/board';
 import { EnergySlider } from './ui/energy-slider';
 import { Settings, List, Trash2, Calendar } from 'lucide-react';
-import { toISODate } from '../utils/schedule-utils';
+import { formatDateLabel, toISODate } from '../utils/schedule-utils';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -40,7 +40,6 @@ interface CardDetailProps {
   onClose: () => void;
   onOpenSettings: () => void;
   isNew?: boolean;
-  timeFeatures?: boolean;
   energyMax?: number;
 }
 
@@ -52,7 +51,6 @@ export function CardDetail({
   onClose,
   onOpenSettings,
   isNew,
-  timeFeatures,
   energyMax,
 }: CardDetailProps) {
   const [editing, setEditing] = useState(card);
@@ -89,16 +87,13 @@ export function CardDetail({
   const handleStatusChange = (newStatus: ColumnStatus) => {
     setEditing((prev) => {
       const updated = { ...prev, status: newStatus };
-      // Reset scheduledDate to today when moving from Grounded→Charging,
-      // Powered→Live, or Powered→Charging (re-activating a card)
-      if (timeFeatures) {
-        const reactivating =
-          (prev.status === STATUS.GROUNDED && newStatus === STATUS.CHARGING) ||
-          (prev.status === STATUS.POWERED &&
-            (newStatus === STATUS.LIVE || newStatus === STATUS.CHARGING));
-        if (reactivating) {
-          updated.scheduledDate = toISODate(new Date());
-        }
+      // Reset scheduledDate to today when re-activating a card
+      const reactivating =
+        (prev.status === STATUS.GROUNDED && newStatus === STATUS.CHARGING) ||
+        (prev.status === STATUS.POWERED &&
+          (newStatus === STATUS.LIVE || newStatus === STATUS.CHARGING));
+      if (reactivating) {
+        updated.scheduledDate = toISODate(new Date());
       }
       return updated;
     });
@@ -282,44 +277,47 @@ export function CardDetail({
           )}
         </div>
 
-        {/* Scheduled date (when time features enabled) */}
-        {timeFeatures && (
-          <div className="mb-3">
-            <span className="font-display text-ohm-muted mb-2 flex items-center gap-1 text-xs tracking-widest uppercase">
-              <Calendar size={10} />
-              Scheduled
-            </span>
-            {editing.activityInstanceId ? (
-              <p className="font-body text-ohm-muted text-base">{editing.scheduledDate}</p>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input
-                  id="card-scheduled-date"
-                  type="date"
-                  autoComplete="off"
-                  data-form-type="other"
-                  value={editing.scheduledDate ?? ''}
-                  onChange={(e) =>
-                    setEditing((prev) => ({
-                      ...prev,
-                      scheduledDate: e.target.value || undefined,
-                    }))
-                  }
-                  className={`${accent.border} bg-ohm-bg font-body text-ohm-text focus:ring-ohm-text/10 rounded-md border px-3 py-1.5 text-base focus:ring-1 focus:outline-hidden`}
-                />
-                {editing.scheduledDate && (
-                  <button
-                    type="button"
-                    onClick={() => setEditing((prev) => ({ ...prev, scheduledDate: undefined }))}
-                    className="text-ohm-muted hover:text-ohm-text text-xs underline decoration-dotted"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Scheduled date */}
+        <div className="mb-3">
+          <span className="font-display text-ohm-muted mb-2 flex items-center gap-1 text-xs tracking-widest uppercase">
+            <Calendar size={10} />
+            Scheduled
+          </span>
+          {editing.activityInstanceId ? (
+            <p className="font-body text-ohm-muted text-base">
+              {editing.scheduledDate
+                ? formatDateLabel(editing.scheduledDate, toISODate(new Date()), true)
+                : 'None'}
+            </p>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                id="card-scheduled-date"
+                type="date"
+                autoComplete="off"
+                data-form-type="other"
+                value={editing.scheduledDate ?? ''}
+                onChange={(e) =>
+                  setEditing((prev) => ({
+                    ...prev,
+                    scheduledDate: e.target.value || undefined,
+                  }))
+                }
+                max={isPowered ? toISODate(new Date()) : undefined}
+                className={`${accent.border} bg-ohm-bg font-body text-ohm-text focus:ring-ohm-text/10 rounded-md border px-3 py-1.5 text-base focus:ring-1 focus:outline-hidden`}
+              />
+              {editing.scheduledDate && !isPowered && (
+                <button
+                  type="button"
+                  onClick={() => setEditing((prev) => ({ ...prev, scheduledDate: undefined }))}
+                  className="text-ohm-muted hover:text-ohm-text text-xs underline decoration-dotted"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Category */}
         {!isPowered && (

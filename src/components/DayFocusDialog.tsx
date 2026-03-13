@@ -10,6 +10,7 @@ import {
 import type { OhmBoard, OhmCard } from '../types/board';
 import { STATUS, COLUMNS, energyColor, budgetColor } from '../types/board';
 import { getCardsForDate } from '../utils/board-utils';
+import { formatDateLabel, toISODate } from '../utils/schedule-utils';
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -48,21 +49,10 @@ interface DayFocusDialogProps {
   onClose: () => void;
 }
 
-function formatDateLabel(dateStr: string, todayStr: string): string {
-  if (dateStr === todayStr) return 'Today';
-  const today = new Date(todayStr + 'T00:00:00');
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
-  if (dateStr === tomorrowStr) return 'Tomorrow';
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
-}
-
 function getTomorrow(todayStr: string): string {
   const d = new Date(todayStr + 'T00:00:00');
   d.setDate(d.getDate() + 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return toISODate(d);
 }
 
 /** Group cards by column status for display */
@@ -95,7 +85,7 @@ export function DayFocusDialog({
   const cards = getCardsForDate(board, currentDate);
   const totalEnergy = cards.reduce((sum, c) => sum + c.energy, 0);
   const statusGroups = groupByStatus(cards);
-  const label = formatDateLabel(currentDate, todayStr);
+  const label = formatDateLabel(currentDate, todayStr, true);
   const tomorrowStr = getTomorrow(todayStr);
   const [draggingCard, setDraggingCard] = useState<OhmCard | null>(null);
 

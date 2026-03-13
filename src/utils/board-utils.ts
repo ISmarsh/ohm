@@ -1,5 +1,6 @@
 import type { OhmCard, OhmBoard, ColumnStatus } from '../types/board';
 import { STATUS, ENERGY_DEFAULT } from '../types/board';
+import { toISODate } from './schedule-utils';
 
 /** A group of cards sharing the same scheduledDate (or unscheduled). */
 export interface DayGroup {
@@ -50,7 +51,7 @@ export function moveCard(card: OhmCard, newStatus: ColumnStatus): OhmCard {
   return {
     ...card,
     status: newStatus,
-    ...(newStatus === STATUS.LIVE ? { scheduledDate: now.toISOString().slice(0, 10) } : {}),
+    ...(newStatus === STATUS.LIVE ? { scheduledDate: toISODate(now) } : {}),
     ...(newStatus === STATUS.GROUNDED ? { scheduledDate: undefined } : {}),
     updatedAt: now.toISOString(),
   };
@@ -77,7 +78,7 @@ export function getColumnCapacity(
   today?: string,
 ): { used: number; total: number } | null {
   if (status !== STATUS.LIVE) return null;
-  const todayStr = today ?? new Date().toISOString().slice(0, 10);
+  const todayStr = today ?? toISODate(new Date());
   const used = board.cards
     .filter(
       (c) =>
