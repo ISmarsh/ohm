@@ -5,6 +5,7 @@ export function createLocalStorage<T>(opts: {
   version?: number;
   sanitize?: (raw: unknown) => T;
   createDefault: () => T;
+  storage?: unknown;
 }) {
   return {
     loadFromLocal: (): T => {

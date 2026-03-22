@@ -12,6 +12,7 @@ import {
   BUDGET_DEFAULT,
   LIVE_DEFAULT,
 } from '../types/board';
+import { storageService } from './storage-service';
 
 /** Coerce invalid field values to safe defaults -- index-range validation */
 export function sanitizeBoard(board: OhmBoard): OhmBoard {
@@ -77,12 +78,15 @@ export function sanitizeBoard(board: OhmBoard): OhmBoard {
   return board;
 }
 
+const storage = await storageService;
+
 const localSync = createLocalStorage<OhmBoard>({
   storageKey: 'ohm-board',
   logPrefix: '[Ohm]',
   version: 1,
   sanitize: sanitizeBoard,
   createDefault: createDefaultBoard,
+  storage,
 });
 
 const { saveToLocal: rawSave, loadFromLocal, clearLocal } = localSync;

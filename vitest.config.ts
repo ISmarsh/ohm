@@ -22,6 +22,10 @@ export default defineConfig({
         __dirname,
         './src/test/__stubs__/google-drive-sync.ts',
       ),
+      '../../.toolbox/lib/storage-service': path.resolve(
+        __dirname,
+        './src/test/__stubs__/storage-service.ts',
+      ),
     },
   },
 });

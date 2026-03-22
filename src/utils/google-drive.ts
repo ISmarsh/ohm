@@ -15,6 +15,9 @@ import {
   TOKEN_EXCHANGE_URL,
 } from '../config/drive';
 import { sanitizeBoard } from './storage';
+import { storageService } from './storage-service';
+
+const storage = await storageService;
 
 const driveSync = createDriveSync<OhmBoard>({
   clientId: DRIVE_CLIENT_ID,
@@ -26,6 +29,7 @@ const driveSync = createDriveSync<OhmBoard>({
   storageKeyPrefix: 'ohm-drive',
   logPrefix: '[Ohm]',
   sanitize: sanitizeBoard,
+  storage,
 });
 
 export const {
