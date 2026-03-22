@@ -80,9 +80,9 @@ describe('useDriveSync', () => {
 
       const { result } = renderHook(() => useDriveSync(board, onBoardLoaded));
 
-      // Give the init effect time to run
-      await act(async () => {
-        await new Promise((r) => setTimeout(r, 50));
+      // Wait for init to complete (initDriveAuth is called synchronously in the effect)
+      await waitFor(() => {
+        expect(mockInitDriveAuth).toHaveBeenCalled();
       });
 
       expect(result.current.needsReconnect).toBe(false);
