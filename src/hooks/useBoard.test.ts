@@ -5,7 +5,9 @@ import { createCard } from '../utils/board-utils';
 import { useBoard } from './useBoard';
 
 const { mockRecoverFromStorage } = vi.hoisted(() => ({
-  mockRecoverFromStorage: vi.fn<() => Promise<null>>().mockResolvedValue(null),
+  mockRecoverFromStorage: vi
+    .fn<() => Promise<import('../types/board').OhmBoard | null>>()
+    .mockResolvedValue(null),
 }));
 
 vi.mock('../utils/storage', async () => {

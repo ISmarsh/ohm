@@ -35,14 +35,20 @@ export function useBoard() {
   // Only applies recovery when the current board has no cards (default state),
   // so it won't overwrite active user data.
   useEffect(() => {
-    recoverFromStorage().then((recovered) => {
-      if (!recovered || recovered.cards.length === 0) return;
-      setBoard((current) => {
-        if (current.cards.length > 0) return current;
-        return recovered;
-      });
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    let cancelled = false;
+    recoverFromStorage()
+      .then((recovered) => {
+        if (cancelled || !recovered || recovered.cards.length === 0) return;
+        setBoard((current) => {
+          if (current.cards.length > 0) return current;
+          return recovered;
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /** Quick-add a card to Charging (minimal friction, optional details) */
   const quickAdd = useCallback(
