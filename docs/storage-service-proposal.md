@@ -69,22 +69,37 @@ OPFS (via `createSyncAccessHandle`) locks files to one tab. The app isn't design
 This isn't building multi-tab support — it's preventing multi-tab corruption. Low effort, high safety.
 
 ### Token Storage
-`ohm-drive-*` keys are managed internally by `.toolbox/lib/google-drive-sync`. These should **NOT** be migrated to OPFS — they're small, infrequently written, and the toolbox module owns them. Leave as localStorage.
+`ohm-drive-*` keys are managed internally by `.toolbox/lib/google-drive-sync`. These are high-value for durability — losing the refresh token forces re-auth, which is the exact failure OPFS migration aims to prevent. Building StorageService in the toolbox means `createDriveSync` can accept it natively from day one.
 
 ---
 
 ## Proposal
 
+### Approach: Toolbox-First
+
+StorageService is built in `.toolbox/lib/` from the start — it's a generic utility with no app-specific types. Building it in the toolbox means:
+
+- `createDriveSync` accepts a `storage` option natively — no interim hack, tokens get OPFS durability immediately
+- `createLocalStorage` can accept the same adapter — one migration path for both modules
+- OHM (and future companion apps) just consume it
+- The interface is proven in OHM but never lives in app code that has to be extracted later
+
 ### Location
 
 ```
-src/utils/storage-service.ts    ← Interface + factory
-src/utils/opfs-adapter.ts       ← OPFS adapter
-src/utils/localstorage-adapter.ts ← localStorage adapter (fallback + sync cache)
-src/test/__stubs__/storage-service.ts ← Test stub
-```
+.toolbox/lib/
+  storage-service/
+    index.ts                  ← createStorageService factory + types
+    opfs-adapter.ts           ← OPFS adapter
+    localstorage-adapter.ts   ← localStorage adapter (fallback + sync cache)
+  local-storage-sync.ts      ← existing, updated to accept optional StorageService
+  google-drive-sync.ts        ← existing, updated to accept optional StorageService
 
-This follows the existing pattern: utils export factory functions, no classes needed for the public API.
+src/test/__stubs__/
+  storage-service.ts          ← Test stub (in-memory Map)
+
+vitest.config.ts              ← New alias: .toolbox/lib/storage-service → stub
+```
 
 **Naming note:** "adapter" rather than "backend" — these are storage adapters that implement the StorageService interface. The app has one real backend (the user's browser); adapters are just the access strategy.
 
@@ -92,12 +107,12 @@ This follows the existing pattern: utils export factory functions, no classes ne
 
 ```ts
 /** Which storage adapter is active */
-export type StorageAdapter = 'opfs' | 'localstorage';
+export type StorageAdapterType = 'opfs' | 'localstorage';
 
 /** Async key-value storage with typed values */
 export interface StorageService {
   /** Which adapter resolved at init */
-  readonly adapter: StorageAdapter;
+  readonly adapter: StorageAdapterType;
 
   get<T>(key: string): Promise<T | null>;
   set<T>(key: string, value: T): Promise<void>;
@@ -110,8 +125,6 @@ export interface StorageService {
 export interface StorageServiceOptions {
   /** Prefix for all keys (e.g. 'ohm') — prevents collisions */
   prefix?: string;
-  /** Called on read to validate/migrate data */
-  sanitize?: <T>(key: string, raw: unknown) => T;
 }
 
 /** Create a StorageService — resolves OPFS when available, localStorage otherwise */
@@ -121,10 +134,34 @@ export function createStorageService(opts?: StorageServiceOptions): Promise<Stor
 **Design decisions:**
 - **All async** — OPFS requires it, localStorage can trivially be wrapped in `Promise.resolve()`
 - **Untyped keys with generic methods** — callers provide the type at call site, matching the flexibility of `localStorage.getItem`/`setItem`
-- **Prefix option** — namespaces keys for multi-app toolbox extraction
+- **Prefix option** — namespaces keys per-app (e.g. `'ohm'` → keys stored as `ohm/board`)
 - **No per-key config** — sanitization/defaults belong in the calling layer (e.g., `storage.ts` keeps `sanitizeBoard`)
-- **`adapter` property** — exposes which adapter resolved, so the UI can show a storage status segment (see below)
+- **`adapter` property** — exposes which adapter resolved, so consuming apps can show a storage status segment
 - **Async factory** — `createStorageService()` returns a Promise because OPFS availability detection (`navigator.storage.getDirectory()`) is itself async
+
+### Toolbox Module Updates
+
+**`createLocalStorage` gains an optional `storage` param:**
+```ts
+createLocalStorage<OhmBoard>({
+  storageKey: 'ohm-board',
+  sanitize: sanitizeBoard,
+  createDefault: createDefaultBoard,
+  storage: storageService,  // ← new, optional. Falls back to raw localStorage if omitted.
+});
+```
+
+**`createDriveSync` gains an optional `storage` param:**
+```ts
+createDriveSync<OhmBoard>({
+  clientId: DRIVE_CLIENT_ID,
+  storageKeyPrefix: 'ohm-drive',
+  storage: storageService,  // ← new, optional. Token persistence uses this instead of localStorage.
+  // ...rest unchanged
+});
+```
+
+Both modules remain backward-compatible — omitting `storage` preserves current localStorage behavior. Apps opt in by passing a StorageService instance.
 
 ### Storage Status Segment
 
@@ -181,50 +218,35 @@ After:   useDriveSync → mergeBoards() → replaceBoard() → storageService.se
 Specifically:
 1. `storage.ts` exports (`saveToLocal`, `loadFromLocal`) become thin wrappers around `storageService.get('board')` / `storageService.set('board', board)`
 2. `useDriveSync` continues calling `storage.ts` exports — it never touches StorageService directly
-3. Token keys (`ohm-drive-*`) stay in localStorage — owned by toolbox module, out of scope
+3. Token keys (`ohm-drive-*`) get OPFS durability automatically via `createDriveSync`'s new `storage` option
 
-### What Stays on localStorage (for now)
+### What Stays on localStorage
 
 | Key | Owner | Migrate? | Notes |
 |-----|-------|----------|-------|
-| `ohm-last-opened` | `useWelcomeBack` | No | Transient timestamp, one read/write per session. Losing it just means no welcome-back prompt — harmless. |
-| `ohm-drive-synced` | `useDriveSync` | No | Session flag. If lost, user just reconnects — the refresh token is the real value. |
-| `ohm-drive-*` tokens | `.toolbox/lib/google-drive-sync` | **Yes, eventually** | See below. |
-
-**Token durability matters.** The whole impetus for OPFS is surviving Chrome data clearing / storage pressure. If the refresh token is lost, the user has to re-authorize with Google — that's the exact failure this migration aims to prevent. But the tokens are currently managed opaquely by `createDriveSync` via its `storageKeyPrefix` option; the app has no hook into how they're stored.
-
-**Path forward for tokens:**
-1. Extend `createDriveSync` to accept a `storage` option (a StorageService or similar async get/set interface) alongside `storageKeyPrefix`
-2. When provided, the toolbox module uses the injected storage instead of raw localStorage
-3. This is a toolbox-level change — should happen alongside or after StorageService is promoted to `.toolbox/lib/` (Phase 5)
-4. Until then, tokens remain on localStorage. The app still works — users just re-auth if storage is cleared
-
-This keeps the migration phases clean: Phases 1–4 prove StorageService in-app on the structured payloads, Phase 5 promotes to toolbox and wires token storage through it.
-
-**Primary migration targets:** `ohm-board` and `ohm-restore-points`.
-**Deferred migration target:** `ohm-drive-*` tokens (requires toolbox module change).
+| `ohm-last-opened` | `useWelcomeBack` | No | Transient timestamp. Losing it just means no welcome-back prompt — harmless. |
+| `ohm-drive-synced` | `useDriveSync` | No | Session flag. If lost, user just reconnects — the refresh token (which *is* migrated) is the real value. |
 
 ### Migration Path
 
-**Phase 1: Introduce StorageService (no behavior change)**
-- Create `storage-service.ts` with the interface and factory
-- Create `localstorage-adapter.ts` that wraps current localStorage calls
-- Create test stub (in-memory `Map<string, string>`)
-- Wire `storage.ts` to use StorageService internally — same localStorage adapter, just indirected
+**Phase 1: Build StorageService in toolbox**
+- Create `.toolbox/lib/storage-service/` with interface, OPFS adapter, localStorage adapter
+- Add `storage` option to `createLocalStorage` and `createDriveSync` (backward-compatible, optional)
+- Write tests in toolbox
+
+**Phase 2: Wire up in OHM (no behavior change)**
+- Add vitest alias + test stub for `.toolbox/lib/storage-service`
+- Initialize StorageService in app (async, at startup)
+- Pass to `createLocalStorage` and `createDriveSync` via `storage` option
+- Same localStorage adapter underneath — validates the wiring without changing storage behavior
 - All existing tests pass unchanged
 
-**Phase 2: Add OPFS adapter + status segment**
-- Create `opfs-adapter.ts` implementing StorageService
-- Feature-detect OPFS availability (`navigator.storage.getDirectory`)
+**Phase 3: Enable OPFS + status segment**
 - `createStorageService()` resolves OPFS adapter when available, localStorage adapter as fallback
-- Add `getSync()` for bootstrap reads (reads localStorage mirror)
-- Add `StorageIndicator` component (mirrors `SyncIndicator` pattern) — shows OPFS icon when active
-- Thread `adapter` value from StorageService to the header via hook/context
-
-**Phase 3: Migrate structured payloads**
-- `storage.ts` (ohm-board) — highest value, migrate first
-- `restore-points.ts` (ohm-restore-points) — second, largest payload benefits most from OPFS
-- Transient/primitive keys (`ohm-last-opened`, `ohm-drive-synced`, `ohm-drive-*` tokens) stay on localStorage — no migration needed
+- Board and restore points now durable in OPFS with localStorage mirror
+- Tokens now durable in OPFS via `createDriveSync`'s `storage` option
+- Add `StorageIndicator` component — shows OPFS icon when active
+- Thread `adapter` value to the header via hook/context
 
 **Phase 4: Multi-tab safety**
 - Add `BroadcastChannel` write notifications to the OPFS adapter
@@ -232,33 +254,6 @@ This keeps the migration phases clean: Phases 1–4 prove StorageService in-app 
 - On incoming signal: mark in-memory state stale, reload on next read
 - No leader election needed — just prevent silent data loss
 
-**Phase 5: Toolbox promotion**
-- Prove the interface is stable across Phases 1-4 in this app
-- Move `storage-service.ts` + adapters to `.toolbox/lib/storage-service`
-- Update import path in `src/utils/storage.ts` to `../../.toolbox/lib/storage-service`
-- Add vitest alias → `src/test/__stubs__/storage-service.ts`
-- Other toolbox consumers (companion apps) import the same module
-- OHM-specific wrappers (`stripTransientCards`, `sanitizeBoard`) stay in `src/utils/storage.ts`
-
-### Toolbox Extraction Extension Point
-
-The interface is designed from day one to be extractable, but stays in-app until proven:
-
-- **No OHM-specific types** in the StorageService interface (generic `<T>`)
-- **Prefix option** handles namespacing per-app
-- **Adapter property** lets each app surface storage info in its own UI
-- **Sanitize callback** lets each app define its own validation
-- **Adapter pattern** means the toolbox ships the interface + adapters; apps just call `createStorageService()`
-- **Same stub pattern** as existing toolbox modules — vitest alias to a test stub that uses an in-memory `Map`
-
-Future toolbox structure (once promoted):
-```
-.toolbox/lib/
-  local-storage-sync.ts      ← existing
-  google-drive-sync.ts        ← existing
-  storage-service/
-    index.ts                  ← createStorageService factory
-    opfs-adapter.ts
-    localstorage-adapter.ts
-    types.ts                  ← StorageService interface, StorageAdapter type
-```
+**Phase 5: Migrate remaining direct localStorage calls**
+- `restore-points.ts` — currently uses localStorage directly (not via `createLocalStorage`). Wire through StorageService.
+- `useWelcomeBack.ts` / `useDriveSync.ts` flags — leave on localStorage (transient, low-value)
