@@ -1,7 +1,7 @@
 import { createStorageService } from '../../.toolbox/lib/storage-service';
-import type { StorageService } from '../../.toolbox/lib/storage-service';
+import type { StorageService, StorageAdapterType } from '../../.toolbox/lib/storage-service';
 
-export type { StorageService };
+export type { StorageService, StorageAdapterType };
 
 /** Shared StorageService instance — scoped to 'ohm' prefix. */
 export const storageService: Promise<StorageService> = createStorageService({
