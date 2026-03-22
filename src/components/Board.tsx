@@ -644,7 +644,7 @@ export function Board() {
           <CloudOff size={14} className="text-ohm-muted" />
           <span className="font-body text-ohm-muted text-xs">
             {recoveryPrompt
-              ? 'Have a board on Google Drive?'
+              ? 'Sync with Google Drive?'
               : 'This board was previously synced with Google Drive.'}
           </span>
           <button
