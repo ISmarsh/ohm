@@ -21,5 +21,8 @@ export function createLocalStorage<T>(opts: {
     saveToLocal: (val: T) => {
       localStorage.setItem(opts.storageKey, JSON.stringify(val));
     },
+    recoverFromStorage: async (): Promise<T | null> => {
+      return null;
+    },
   };
 }

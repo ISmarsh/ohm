@@ -1,7 +1,20 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { STATUS } from '../types/board';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { STATUS, createDefaultBoard } from '../types/board';
+import { createCard } from '../utils/board-utils';
 import { useBoard } from './useBoard';
+
+const { mockRecoverFromStorage } = vi.hoisted(() => ({
+  mockRecoverFromStorage: vi.fn<() => Promise<null>>().mockResolvedValue(null),
+}));
+
+vi.mock('../utils/storage', async () => {
+  const actual = await vi.importActual<typeof import('../utils/storage')>('../utils/storage');
+  return {
+    ...actual,
+    recoverFromStorage: mockRecoverFromStorage,
+  };
+});
 
 beforeEach(() => {
   localStorage.clear();
@@ -356,6 +369,61 @@ describe('useBoard', () => {
       const cards = result.current.board.cards;
       const sorted = [...cards].sort((x, y) => x.sortOrder - y.sortOrder);
       expect(sorted.map((card) => card.id)).toEqual([c.id, a.id, b.id]);
+    });
+  });
+
+  describe('OPFS recovery', () => {
+    beforeEach(() => {
+      mockRecoverFromStorage.mockReset().mockResolvedValue(null);
+    });
+
+    it('recovers board from OPFS when localStorage is empty', async () => {
+      const recovered = {
+        ...createDefaultBoard(),
+        cards: [createCard('Recovered task')],
+      };
+      mockRecoverFromStorage.mockResolvedValueOnce(recovered);
+
+      const { result } = renderHook(() => useBoard());
+
+      await waitFor(() => {
+        expect(result.current.board.cards).toHaveLength(1);
+      });
+      expect(result.current.board.cards[0].title).toBe('Recovered task');
+    });
+
+    it('skips recovery when board already has cards', async () => {
+      const existing = {
+        ...createDefaultBoard(),
+        cards: [createCard('Existing')],
+      };
+      localStorage.setItem('ohm-board', JSON.stringify(existing));
+
+      const staleData = {
+        ...createDefaultBoard(),
+        cards: [createCard('Old OPFS data')],
+      };
+      mockRecoverFromStorage.mockResolvedValueOnce(staleData);
+
+      const { result } = renderHook(() => useBoard());
+      expect(result.current.board.cards[0].title).toBe('Existing');
+
+      // Let recovery effect settle — should be a no-op
+      await act(async () => {});
+
+      expect(result.current.board.cards).toHaveLength(1);
+      expect(result.current.board.cards[0].title).toBe('Existing');
+    });
+
+    it('skips recovery when OPFS returns empty board', async () => {
+      const emptyRecovery = { ...createDefaultBoard(), cards: [] };
+      mockRecoverFromStorage.mockResolvedValueOnce(emptyRecovery);
+
+      const { result } = renderHook(() => useBoard());
+
+      await act(async () => {});
+
+      expect(result.current.board.cards).toHaveLength(0);
     });
   });
 });

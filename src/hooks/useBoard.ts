@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { OhmBoard, OhmCard, ColumnStatus } from '../types/board';
 import { ENERGY_MIN, WINDOW_MIN, WINDOW_MAX, WINDOW_DEFAULT, STATUS } from '../types/board';
 import type { Activity } from '../types/activity';
-import { loadFromLocal, saveToLocal } from '../utils/storage';
+import { loadFromLocal, saveToLocal, recoverFromStorage } from '../utils/storage';
 import {
   createCard,
   moveCard,
@@ -30,6 +30,19 @@ export function useBoard() {
 
   // Auto-save on changes
   useDebouncedSave(board);
+
+  // Recover from OPFS if localStorage was cleared (e.g., browser storage pressure).
+  // Only applies recovery when the current board has no cards (default state),
+  // so it won't overwrite active user data.
+  useEffect(() => {
+    recoverFromStorage().then((recovered) => {
+      if (!recovered || recovered.cards.length === 0) return;
+      setBoard((current) => {
+        if (current.cards.length > 0) return current;
+        return recovered;
+      });
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Quick-add a card to Charging (minimal friction, optional details) */
   const quickAdd = useCallback(
