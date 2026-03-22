@@ -68,6 +68,8 @@ import { DayFocusDialog } from './DayFocusDialog';
 import { CardDetail } from './CardDetail';
 import { SettingsPage } from './SettingsPage';
 import { SyncIndicator } from './SyncIndicator';
+import { StorageIndicator } from './StorageIndicator';
+import { useStorageAdapter } from '../hooks/useStorageAdapter';
 import {
   toastCardMoved,
   toastCardDeleted,
@@ -448,6 +450,7 @@ export function Board() {
 
   const { summary: welcomeBack, dismiss: dismissWelcome } = useWelcomeBack(board);
   const { isInstallable, installApp } = useInstallPrompt();
+  const storageAdapter = useStorageAdapter();
 
   // Completion flash — column header animation
   const [poweredFlash, setPoweredFlash] = useState(false);
@@ -566,8 +569,9 @@ export function Board() {
       {/* Header */}
       <header className="border-ohm-border bg-ohm-bg/90 sticky top-0 z-30 border-b backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Left -- sync status + install */}
+          {/* Left -- storage + sync status + install */}
           <div className="flex w-24 items-center gap-1">
+            <StorageIndicator adapter={storageAdapter} />
             {driveAvailable && (
               <SyncIndicator connected={driveConnected} status={syncStatus} onSync={manualSync} />
             )}
@@ -1291,6 +1295,7 @@ export function Board() {
         onDisconnectDrive={disconnect}
         board={board}
         onReplaceBoard={replaceBoard}
+        storageAdapter={storageAdapter}
       />
 
       {/* Quick spark FAB -- mobile only */}
