@@ -16,7 +16,7 @@ export function StorageIndicator({ adapter }: StorageIndicatorProps) {
   const label = ADAPTER_TOOLTIP[adapter];
 
   return (
-    <span className="text-ohm-muted rounded-md p-1.5" aria-label={label} title={label}>
+    <span className="text-ohm-powered rounded-md p-1.5" aria-label={label} title={label}>
       <HardDrive size={16} />
     </span>
   );
