@@ -7,4 +7,9 @@ export type { StorageService, StorageAdapterType };
 export const storageService: Promise<StorageService> = createStorageService({
   prefix: 'ohm',
   logPrefix: '[Ohm]',
+}).then((s) => {
+  if (import.meta.env.DEV) {
+    console.log(`[Ohm] StorageService adapter: ${s.adapter}`);
+  }
+  return s;
 });
