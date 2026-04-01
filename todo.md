@@ -13,3 +13,5 @@
 - [x] Day budget focus dialog (click on day budget meter to pop a day focus view)
 - [ ] Budget bar click-through when dialogs are open (pointer-events-auto + onInteractOutside to prevent dismiss)
 - [ ] Snap-aware drawer scroll height (SnapContext passing active snap fraction to Content for dynamic height)
+
+- [ ] Run OHM through BMAD workflow (product brief, PRD, tech spec) -- phase 2 of methodology adoption, post-redesign
