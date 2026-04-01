@@ -2,13 +2,13 @@
 
 ## 1. Column Reorder + Desktop Grid Layout
 
-- [ ] 1.1 Add `COLUMN_ORDER` array to `src/types/board.ts`: `[STATUS.POWERED, STATUS.LIVE, STATUS.CHARGING, STATUS.GROUNDED]`
-- [ ] 1.2 Update `Board.tsx` render loop to iterate `COLUMN_ORDER` instead of `COLUMNS.map((col, index))`
-- [ ] 1.3 Replace `md:flex-row` layout in Board.tsx with CSS grid: `grid-template-columns: repeat(4, 1fr)` at md+ breakpoint
-- [ ] 1.4 Add two spanning header slots in grid (cols 1-2 for BudgetBar, cols 3-4 for What's Ahead placeholder)
-- [ ] 1.5 Keep mobile layout as single-column flex stack
+- [x] 1.1 Add `COLUMN_ORDER` array to `src/types/board.ts`: `[STATUS.POWERED, STATUS.LIVE, STATUS.CHARGING, STATUS.GROUNDED]`
+- [x] 1.2 Update `Board.tsx` render loop to iterate `COLUMN_ORDER` instead of `COLUMNS.map((col, index))`
+- [x] 1.3 Replace `md:flex-row` layout in Board.tsx with CSS grid: `grid-template-columns: repeat(4, 1fr)` at md+ breakpoint
+- [x] 1.4 Add two spanning header slots in grid (cols 1-2 for BudgetBar, cols 3-4 for What's Ahead placeholder)
+- [x] 1.5 Keep mobile layout as single-column flex stack
 - [ ] 1.6 Verify column order on desktop and mobile, check drag-and-drop still works within columns
-- [ ] 1.7 Run build to verify no TypeScript errors
+- [x] 1.7 Run build to verify no TypeScript errors
 
 ## 2. BudgetBar Adaptation
 

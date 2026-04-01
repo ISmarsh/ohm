@@ -143,6 +143,15 @@ export const COLUMNS: readonly OhmColumn[] = [
   },
 ];
 
+/** Display order for columns — present → future → someday.
+ *  Powered leads so wins are the first thing you see. */
+export const COLUMN_ORDER: readonly ColumnStatus[] = [
+  STATUS.POWERED,
+  STATUS.LIVE,
+  STATUS.CHARGING,
+  STATUS.GROUNDED,
+];
+
 /** Accent Tailwind classes per column status -- static strings so JIT detects them */
 export const STATUS_CLASSES: readonly {
   border: string;
