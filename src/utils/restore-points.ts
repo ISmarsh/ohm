@@ -3,6 +3,7 @@ import { sanitizeBoard } from './storage';
 
 const RP_KEY = 'ohm-restore-points';
 const MAX_RESTORE_POINTS = 10;
+const RP_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
 export interface RestorePoint {
   id: string;
@@ -11,11 +12,20 @@ export interface RestorePoint {
   board: OhmBoard;
 }
 
-/** Load all restore points from localStorage */
+/** Load all restore points from localStorage, pruning those older than 14 days (keeps at least the newest). */
 export function getRestorePoints(): RestorePoint[] {
   try {
     const raw = localStorage.getItem(RP_KEY);
-    if (raw) return JSON.parse(raw) as RestorePoint[];
+    if (!raw) return [];
+    const points = JSON.parse(raw) as RestorePoint[];
+    const cutoff = Date.now() - RP_MAX_AGE_MS;
+    const pruned = points.filter(
+      (p, i) => new Date(p.createdAt).getTime() > cutoff || i === points.length - 1,
+    );
+    if (pruned.length < points.length) {
+      localStorage.setItem(RP_KEY, JSON.stringify(pruned));
+    }
+    return pruned;
   } catch (e) {
     console.error('[Ohm] Failed to load restore points:', e);
   }

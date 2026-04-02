@@ -1028,16 +1028,9 @@ export function Board() {
           tabIndex={-1}
           className="flex-1 overflow-y-auto focus:outline-none md:overflow-x-auto md:overflow-y-hidden"
         >
-          <div className="flex flex-col gap-3 p-4 pb-28 md:grid md:min-h-[calc(100vh-56px)] md:grid-cols-4 md:grid-rows-[auto_1fr] md:gap-4">
-            {/* Grid header row — spans 2 cols each, hidden on mobile */}
-            <div className="hidden md:col-span-2 md:block" aria-label="Today meter">
-              {/* TodayMeter added in a later phase */}
-            </div>
-            <div className="hidden md:col-span-2 md:block" aria-label="What's ahead">
-              {/* WhatsAhead component added in Phase 5 */}
-            </div>
+          <div className="flex flex-col gap-3 p-4 pb-28 md:grid md:min-h-[calc(100vh-56px)] md:grid-cols-4 md:gap-4">
             {COLUMN_ORDER.map((status) => {
-              const col = COLUMNS[status];
+              const col = COLUMNS[status]!;
               const cards = filteredCards(status);
               const todayStr = toISODate(new Date());
               return (

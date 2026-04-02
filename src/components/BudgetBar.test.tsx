@@ -15,13 +15,15 @@ beforeAll(() => {
 
 const defaultProps = {
   daily: [
-    { date: '2026-03-11', used: 4 },
-    { date: '2026-03-12', used: 2 },
-    { date: '2026-03-13', used: 0 },
+    { date: '2026-03-11', count: 2, avgEnergy: 3 },
+    { date: '2026-03-12', count: 1, avgEnergy: 5 },
+    { date: '2026-03-13', count: 0, avgEnergy: 0 },
   ],
-  dayLimit: 10,
-  total: { used: 6, total: 40 },
+  dailyLimit: 3,
+  total: { count: 3, limit: 9 },
+  todayCount: 2,
   todayStr: '2026-03-11',
+  energyMax: 7,
   onDayClick: vi.fn(),
 };
 
@@ -42,13 +44,13 @@ describe('BudgetBar', () => {
 
   it('displays total usage', () => {
     render(<BudgetBar {...defaultProps} />);
-    expect(screen.getByText('6/40')).toBeInTheDocument();
+    expect(screen.getByText('3/9')).toBeInTheDocument();
   });
 
   it('renders without daily segments when daily is empty', () => {
     render(<BudgetBar {...defaultProps} daily={[]} />);
     expect(screen.queryAllByRole('button')).toHaveLength(0);
-    expect(screen.getByText('6/40')).toBeInTheDocument();
+    expect(screen.getByText('3/9')).toBeInTheDocument();
   });
 
   it('highlights today segment with bold text', () => {

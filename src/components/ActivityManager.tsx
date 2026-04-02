@@ -422,11 +422,11 @@ export function ActivityManager({
   };
 
   return (
-    <div className="border-ohm-border mt-5 border-t pt-5">
+    <>
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar size={14} className="text-ohm-muted" />
-          <span className="font-display text-ohm-muted text-[10px] tracking-widest uppercase">
+          <span className="font-display text-ohm-muted text-sm tracking-widest uppercase">
             Activities
           </span>
         </div>
@@ -434,7 +434,7 @@ export function ActivityManager({
 
       {/* Activity list */}
       {activities.length === 0 && (
-        <p className="font-body text-ohm-muted/60 text-[11px]">
+        <p className="font-body text-ohm-muted/80 text-sm">
           No activities yet. Create one from the spark button.
         </p>
       )}
@@ -493,6 +493,6 @@ export function ActivityManager({
           ),
         )}
       </div>
-    </div>
+    </>
   );
 }
