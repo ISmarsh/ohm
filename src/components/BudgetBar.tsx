@@ -11,7 +11,6 @@ interface BudgetBarProps {
   daily: DayData[];
   dailyLimit: number;
   total: { count: number; limit: number };
-  todayCount: number;
   todayStr: string;
   energyMax: number;
   onDayClick: (date: string) => void;
@@ -21,7 +20,6 @@ export function BudgetBar({
   daily,
   dailyLimit,
   total,
-  todayCount,
   todayStr,
   energyMax,
   onDayClick,
@@ -29,7 +27,6 @@ export function BudgetBar({
   const totalRatio = total.limit > 0 ? total.count / total.limit : 0;
   const totalColor = budgetColor(totalRatio);
   const barRef = useRef<HTMLDivElement>(null);
-  const overflow = todayCount - dailyLimit;
 
   useEffect(() => {
     const el = barRef.current;

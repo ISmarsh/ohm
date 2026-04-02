@@ -178,7 +178,6 @@ export function getDailyItemCounts(
   todayStr: string,
   windowEnd: string,
 ): Array<{ date: string; count: number; avgEnergy: number }> {
-  const limit = board.dailyLimit ?? DAILY_LIMIT_DEFAULT;
   const byDate = new Map<string, { count: number; totalEnergy: number }>();
 
   for (const card of board.cards) {

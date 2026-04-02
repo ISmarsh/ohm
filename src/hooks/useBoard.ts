@@ -8,7 +8,6 @@ import {
   STATUS,
   DAILY_LIMIT_MIN,
   DAILY_LIMIT_MAX,
-  DAILY_LIMIT_DEFAULT,
 } from '../types/board';
 import type { Activity } from '../types/activity';
 import { loadFromLocal, saveToLocal, recoverFromStorage } from '../utils/storage';

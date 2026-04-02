@@ -358,7 +358,7 @@ export function Board() {
         updateCard({ ...card, archivedAt: now });
       }
     }
-  }, [board.cards, updateCard]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [board.cards, updateCard]);
 
   // Drag-and-drop sensors
   const pointerSensor = useSensor(PointerSensor, {
@@ -1075,7 +1075,6 @@ export function Board() {
         daily={budgetData.daily}
         dailyLimit={budgetData.dailyLimit}
         total={budgetData.total}
-        todayCount={budgetData.todayCount}
         todayStr={budgetData.todayStr}
         energyMax={eMax}
         onDayClick={setFocusDate}

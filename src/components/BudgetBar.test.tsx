@@ -21,7 +21,6 @@ const defaultProps = {
   ],
   dailyLimit: 3,
   total: { count: 3, limit: 9 },
-  todayCount: 2,
   todayStr: '2026-03-11',
   energyMax: 7,
   onDayClick: vi.fn(),
