@@ -12,6 +12,8 @@ import {
   BUDGET_DEFAULT,
   LIVE_DEFAULT,
   DAILY_LIMIT_DEFAULT,
+  DAILY_LIMIT_MIN,
+  DAILY_LIMIT_MAX,
 } from '../types/board';
 import { storageService } from './storage-service';
 
@@ -88,9 +90,14 @@ export function sanitizeBoard(board: OhmBoard): OhmBoard {
   const pruneThreshold = fourteenDaysAgo.toISOString();
   board.cards = board.cards.filter((c) => !c.archivedAt || c.archivedAt > pruneThreshold);
 
-  // Default dailyLimit if missing
-  if (typeof board.dailyLimit !== 'number' || board.dailyLimit < 1) {
+  // Default and clamp dailyLimit to valid range
+  if (typeof board.dailyLimit !== 'number' || !Number.isFinite(board.dailyLimit)) {
     board.dailyLimit = DAILY_LIMIT_DEFAULT;
+  } else {
+    board.dailyLimit = Math.min(
+      DAILY_LIMIT_MAX,
+      Math.max(DAILY_LIMIT_MIN, Math.round(board.dailyLimit)),
+    );
   }
 
   return board;
