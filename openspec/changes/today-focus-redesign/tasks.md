@@ -5,7 +5,7 @@
 - [x] 1.1 Add `COLUMN_ORDER` array to `src/types/board.ts`: `[STATUS.POWERED, STATUS.LIVE, STATUS.CHARGING, STATUS.GROUNDED]`
 - [x] 1.2 Update `Board.tsx` render loop to iterate `COLUMN_ORDER` instead of `COLUMNS.map((col, index))`
 - [x] 1.3 Replace `md:flex-row` layout in Board.tsx with CSS grid: `grid-template-columns: repeat(4, 1fr)` at md+ breakpoint
-- [x] 1.4 Add two spanning header slots in grid (cols 1-2 for BudgetBar, cols 3-4 for What's Ahead placeholder)
+- [ ] 1.4 Add two spanning header slots in grid (cols 1-2 for BudgetBar, cols 3-4 for What's Ahead placeholder) -- DROPPED (header slots removed, BudgetBar stays fixed-bottom)
 - [x] 1.5 Keep mobile layout as single-column flex stack
 - [ ] 1.6 Verify column order on desktop and mobile, check drag-and-drop still works within columns
 - [x] 1.7 Run build to verify no TypeScript errors
@@ -19,7 +19,7 @@
 - [x] 2.5 Add prominent 3-segment today indicator for Live + today's Powered count vs `dailyLimit`
 - [x] 2.6 Replace total row: item count across 14-day forward window
 - [x] 2.7 Add "+N" overflow badge when cards exceed `dailyLimit`
-- [x] 2.8 Move BudgetBar from fixed-bottom to grid header area on desktop (keep mobile positioning)
+- [ ] 2.8 Move BudgetBar from fixed-bottom to grid header area on desktop -- KEPT fixed-bottom (better UX)
 - [x] 2.9 Update Board.tsx budget data calculation: 14-day forward window, item counts
 - [x] 2.10 Preserve day-click -> DayFocusDialog trigger
 - [x] 2.11 Run build

@@ -107,6 +107,18 @@ export function useBoard() {
     }));
   }, []);
 
+  /** Set archivedAt on multiple cards in a single state update */
+  const archiveCards = useCallback((cardIds: string[]) => {
+    if (cardIds.length === 0) return;
+    const idSet = new Set(cardIds);
+    const now = new Date().toISOString();
+    setBoard((prev) => ({
+      ...prev,
+      cards: prev.cards.map((c) => (idSet.has(c.id) ? { ...c, archivedAt: now } : c)),
+      lastSaved: now,
+    }));
+  }, []);
+
   /** Restore a previously deleted card (idempotent — no-op if already present) */
   const restoreCard = useCallback((card: OhmCard) => {
     setBoard((prev) => {
@@ -391,6 +403,7 @@ export function useBoard() {
     updateCard,
     deleteCard,
     deleteCards,
+    archiveCards,
     restoreCard,
     reorder,
     reorderBatch,

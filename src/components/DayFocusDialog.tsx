@@ -158,7 +158,14 @@ export function DayFocusDialog({
           </button>
           <CalendarDays size={16} className="text-ohm-muted shrink-0" />
           <span className="flex-1 truncate">{label}</span>
-          <div className="flex shrink-0 items-center gap-1">
+          <div
+            className="flex shrink-0 items-center gap-1"
+            aria-label={`${cardCount} of ${dailyLimit} cards`}
+            role="meter"
+            aria-valuenow={cardCount}
+            aria-valuemin={0}
+            aria-valuemax={dailyLimit}
+          >
             {Array.from({ length: dailyLimit }, (_, i) => {
               const filled = i < cardCount;
               const pipColor =

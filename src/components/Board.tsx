@@ -180,6 +180,7 @@ export function Board() {
     updateCard,
     deleteCard,
     deleteCards,
+    archiveCards,
     restoreCard,
     reorderBatch,
     addCategory,
@@ -343,22 +344,19 @@ export function Board() {
     for (const u of updates) updateCard(u);
   }, [board.cards, activities, instances, updateCard]);
 
-  // Soft-archive Powered cards from before today (set archivedAt instead of deleting)
+  // Soft-archive Powered cards from before today (batched single state update)
   useEffect(() => {
     const todayStr = toISODate(new Date());
-    const now = new Date().toISOString();
-    const toArchive = board.cards.filter(
-      (c) =>
-        c.status === STATUS.POWERED &&
-        !c.archivedAt &&
-        (c.scheduledDate ?? c.updatedAt.slice(0, 10)) < todayStr,
-    );
-    if (toArchive.length > 0) {
-      for (const card of toArchive) {
-        updateCard({ ...card, archivedAt: now });
-      }
-    }
-  }, [board.cards, updateCard]);
+    const ids = board.cards
+      .filter(
+        (c) =>
+          c.status === STATUS.POWERED &&
+          !c.archivedAt &&
+          (c.scheduledDate ?? c.updatedAt.slice(0, 10)) < todayStr,
+      )
+      .map((c) => c.id);
+    archiveCards(ids);
+  }, [board.cards, archiveCards]);
 
   // Drag-and-drop sensors
   const pointerSensor = useSensor(PointerSensor, {
