@@ -16,6 +16,7 @@ import {
   DatabaseZap,
   Zap,
   Tag,
+  Gauge,
 } from 'lucide-react';
 import {
   ResponsiveDialog,
@@ -30,6 +31,9 @@ import {
   WINDOW_MIN,
   WINDOW_MAX,
   WINDOW_DEFAULT,
+  DAILY_LIMIT_MIN,
+  DAILY_LIMIT_MAX,
+  DAILY_LIMIT_DEFAULT,
 } from '../types/board';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -65,6 +69,8 @@ export interface SettingsPageProps {
   onRenameCategory: (oldName: string, newName: string) => void;
   energyMax?: number;
   onSetEnergyMax?: (max: number) => void;
+  dailyLimit: number;
+  onSetDailyLimit: (limit: number) => void;
   windowSize?: number;
   onSetWindowSize?: (size: number) => void;
   activities?: Activity[];
@@ -127,6 +133,8 @@ export function SettingsPage({
   onRenameCategory,
   energyMax,
   onSetEnergyMax,
+  dailyLimit,
+  onSetDailyLimit,
   windowSize,
   onSetWindowSize,
   activities,
@@ -387,6 +395,8 @@ export function SettingsPage({
               handleAddCategory={handleAddCategory}
               energyMax={energyMax}
               onSetEnergyMax={onSetEnergyMax}
+              dailyLimit={dailyLimit}
+              onSetDailyLimit={onSetDailyLimit}
             />
           )}
 
@@ -442,6 +452,8 @@ function BoardTab({
   handleAddCategory,
   energyMax,
   onSetEnergyMax,
+  dailyLimit,
+  onSetDailyLimit,
 }: {
   categories: string[];
   onRemoveCategory: (c: string) => void;
@@ -451,6 +463,8 @@ function BoardTab({
   handleAddCategory: () => void;
   energyMax?: number;
   onSetEnergyMax?: (v: number) => void;
+  dailyLimit: number;
+  onSetDailyLimit: (v: number) => void;
 }) {
   return (
     <>
@@ -498,6 +512,47 @@ function BoardTab({
           </div>
         </section>
       )}
+
+      {/* Daily Limit */}
+      <section className="mb-8">
+        <div className="flex items-center gap-2">
+          <Gauge size={14} className="text-ohm-muted" />
+          <span className="font-display text-ohm-muted text-[10px] tracking-widest uppercase">
+            Daily Limit
+          </span>
+        </div>
+        <p className="font-body text-ohm-muted/60 mt-1.5 text-[11px]">
+          Maximum cards in your active focus. Shown in the budget bar and day view.
+        </p>
+        <div className="mt-3 flex items-center gap-3">
+          <span className="font-display text-ohm-muted w-20 text-[10px] tracking-widest uppercase">
+            Max
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => onSetDailyLimit(Math.max(DAILY_LIMIT_MIN, dailyLimit - 1))}
+            disabled={dailyLimit <= DAILY_LIMIT_MIN}
+            className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
+            aria-label="Decrease daily limit"
+          >
+            <Minus size={14} />
+          </Button>
+          <span className="font-display text-ohm-text min-w-[2ch] text-center text-lg font-bold">
+            {dailyLimit}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => onSetDailyLimit(Math.min(DAILY_LIMIT_MAX, dailyLimit + 1))}
+            disabled={dailyLimit >= DAILY_LIMIT_MAX}
+            className="border-ohm-border text-ohm-muted hover:text-ohm-text h-8 w-8"
+            aria-label="Increase daily limit"
+          >
+            <Plus size={14} />
+          </Button>
+        </div>
+      </section>
 
       {/* Categories */}
       <section className="mt-8">

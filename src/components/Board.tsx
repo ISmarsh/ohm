@@ -186,6 +186,7 @@ export function Board() {
     removeCategory,
     renameCategory,
     setEnergyMax: setBoardEnergyMax,
+    setDailyLimit,
     setWindowSize,
     setActivities,
     materializeInstances,
@@ -1309,6 +1310,8 @@ export function Board() {
         onRenameCategory={renameCategory}
         energyMax={eMax}
         onSetEnergyMax={setBoardEnergyMax}
+        dailyLimit={board.dailyLimit ?? DAILY_LIMIT_DEFAULT}
+        onSetDailyLimit={setDailyLimit}
         windowSize={board.windowSize}
         onSetWindowSize={setWindowSize}
         activities={activities}
