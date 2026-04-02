@@ -36,12 +36,12 @@ The total row SHALL show item count across the forward window. It SHALL pulse wh
 
 ### Requirement: Desktop layout position
 
-The BudgetBar SHALL move from fixed-bottom positioning to the CSS grid header area on desktop (spanning columns 1-2). Mobile positioning SHALL remain at the top of the screen.
+The BudgetBar SHALL remain in fixed-bottom positioning on all viewports.
 
-#### Scenario: Desktop grid placement
+#### Scenario: Fixed-bottom placement
 
-- **WHEN** the board renders on desktop (md+ breakpoint)
-- **THEN** BudgetBar renders in the grid header spanning columns 1-2
+- **WHEN** the board renders on any viewport
+- **THEN** BudgetBar renders fixed to the bottom of the screen
 
 ### Requirement: DayFocusDialog trigger
 

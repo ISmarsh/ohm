@@ -120,28 +120,25 @@ Day-click in the adapted BudgetBar opens the dialog for that date (same interact
 
 ## Desktop Layout
 
-Two spanning header sections above the four columns, implemented with CSS grid.
+CSS grid for the four columns, BudgetBar fixed to the bottom on all viewports.
 
 ```
 Desktop (md+):
-┌─────────────────────────┬─────────────────────────┐
-│  BudgetBar / Today      │  What's Ahead           │
-│  (spans cols 1-2)       │  (spans cols 3-4)       │
-├────────────┬────────────┼────────────┬────────────┤
+┌────────────┬────────────┬────────────┬────────────┐
 │  Powered   │    Live    │  Charging  │  Grounded  │
 └────────────┴────────────┴────────────┴────────────┘
+  BudgetBar (fixed bottom, full width)
 ```
 
 ### CSS
 
-- `grid-template-columns: repeat(4, 1fr)`, top row elements use `grid-column: span 2`.
-- BudgetBar moves from fixed-bottom positioning to the grid header area on desktop.
-- The BudgetBar header can accommodate additional data beyond the 3-segment meter.
+- `grid-template-columns: repeat(4, 1fr)` at md+ breakpoint.
+- BudgetBar remains fixed-bottom with `backdrop-blur` overlay.
 
 ### Mobile
 
 - Single-column flex stack (no grid).
-- BudgetBar at top, then Live, then What's Ahead as section divider, then Charging, then Grounded.
+- Column order: Powered, Live, Charging, Grounded. BudgetBar fixed at bottom.
 
 ---
 

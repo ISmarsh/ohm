@@ -17,7 +17,9 @@ export function getRestorePoints(): RestorePoint[] {
   try {
     const raw = localStorage.getItem(RP_KEY);
     if (!raw) return [];
-    const points = JSON.parse(raw) as RestorePoint[];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const points = parsed as RestorePoint[];
     const cutoff = Date.now() - RP_MAX_AGE_MS;
     const pruned = points.filter(
       (p, i) => new Date(p.createdAt).getTime() > cutoff || i === points.length - 1,

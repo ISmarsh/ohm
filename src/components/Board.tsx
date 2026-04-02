@@ -41,6 +41,7 @@ import {
 import { ACTIVITY_STATUS } from '../types/activity';
 import {
   createCard,
+  cardEffectiveDate,
   getColumnCards,
   getDailyItemCounts,
   getTotalItemCount,
@@ -349,10 +350,7 @@ export function Board() {
     const todayStr = toISODate(new Date());
     const ids = board.cards
       .filter(
-        (c) =>
-          c.status === STATUS.POWERED &&
-          !c.archivedAt &&
-          (c.scheduledDate ?? c.updatedAt.slice(0, 10)) < todayStr,
+        (c) => c.status === STATUS.POWERED && !c.archivedAt && cardEffectiveDate(c) < todayStr,
       )
       .map((c) => c.id);
     archiveCards(ids);
@@ -541,8 +539,7 @@ export function Board() {
       (c) =>
         !c.archivedAt &&
         (c.status === STATUS.LIVE ||
-          (c.status === STATUS.POWERED &&
-            (c.scheduledDate ?? c.updatedAt.slice(0, 10)) === todayStr)),
+          (c.status === STATUS.POWERED && cardEffectiveDate(c) === todayStr)),
     ).length;
     return { daily, dailyLimit, total, todayCount, todayStr };
   })();

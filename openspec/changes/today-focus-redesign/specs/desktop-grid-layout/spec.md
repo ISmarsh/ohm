@@ -2,18 +2,18 @@
 
 ## ADDED Requirements
 
-### Requirement: CSS grid with spanning headers
+### Requirement: CSS grid for desktop columns
 
-The desktop board layout (md+ breakpoint) SHALL use CSS grid with `grid-template-columns: repeat(4, 1fr)`. Two header sections SHALL span 2 columns each: BudgetBar (cols 1-2) and What's Ahead (cols 3-4).
+The desktop board layout (md+ breakpoint) SHALL use CSS grid with `grid-template-columns: repeat(4, 1fr)` for the four columns. BudgetBar remains fixed-bottom on all viewports.
 
 #### Scenario: Desktop grid renders correctly
 
 - **WHEN** the board renders on desktop (md+ breakpoint)
-- **THEN** the layout uses a CSS grid with BudgetBar spanning columns 1-2 above Powered and Live, and What's Ahead spanning columns 3-4 above Charging and Grounded
+- **THEN** the layout uses a CSS grid with four equal columns for Powered, Live, Charging, and Grounded
 
 ### Requirement: Mobile stays single-column flex
 
-Mobile layout SHALL remain a single-column flex stack with no grid. Order: BudgetBar at top, Live, What's Ahead (section divider), Charging, Grounded.
+Mobile layout SHALL remain a single-column flex stack with no grid. Order: Powered, Live, Charging, Grounded.
 
 #### Scenario: Mobile layout renders as flex column
 
