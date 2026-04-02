@@ -17,10 +17,8 @@ function defaultProps(overrides?: Partial<SettingsPageProps>): SettingsPageProps
     onAddCategory: noop,
     onRemoveCategory: noop,
     onRenameCategory: noop,
-    energyBudget: 6,
-    liveCapacity: 3,
-    onSetEnergyBudget: noop,
-    onSetLiveCapacity: noop,
+    dailyLimit: 3,
+    onSetDailyLimit: noop,
     board: {
       cards: [],
       categories: ['Work', 'Personal'],
@@ -29,6 +27,7 @@ function defaultProps(overrides?: Partial<SettingsPageProps>): SettingsPageProps
       lastSaved: '',
     } as SettingsPageProps['board'],
     onReplaceBoard: noop,
+    storageAdapter: 'localstorage' as const,
     ...overrides,
   };
 }
@@ -152,7 +151,7 @@ describe('SettingsPage a11y', () => {
   });
 });
 
-describe('AuthLevelIndicator', () => {
+describe('StorageLevelIndicator', () => {
   beforeEach(() => {
     localStorage.clear();
     mockGetAuthLevel.mockReturnValue(1);
@@ -162,10 +161,10 @@ describe('AuthLevelIndicator', () => {
     const { rerender } = render(
       <SettingsPage {...defaultProps({ initialTab: 'data', driveConnected: false })} />,
     );
-    expect(screen.getByText('Local only')).toBeInTheDocument();
+    expect(screen.getByText(/Basic storage/)).toBeInTheDocument();
 
     mockGetAuthLevel.mockReturnValue(3);
     rerender(<SettingsPage {...defaultProps({ initialTab: 'data', driveConnected: true })} />);
-    expect(screen.getByText('Persistent sync')).toBeInTheDocument();
+    expect(screen.getByText(/Persistent sync/)).toBeInTheDocument();
   });
 });

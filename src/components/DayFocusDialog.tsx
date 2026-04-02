@@ -8,7 +8,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import type { OhmBoard, OhmCard } from '../types/board';
-import { STATUS, COLUMNS, energyColor, budgetColor } from '../types/board';
+import { STATUS, COLUMNS, DAILY_LIMIT_DEFAULT, energyColor, budgetColor } from '../types/board';
 import { getCardsForDate } from '../utils/board-utils';
 import { formatDateLabel, toISODate } from '../utils/schedule-utils';
 import {
@@ -83,7 +83,9 @@ export function DayFocusDialog({
 }: DayFocusDialogProps) {
   const [currentDate, setCurrentDate] = useState(date);
   const cards = getCardsForDate(board, currentDate);
-  const totalEnergy = cards.reduce((sum, c) => sum + c.energy, 0);
+  const dailyLimit = board.dailyLimit ?? DAILY_LIMIT_DEFAULT;
+  const cardCount = cards.length;
+  const avgEnergy = cardCount > 0 ? cards.reduce((sum, c) => sum + c.energy, 0) / cardCount : 0;
   const statusGroups = groupByStatus(cards);
   const label = formatDateLabel(currentDate, todayStr, true);
   const tomorrowStr = getTomorrow(todayStr);
@@ -156,12 +158,36 @@ export function DayFocusDialog({
           </button>
           <CalendarDays size={16} className="text-ohm-muted shrink-0" />
           <span className="flex-1 truncate">{label}</span>
-          <span
-            className="font-display shrink-0 text-sm font-bold"
-            style={{ color: budgetColor(totalEnergy / board.liveCapacity) }}
+          <div
+            className="flex shrink-0 items-center gap-1"
+            aria-label={`${cardCount} of ${dailyLimit} cards`}
+            role="meter"
+            aria-valuenow={cardCount}
+            aria-valuemin={0}
+            aria-valuemax={dailyLimit}
           >
-            {totalEnergy}/{board.liveCapacity}
-          </span>
+            {Array.from({ length: dailyLimit }, (_, i) => {
+              const filled = i < cardCount;
+              const pipColor =
+                filled && avgEnergy > 0 ? energyColor(avgEnergy, undefined, energyMax) : undefined;
+              return (
+                <div
+                  key={i}
+                  className={`h-2 w-2 rounded-full transition-all duration-300 ${filled ? '' : 'bg-ohm-border'}`}
+                  style={
+                    filled
+                      ? { backgroundColor: pipColor ?? budgetColor(cardCount / dailyLimit) }
+                      : undefined
+                  }
+                />
+              );
+            })}
+            {cardCount > dailyLimit && (
+              <span className="text-ohm-live font-display text-[10px] font-bold">
+                +{cardCount - dailyLimit}
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => canNext && goTo(availableDates![dateIdx + 1]!)}
@@ -188,13 +214,13 @@ export function DayFocusDialog({
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
           >
-            <div className="mt-4">
+            <div className="mt-4 space-y-5">
               {statusGroups.map((group) => {
                 const col = COLUMNS[group.status]!;
                 return (
                   <div key={group.status} className="rounded-lg">
                     {/* Column-styled section header */}
-                    <div className="mb-4 flex items-center gap-2">
+                    <div className="mb-3 flex items-center gap-2">
                       <div className={`h-2 w-2 rounded-full bg-${col.color}`} aria-hidden="true" />
                       <h3 className="font-display text-ohm-text text-sm font-bold tracking-widest uppercase">
                         {group.label}
@@ -263,7 +289,7 @@ function SortableCardRow({
   const handle = (
     <button
       type="button"
-      className="text-ohm-muted/40 hover:text-ohm-muted mt-0.5 shrink-0 cursor-grab touch-none active:cursor-grabbing"
+      className="text-ohm-muted/40 hover:text-ohm-muted shrink-0 cursor-grab touch-none active:cursor-grabbing"
       {...listeners}
       aria-label="Drag to reorder"
       onClick={(e) => e.stopPropagation()}
@@ -302,10 +328,10 @@ function CardRow({
 
   return (
     <div className="border-ohm-border bg-ohm-bg/50 rounded-lg border p-2.5">
-      <div className="flex items-start gap-2">
+      <div className="flex items-center gap-2">
         {/* Energy badge */}
         <span
-          className="font-display mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-bold"
+          className="font-display shrink-0 rounded px-1.5 py-0.5 text-xs font-bold"
           style={{
             backgroundColor: energyColor(card.energy, 0.12, energyMax),
             color: energyColor(card.energy, undefined, energyMax),
@@ -314,13 +340,14 @@ function CardRow({
           {card.energy}
         </span>
 
-        {/* Title + category */}
-        <div className="min-w-0 flex-1">
-          <p className="font-body text-ohm-text truncate text-base font-medium">{card.title}</p>
-          {card.category && <span className="text-ohm-muted text-xs">{card.category}</span>}
-        </div>
+        {/* Title + Category */}
+        <p className="font-body text-ohm-text min-w-0 truncate text-base font-medium">
+          {card.title}
+        </p>
+        {card.category && <span className="text-ohm-muted shrink-0 text-xs">{card.category}</span>}
 
-        {/* Drag handle */}
+        {/* Spacer + Drag handle */}
+        <span className="ml-auto" />
         {handle}
       </div>
 

@@ -30,20 +30,21 @@ import type { OhmCard, ColumnStatus } from '../types/board';
 import {
   STATUS,
   COLUMNS,
+  COLUMN_ORDER,
   ENERGY_MIN,
   ENERGY_MAX_DEFAULT,
   ENERGY_DEFAULT,
   WINDOW_DEFAULT,
+  DAILY_LIMIT_DEFAULT,
   energyColor,
 } from '../types/board';
 import { ACTIVITY_STATUS } from '../types/activity';
 import {
   createCard,
+  cardEffectiveDate,
   getColumnCards,
-  getColumnCapacity,
-  getTotalCapacity,
-  getDailyEnergy,
-  getExpiredPowered,
+  getDailyItemCounts,
+  getTotalItemCount,
   groupCardsByDate,
 } from '../utils/board-utils';
 import { formatDateLabel, toISODate } from '../utils/schedule-utils';
@@ -180,16 +181,15 @@ export function Board() {
     updateCard,
     deleteCard,
     deleteCards,
+    archiveCards,
     restoreCard,
     reorderBatch,
     addCategory,
     removeCategory,
     renameCategory,
-    setEnergyBudget,
-    setLiveCapacity,
     setEnergyMax: setBoardEnergyMax,
+    setDailyLimit,
     setWindowSize,
-    setAutoBudget,
     setActivities,
     materializeInstances,
     replaceBoard,
@@ -345,15 +345,16 @@ export function Board() {
     for (const u of updates) updateCard(u);
   }, [board.cards, activities, instances, updateCard]);
 
-  // Auto-archive Powered cards that have fallen outside the trailing window
+  // Soft-archive Powered cards from before today (batched single state update)
   useEffect(() => {
-    const trailingStart = new Date();
-    trailingStart.setDate(trailingStart.getDate() - ((board.windowSize ?? WINDOW_DEFAULT) - 1));
-    const expired = getExpiredPowered(board, toISODate(trailingStart));
-    if (expired.length > 0) {
-      deleteCards(expired.map((c) => c.id));
-    }
-  }, [board.windowSize, board.cards, deleteCards]); // eslint-disable-line react-hooks/exhaustive-deps
+    const todayStr = toISODate(new Date());
+    const ids = board.cards
+      .filter(
+        (c) => c.status === STATUS.POWERED && !c.archivedAt && cardEffectiveDate(c) < todayStr,
+      )
+      .map((c) => c.id);
+    archiveCards(ids);
+  }, [board.cards, archiveCards]);
 
   // Drag-and-drop sensors
   const pointerSensor = useSensor(PointerSensor, {
@@ -527,13 +528,20 @@ export function Board() {
   const budgetData = (() => {
     const today = new Date();
     const todayStr = toISODate(today);
-    const dayLimit = board.liveCapacity;
+    const dailyLimit = board.dailyLimit ?? DAILY_LIMIT_DEFAULT;
     const windowEnd = new Date(today);
     windowEnd.setDate(windowEnd.getDate() + (board.windowSize ?? WINDOW_DEFAULT) - 1);
     const windowEndStr = toISODate(windowEnd);
-    const daily = getDailyEnergy(board, todayStr, windowEndStr);
-    const total = getTotalCapacity(board, todayStr, windowEndStr);
-    return { daily, dayLimit, total, todayStr };
+    const daily = getDailyItemCounts(board, todayStr, windowEndStr);
+    const total = getTotalItemCount(board, todayStr, windowEndStr);
+    // Today's count: Live cards + today's Powered cards
+    const todayCount = board.cards.filter(
+      (c) =>
+        !c.archivedAt &&
+        (c.status === STATUS.LIVE ||
+          (c.status === STATUS.POWERED && cardEffectiveDate(c) === todayStr)),
+    ).length;
+    return { daily, dailyLimit, total, todayCount, todayStr };
   })();
 
   const handleQuickSpark = () => {
@@ -1015,29 +1023,34 @@ export function Board() {
           tabIndex={-1}
           className="flex-1 overflow-y-auto focus:outline-none md:overflow-x-auto md:overflow-y-hidden"
         >
-          <div className="flex flex-col gap-3 p-4 pb-28 md:min-h-[calc(100vh-56px)] md:flex-row md:gap-4">
-            {COLUMNS.map((col, index) => {
-              const status = index as ColumnStatus;
+          <div className="flex flex-col gap-3 p-4 pb-28 md:grid md:min-h-[calc(100vh-56px)] md:grid-cols-4 md:gap-4">
+            {COLUMN_ORDER.map((status) => {
+              const col = COLUMNS[status]!;
               const cards = filteredCards(status);
               const todayStr = toISODate(new Date());
               return (
                 <Column
-                  key={index}
+                  key={status}
                   column={col}
                   cards={cards}
                   onCardTap={setSelectedCard}
                   onReorderCards={reorderBatch}
-                  capacity={getColumnCapacity(board, status, todayStr) ?? undefined}
-                  defaultExpanded={index === STATUS.LIVE}
-                  flash={index === STATUS.POWERED ? poweredFlash : undefined}
-                  energyMax={eMax}
-                  dayGroups={
-                    status === STATUS.CHARGING || status === STATUS.POWERED
-                      ? groupCardsByDate(cards, todayStr, status === STATUS.POWERED)
+                  capacity={
+                    status === STATUS.LIVE
+                      ? { used: budgetData.todayCount, total: budgetData.dailyLimit }
                       : undefined
                   }
-                  dayLimit={board.liveCapacity}
+                  defaultExpanded={status === STATUS.LIVE}
+                  flash={status === STATUS.POWERED ? poweredFlash : undefined}
+                  energyMax={eMax}
+                  dayGroups={
+                    status === STATUS.CHARGING
+                      ? groupCardsByDate(cards, todayStr, false)
+                      : undefined
+                  }
+                  dayLimit={budgetData.dailyLimit}
                   filterDate={dateFilter}
+                  expandedCards={status === STATUS.LIVE || status === STATUS.POWERED}
                 />
               );
             })}
@@ -1055,9 +1068,10 @@ export function Board() {
       {/* Budget bar — fixed bottom */}
       <BudgetBar
         daily={budgetData.daily}
-        dayLimit={budgetData.dayLimit}
+        dailyLimit={budgetData.dailyLimit}
         total={budgetData.total}
         todayStr={budgetData.todayStr}
+        energyMax={eMax}
         onDayClick={setFocusDate}
       />
 
@@ -1277,16 +1291,12 @@ export function Board() {
         onAddCategory={addCategory}
         onRemoveCategory={removeCategory}
         onRenameCategory={renameCategory}
-        energyBudget={board.energyBudget}
-        liveCapacity={board.liveCapacity}
-        onSetEnergyBudget={setEnergyBudget}
-        onSetLiveCapacity={setLiveCapacity}
         energyMax={eMax}
         onSetEnergyMax={setBoardEnergyMax}
+        dailyLimit={board.dailyLimit ?? DAILY_LIMIT_DEFAULT}
+        onSetDailyLimit={setDailyLimit}
         windowSize={board.windowSize}
         onSetWindowSize={setWindowSize}
-        autoBudget={board.autoBudget}
-        onSetAutoBudget={setAutoBudget}
         activities={activities}
         onUpdateActivity={updateActivity}
         onDeleteActivity={async (id) => {

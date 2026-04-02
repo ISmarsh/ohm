@@ -1,6 +1,14 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { OhmBoard, OhmCard, ColumnStatus } from '../types/board';
-import { ENERGY_MIN, WINDOW_MIN, WINDOW_MAX, WINDOW_DEFAULT, STATUS } from '../types/board';
+import {
+  ENERGY_MIN,
+  WINDOW_MIN,
+  WINDOW_MAX,
+  WINDOW_DEFAULT,
+  STATUS,
+  DAILY_LIMIT_MIN,
+  DAILY_LIMIT_MAX,
+} from '../types/board';
 import type { Activity } from '../types/activity';
 import { loadFromLocal, saveToLocal, recoverFromStorage } from '../utils/storage';
 import {
@@ -96,6 +104,18 @@ export function useBoard() {
       ...prev,
       cards: prev.cards.filter((c) => !idSet.has(c.id)),
       lastSaved: new Date().toISOString(),
+    }));
+  }, []);
+
+  /** Set archivedAt on multiple cards in a single state update */
+  const archiveCards = useCallback((cardIds: string[]) => {
+    if (cardIds.length === 0) return;
+    const idSet = new Set(cardIds);
+    const now = new Date().toISOString();
+    setBoard((prev) => ({
+      ...prev,
+      cards: prev.cards.map((c) => (idSet.has(c.id) ? { ...c, archivedAt: now } : c)),
+      lastSaved: now,
     }));
   }, []);
 
@@ -255,6 +275,17 @@ export function useBoard() {
     });
   }, []);
 
+  /** Set daily item limit (1-5) */
+  const setDailyLimit = useCallback((limit: number) => {
+    const now = new Date().toISOString();
+    setBoard((prev) => ({
+      ...prev,
+      dailyLimit: Math.min(DAILY_LIMIT_MAX, Math.max(DAILY_LIMIT_MIN, Math.round(limit))),
+      capacitiesUpdatedAt: now,
+      lastSaved: now,
+    }));
+  }, []);
+
   /** Toggle auto-budget (Total = Window x Live) */
   const setAutoBudget = useCallback((enabled: boolean) => {
     const now = new Date().toISOString();
@@ -372,12 +403,14 @@ export function useBoard() {
     updateCard,
     deleteCard,
     deleteCards,
+    archiveCards,
     restoreCard,
     reorder,
     reorderBatch,
     setEnergyBudget,
     setLiveCapacity,
     setEnergyMax,
+    setDailyLimit,
     addCategory,
     removeCategory,
     renameCategory,
